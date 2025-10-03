@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập EzGear</title>
+  <link rel="stylesheet" href="assets/css/login.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Bên trái -->
+    <div class="auth-left">
+      <div class="intro-box">
+        <div class="logo-large">EzGear</div>
+        <h1>EzGear Member</h1>
+        <p>Gia nhập hội thành viên EzGear để nhận ưu đãi cực hấp dẫn:</p>
+        <ul>
+          <li>
+            <i class="fas fa-gift"></i>
+            <span>Giảm giá đến <b>5%</b> khi mua hàng</span>
+          </li>
+          <li>
+            <i class="fas fa-shipping-fast"></i>
+            <span>Miễn phí giao hàng cho đơn từ 300.000đ</span>
+          </li>
+          <li>
+            <i class="fas fa-birthday-cake"></i>
+            <span>Tặng voucher sinh nhật đến <b>500.000đ</b></span>
+          </li>
+          <li>
+            <i class="fas fa-star"></i>
+            <span>Tích điểm – thăng hạng – đổi quà</span>
+          </li>
+        </ul>
+        <div class="testimonial">
+          <p>"EzGear đã thay đổi hoàn toàn trải nghiệm mua sắm của tôi!"</p>
+          <div class="customer">- Nguyễn Văn A, Hà Nội</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bên phải -->
+    <div class="auth-right">
+      <div class="form-card">
+        <div class="logo">EzGear</div>
+        <h2>Đăng nhập</h2>
+        <p class="subtitle">Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục</p>
+        
+        <form id="login-form">
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-phone"></i>
+            </div>
+            <input type="email" name="email" placeholder="Email" required>
+          </div>
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-lock"></i>
+            </div>
+            <input type="password" name="password" placeholder="Mật khẩu" required>
+            <button type="button" class="toggle-password" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          
+          <div class="remember-forgot">
+            <label class="checkbox-container">
+              <input type="checkbox">
+              <span class="checkmark"></span>
+              Ghi nhớ đăng nhập
+            </label>
+            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+          </div>
+          
+          <button type="submit" class="login-btn">
+            <span>Đăng nhập</span>
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <div class="divider">
+          <span>Hoặc đăng nhập bằng</span>
+        </div>
+        
+        <div class="social-login">
+          <button class="social-btn google">
+            <i class="fab fa-google"></i>
+            <span>Google</span>
+          </button>
+          <button class="social-btn zalo">
+            <i class="fab fa-facebook"></i>
+            <span>Facebook</span>
+          </button>
+        </div>
+        
+        <p class="register-link">
+          Chưa có tài khoản? 
+          <a href="register.html">Đăng ký ngay</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/api.js"></script>
+  <script>
+    // Hiển thị/ẩn mật khẩu
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.querySelector('input[name="password"]');
+      const icon = this.querySelector('i');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+    
+    // Hiệu ứng loading khi submit form
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const email = this.email.value;
+    const password = this.password.value;
+    const btn = this.querySelector('.login-btn');
+    const originalText = btn.innerHTML;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+    btn.disabled = true;
+
+    try {
+        const res = await request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+            email: email,   
+            password: password
+        })
+        });
+
+        localStorage.setItem('token', res.accessToken);
+        localStorage.setItem('refreshToken', res.refreshToken);
+
+        alert('Đăng nhập thành công!');
+        window.location.href = 'index.html';
+    } catch (err) {
+        alert('Sai email hoặc mật khẩu!');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+    });
+
+  </script>
+</body>
+</html>

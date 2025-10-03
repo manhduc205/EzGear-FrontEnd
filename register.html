@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký EzGear</title>
+  <link rel="stylesheet" href="assets/css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    
+    .password-strength {
+      margin-top: -12px;
+      height: 5px;
+      border-radius: 5px;
+      background: #333;
+      overflow: hidden;
+    }
+    
+    .password-strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    
+    .password-strength-text {
+      font-size: 12px;
+      margin-top: 4px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    
+    .terms {
+      display: flex;
+      align-items: flex-start;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #aaa;
+    }
+    
+    .terms input {
+      margin-right: 10px;
+      margin-top: 3px;
+    }
+    
+    .terms a {
+      color: #c8102e;
+      text-decoration: none;
+    }
+    
+    .terms a:hover {
+      text-decoration: underline;
+    }
+    
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    
+    .benefit-item i {
+      margin-right: 10px;
+      font-size: 1.2rem;
+      color: #c8102e;
+    }
+    
+    .input-error {
+      border-color: #ff4757 !important;
+      box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.2) !important;
+    }
+    
+    .error-message {
+      color: #ff4757;
+      font-size: 12px;
+      text-align: left;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .success-message {
+      color: #2ed573;
+      font-size: 12px;
+      text-align: left;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Bên trái -->
+    <div class="auth-left">
+      <div class="intro-box">
+        <div class="logo-large">EzGear</div>
+        <h1>Trở thành thành viên EzGear</h1>
+        <p>Đăng ký ngay để tận hưởng ưu đãi độc quyền!</p>
+        
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-shipping-fast"></i>
+            <span>Miễn phí giao hàng</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-gift"></i>
+            <span>Quà tặng đặc biệt</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-tag"></i>
+            <span>Giảm giá thành viên</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-star"></i>
+            <span>Tích điểm đổi quà</span>
+          </div>
+        </div>
+        
+        <div class="testimonial">
+          <p>"Đăng ký EzGear là quyết định đúng đắn nhất của tôi trong năm nay!"</p>
+          <div class="customer">- Trần Thị B, TP.HCM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bên phải -->
+    <div class="auth-right">
+      <div class="form-card">
+        <div class="logo">EzGear</div>
+        <h2>Tạo tài khoản</h2>
+
+        <form id="register-form">
+          <div class="input-group">
+            <div class="input-icon"><i class="fas fa-user"></i></div>
+            <input type="text" name="fullName" placeholder="Họ và tên" required>
+            <div class="success-message" id="name-success"><i class="fas fa-check"></i> Hợp lệ</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-icon"><i class="fas fa-envelope"></i></div>
+            <input type="email" name="email" placeholder="Email" required>
+            <div class="error-message" id="email-error">Email không hợp lệ</div>
+            <div class="success-message" id="email-success"><i class="fas fa-check"></i> Email hợp lệ</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-icon"><i class="fas fa-lock"></i></div>
+            <input type="password" name="password" placeholder="Mật khẩu" required>
+            <button type="button" class="toggle-password" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </button>
+            
+          </div>
+          
+            <div class="password-strength">
+            <div class="password-strength-bar" id="password-strength-bar"></div>
+            </div>
+            <div class="password-strength-text" id="password-strength-text">Độ mạnh mật khẩu</div>
+          
+            <div class="input-group">
+                <div class="input-icon"><i class="fas fa-lock"></i></div>
+                <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                <button type="button" class="toggle-password" id="toggleConfirmPassword">
+                <i class="fas fa-eye"></i>
+                </button>
+                <div class="error-message" id="confirm-password-error">Mật khẩu không khớp</div>
+                <div class="success-message" id="confirm-password-success"><i class="fas fa-check"></i> Mật khẩu khớp</div>
+            </div>
+          
+            <div class="terms">
+                <input type="checkbox" id="agreeTerms" required>
+                <label for="agreeTerms">
+                Tôi đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách bảo mật</a> của EzGear
+                </label>
+            </div>
+
+            <button type="submit" class="login-btn">
+                <span>Đăng ký</span>
+                <i class="fas fa-user-plus"></i>
+            </button>
+        </form>
+
+        <div class="divider">
+          <span>Hoặc đăng ký bằng</span>
+        </div>
+
+        <div class="social-login">
+          <button class="social-btn google">
+            <i class="fab fa-google"></i>
+            <span>Google</span>
+          </button>
+          <button class="social-btn zalo">
+            <i class="fab fa-facebook"></i>
+            <span>Facebook</span>
+          </button>
+        </div>
+
+        <p class="register-link">
+          Đã có tài khoản? <a href="login.html">Đăng nhập</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Hiển thị/ẩn mật khẩu
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.querySelector('input[name="password"]');
+      const icon = this.querySelector('i');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+    
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+      const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+      const icon = this.querySelector('i');
+      
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        confirmPasswordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+    
+    // Kiểm tra độ mạnh mật khẩu
+    document.querySelector('input[name="password"]').addEventListener('input', function() {
+      const password = this.value;
+      const strengthBar = document.getElementById('password-strength-bar');
+      const strengthText = document.getElementById('password-strength-text');
+      
+      let strength = 0;
+      let text = 'Rất yếu';
+      let color = '#ff4757';
+      
+      if (password.length >= 6) strength += 25;
+      if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 25;
+      if (password.match(/\d/)) strength += 25;
+      if (password.match(/[^a-zA-Z\d]/)) strength += 25;
+      
+      if (strength >= 75) {
+        text = 'Mạnh';
+        color = '#2ed573';
+      } else if (strength >= 50) {
+        text = 'Trung bình';
+        color = '#ffa502';
+      } else if (strength >= 25) {
+        text = 'Yếu';
+        color = '#ff7f50';
+      }
+      
+      strengthBar.style.width = `${strength}%`;
+      strengthBar.style.background = color;
+      strengthText.textContent = `Độ mạnh mật khẩu: ${text}`;
+      strengthText.style.color = color;
+    });
+    
+    // Kiểm tra mật khẩu khớp
+    document.querySelector('input[name="confirmPassword"]').addEventListener('input', function() {
+      const password = document.querySelector('input[name="password"]').value;
+      const confirmPassword = this.value;
+      const errorMsg = document.getElementById('confirm-password-error');
+      const successMsg = document.getElementById('confirm-password-success');
+      
+      if (confirmPassword && password !== confirmPassword) {
+        this.classList.add('input-error');
+        errorMsg.style.display = 'block';
+        successMsg.style.display = 'none';
+      } else if (confirmPassword && password === confirmPassword) {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'block';
+      } else {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Kiểm tra email hợp lệ
+    document.querySelector('input[name="email"]').addEventListener('input', function() {
+      const email = this.value;
+      const errorMsg = document.getElementById('email-error');
+      const successMsg = document.getElementById('email-success');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (email && !emailRegex.test(email)) {
+        this.classList.add('input-error');
+        errorMsg.style.display = 'block';
+        successMsg.style.display = 'none';
+      } else if (email && emailRegex.test(email)) {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'block';
+      } else {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Kiểm tra tên hợp lệ
+    document.querySelector('input[name="fullName"]').addEventListener('input', function() {
+      const name = this.value;
+      const successMsg = document.getElementById('name-success');
+      
+      if (name && name.length >= 2) {
+        successMsg.style.display = 'block';
+      } else {
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Xử lý đăng ký
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const fullName = this.fullName.value;
+      const email = this.email.value;
+      const password = this.password.value;
+      const confirmPassword = this.confirmPassword.value;
+      const agreeTerms = document.getElementById('agreeTerms').checked;
+
+      // Kiểm tra điều khoản
+      if (!agreeTerms) {
+        alert('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('Mật khẩu nhập lại không khớp!');
+        return;
+      }
+
+      // Kiểm tra độ mạnh mật khẩu
+      if (password.length < 6) {
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+      }
+
+      const submitBtn = this.querySelector('.login-btn');
+      const originalText = submitBtn.innerHTML;
+      
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+      submitBtn.disabled = true;
+      
+      // Giả lập gửi form
+      setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        alert('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
+        window.location.href = 'login.html';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
