@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Purchase Order</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --border-color: #bdc3c7;
+            --shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 24px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-confirmed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-received {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .item-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .item-row input {
+            flex: 1;
+        }
+        
+        .item-row .btn {
+            flex: 0 0 auto;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--dark-color);
+        }
+        
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .total-item {
+            margin-left: 20px;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>Quản lý Purchase Order</h1>
+                <button id="createPoBtn" class="btn btn-primary">Tạo Purchase Order mới</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alertContainer"></div>
+        
+        <div class="card">
+            <h2>Danh sách Purchase Order</h2>
+            <div class="table-container">
+                <table id="poTable">
+                    <thead>
+                        <tr>
+                            <th>Mã PO</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Kho</th>
+                            <th>Trạng thái</th>
+                            <th>Tổng tiền</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="poTableBody">
+                        <!-- Dữ liệu sẽ được thêm bằng JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tạo PO -->
+    <!-- <div id="createPoModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tạo Purchase Order mới</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="poForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="code">Mã PO *</label>
+                        <input type="text" id="code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplierName">Nhà cung cấp *</label>
+                        <input type="text" id="supplierName" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="warehouseId">Kho *</label>
+                        <select id="warehouseId" required>
+                            <option value="">Chọn kho</option>
+                            <option value="1">Kho Hà Nội</option>
+                            <option value="2">Kho Hồ Chí Minh</option>
+                            <option value="3">Kho Đà Nẵng</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createdBy">Người tạo *</label>
+                        <input type="number" id="createdBy" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="note">Ghi chú</label>
+                    <textarea id="note" rows="3"></textarea>
+                </div>
+                
+                <h3>Danh sách sản phẩm</h3>
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <input type="number" placeholder="SKU ID" class="skuId" required>
+                        <input type="number" placeholder="Số lượng" class="quantity" min="1" required>
+                        <input type="number" placeholder="Đơn giá" class="unitPrice" min="0" step="0.01" required>
+                        <button type="button" class="btn btn-danger remove-item">Xóa</button>
+                    </div>
+                </div>
+                
+                <button type="button" id="addItemBtn" class="btn btn-primary">Thêm sản phẩm</button>
+                
+                <div class="total-section">
+                    <div class="total-item">
+                        Tổng cộng: <span id="totalAmount">0</span>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="btn btn-warning" id="cancelCreateBtn">Hủy</button>
+                    <button type="submit" class="btn btn-success">Tạo PO</button>
+                </div>
+            </form>
+        </div>
+    </div> -->
+
+    <!-- Modal chi tiết PO -->
+    <!-- <div id="poDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Chi tiết Purchase Order</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div id="poDetailContent">
+                Nội dung chi tiết sẽ được thêm bằng JavaScript -->
+            <!-- </div>
+        </div>
+    </div> -->
+
+    <script>
+        // API endpoints
+        const API_BASE_URL = 'http://localhost:8080/purchase-orders';
+        
+        // State
+        let purchaseOrders = [];
+        let currentPoId = null;
+        
+        // DOM Elements
+        const createPoBtn = document.getElementById('createPoBtn');
+        const createPoModal = document.getElementById('createPoModal');
+        const poDetailModal = document.getElementById('poDetailModal');
+        const poForm = document.getElementById('poForm');
+        const poTableBody = document.getElementById('poTableBody');
+        const itemsContainer = document.getElementById('itemsContainer');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const alertContainer = document.getElementById('alertContainer');
+        const totalAmountSpan = document.getElementById('totalAmount');
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPurchaseOrders();
+            
+            createPoBtn.addEventListener('click', () => {
+                showModal(createPoModal);
+            });
+            
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    hideAllModals();
+                });
+            });
+            
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        hideAllModals();
+                    }
+                });
+            });
+            
+            document.getElementById('cancelCreateBtn').addEventListener('click', () => {
+                hideAllModals();
+                resetForm();
+            });
+            
+            addItemBtn.addEventListener('click', addItemRow);
+            
+            itemsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-item')) {
+                    e.target.closest('.item-row').remove();
+                    calculateTotal();
+                }
+            });
+            
+            poForm.addEventListener('submit', handleCreatePo);
+            
+            // Lắng nghe thay đổi giá sản phẩm để tính tổng
+            itemsContainer.addEventListener('input', (e) => {
+                if (e.target.classList.contains('quantity') || e.target.classList.contains('unitPrice')) {
+                    calculateTotal();
+                }
+            });
+        });
+        
+        // Functions
+        function showModal(modal) {
+            modal.classList.remove('hidden');
+        }
+        
+        function hideAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.add('hidden');
+            });
+        }
+        
+        function resetForm() {
+            poForm.reset();
+            itemsContainer.innerHTML = `
+                <div class="item-row">
+                    <input type="number" placeholder="SKU ID" class="skuId" required>
+                    <input type="number" placeholder="Số lượng" class="quantity" min="1" required>
+                    <input type="number" placeholder="Đơn giá" class="unitPrice" min="0" step="0.01" required>
+                    <button type="button" class="btn btn-danger remove-item">Xóa</button>
+                </div>
+            `;
+            totalAmountSpan.textContent = '0';
+        }
+        
+        function addItemRow() {
+            const itemRow = document.createElement('div');
+            itemRow.className = 'item-row';
+            itemRow.innerHTML = `
+                <input type="number" placeholder="SKU ID" class="skuId" required>
+                <input type="number" placeholder="Số lượng" class="quantity" min="1" required>
+                <input type="number" placeholder="Đơn giá" class="unitPrice" min="0" step="0.01" required>
+                <button type="button" class="btn btn-danger remove-item">Xóa</button>
+            `;
+            itemsContainer.appendChild(itemRow);
+        }
+        
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+                const unitPrice = parseFloat(row.querySelector('.unitPrice').value) || 0;
+                total += quantity * unitPrice;
+            });
+            totalAmountSpan.textContent = total.toFixed(2);
+        }
+        
+        async function loadPurchaseOrders() {
+            try {
+                showLoading(poTableBody);
+                const response = await fetch(API_BASE_URL);
+                const result = await response.json();
+                
+                if (result.success) {
+                    purchaseOrders = result.payload;
+                    renderPurchaseOrders();
+                } else {
+                    showAlert('Lỗi khi tải danh sách PO: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error loading purchase orders:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+                // Dùng dữ liệu mẫu để demo
+                purchaseOrders = getSampleData();
+                renderPurchaseOrders();
+            }
+        }
+        
+        function renderPurchaseOrders() {
+            poTableBody.innerHTML = '';
+            
+            if (purchaseOrders.length === 0) {
+                poTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Không có dữ liệu</td></tr>';
+                return;
+            }
+            
+            purchaseOrders.forEach(po => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${po.code}</td>
+                    <td>${po.supplierName}</td>
+                    <td>Kho ${po.warehouseId}</td>
+                    <td><span class="status-badge status-${po.status}">${getStatusText(po.status)}</span></td>
+                    <td>${formatCurrency(po.total)}</td>
+                    <td>${po.note || ''}</td>
+                    <td class="actions">
+                        <button class="btn btn-primary view-po" data-id="${po.id}">Xem</button>
+                        ${po.status === 'pending' ? 
+                            `<button class="btn btn-success confirm-po" data-id="${po.id}">Xác nhận</button>
+                             <button class="btn btn-danger cancel-po" data-id="${po.id}">Hủy</button>` : 
+                         po.status === 'confirmed' ? 
+                            `<button class="btn btn-warning receive-po" data-id="${po.id}">Nhận hàng</button>` : 
+                         ''}
+                    </td>
+                `;
+                poTableBody.appendChild(row);
+            });
+            
+            // Thêm event listeners cho các nút
+            document.querySelectorAll('.view-po').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    viewPoDetail(poId);
+                });
+            });
+            
+            document.querySelectorAll('.confirm-po').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    confirmPo(poId);
+                });
+            });
+            
+            document.querySelectorAll('.receive-po').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    receivePo(poId);
+                });
+            });
+            
+            document.querySelectorAll('.cancel-po').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    cancelPo(poId);
+                });
+            });
+        }
+        
+        async function viewPoDetail(poId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${poId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const po = result.payload;
+                    showPoDetail(po);
+                } else {
+                    showAlert('Lỗi khi tải chi tiết PO: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error loading PO detail:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+            }
+        }
+        
+        function showPoDetail(po) {
+            const detailContent = document.getElementById('poDetailContent');
+            detailContent.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mã PO</label>
+                        <p>${po.code}</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Nhà cung cấp</label>
+                        <p>${po.supplierName}</p>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kho</label>
+                        <p>Kho ${po.warehouseId}</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <p><span class="status-badge status-${po.status}">${getStatusText(po.status)}</span></p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <p>${po.note || 'Không có'}</p>
+                </div>
+                
+                <h3>Danh sách sản phẩm</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SKU ID</th>
+                                <th>Số lượng</th>
+                                <th>Đơn giá</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${po.items.map(item => `
+                                <tr>
+                                    <td>${item.skuId}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${formatCurrency(item.unitPrice)}</td>
+                                    <td>${formatCurrency(item.quantity * item.unitPrice)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="total-section">
+                    <div class="total-item">
+                        Tổng cộng: ${formatCurrency(po.total)}
+                    </div>
+                </div>
+                
+                <div class="actions" style="margin-top: 20px; text-align: right;">
+                    ${po.status === 'pending' ? 
+                        `<button class="btn btn-success confirm-po-detail" data-id="${po.id}">Xác nhận</button>
+                         <button class="btn btn-danger cancel-po-detail" data-id="${po.id}">Hủy</button>` : 
+                     po.status === 'confirmed' ? 
+                        `<button class="btn btn-warning receive-po-detail" data-id="${po.id}">Nhận hàng</button>` : 
+                     ''}
+                    <button class="btn btn-primary close-detail">Đóng</button>
+                </div>
+            `;
+            
+            // Thêm event listeners cho các nút trong modal chi tiết
+            if (document.querySelector('.confirm-po-detail')) {
+                document.querySelector('.confirm-po-detail').addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    confirmPo(poId);
+                });
+            }
+            
+            if (document.querySelector('.receive-po-detail')) {
+                document.querySelector('.receive-po-detail').addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    receivePo(poId);
+                });
+            }
+            
+            if (document.querySelector('.cancel-po-detail')) {
+                document.querySelector('.cancel-po-detail').addEventListener('click', (e) => {
+                    const poId = e.target.getAttribute('data-id');
+                    cancelPo(poId);
+                });
+            }
+            
+            document.querySelector('.close-detail').addEventListener('click', () => {
+                hideAllModals();
+            });
+            
+            showModal(poDetailModal);
+        }
+        
+        async function handleCreatePo(e) {
+            e.preventDefault();
+            
+            // Lấy dữ liệu từ form
+            const formData = {
+                code: document.getElementById('code').value,
+                supplierName: document.getElementById('supplierName').value,
+                warehouseId: parseInt(document.getElementById('warehouseId').value),
+                note: document.getElementById('note').value,
+                createdBy: parseInt(document.getElementById('createdBy').value),
+                items: []
+            };
+            
+            // Lấy thông tin các sản phẩm
+            let isValid = true;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const skuId = parseInt(row.querySelector('.skuId').value);
+                const quantity = parseInt(row.querySelector('.quantity').value);
+                const unitPrice = parseFloat(row.querySelector('.unitPrice').value);
+                
+                if (isNaN(skuId) || isNaN(quantity) || isNaN(unitPrice)) {
+                    isValid = false;
+                    return;
+                }
+                
+                formData.items.push({
+                    skuId: skuId,
+                    quantity: quantity,
+                    unitPrice: unitPrice
+                });
+            });
+            
+            if (!isValid) {
+                showAlert('Vui lòng nhập đầy đủ thông tin cho tất cả sản phẩm', 'error');
+                return;
+            }
+            
+            if (formData.items.length === 0) {
+                showAlert('Vui lòng thêm ít nhất một sản phẩm', 'error');
+                return;
+            }
+            
+            // Tính tổng tiền
+            formData.subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+            formData.total = formData.subtotal;
+            formData.status = 'pending';
+            
+            try {
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Tạo PO thành công!', 'success');
+                    hideAllModals();
+                    resetForm();
+                    loadPurchaseOrders();
+                } else {
+                    showAlert('Lỗi khi tạo PO: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error creating PO:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+            }
+        }
+        
+        async function confirmPo(poId) {
+            if (!confirm('Bạn có chắc chắn muốn xác nhận PO này?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${poId}/confirm`, {
+                    method: 'PUT'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Xác nhận PO thành công!', 'success');
+                    hideAllModals();
+                    loadPurchaseOrders();
+                } else {
+                    showAlert('Lỗi khi xác nhận PO: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error confirming PO:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+            }
+        }
+        
+        async function receivePo(poId) {
+            if (!confirm('Bạn có chắc chắn muốn nhận hàng cho PO này?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${poId}/receive`, {
+                    method: 'PUT'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Nhận hàng thành công!', 'success');
+                    hideAllModals();
+                    loadPurchaseOrders();
+                } else {
+                    showAlert('Lỗi khi nhận hàng: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error receiving PO:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+            }
+        }
+        
+        async function cancelPo(poId) {
+            if (!confirm('Bạn có chắc chắn muốn hủy PO này?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${poId}/cancel`, {
+                    method: 'PUT'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Hủy PO thành công!', 'success');
+                    hideAllModals();
+                    loadPurchaseOrders();
+                } else {
+                    showAlert('Lỗi khi hủy PO: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error cancelling PO:', error);
+                showAlert('Lỗi kết nối đến server', 'error');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function showLoading(element) {
+            element.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center;">
+                        <div class="loading"></div> Đang tải...
+                    </td>
+                </tr>
+            `;
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Chờ xác nhận',
+                'confirmed': 'Đã xác nhận',
+                'received': 'Đã nhận hàng',
+                'cancelled': 'Đã hủy'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+        
+        // Dữ liệu mẫu để demo khi không kết nối được với API
+        function getSampleData() {
+            return [
+                {
+                    id: 1,
+                    code: 'PO-001',
+                    supplierName: 'Công ty ABC',
+                    warehouseId: 1,
+                    status: 'pending',
+                    subtotal: 15000000,
+                    total: 15000000,
+                    note: 'Giao hàng trước ngày 30/12',
+                    createdBy: 1,
+                    items: [
+                        { id: 1, purchaseOrderId: 1, skuId: 101, quantity: 10, unitPrice: 500000 },
+                        { id: 2, purchaseOrderId: 1, skuId: 102, quantity: 5, unitPrice: 2000000 }
+                    ]
+                },
+                {
+                    id: 2,
+                    code: 'PO-002',
+                    supplierName: 'Công ty XYZ',
+                    warehouseId: 2,
+                    status: 'confirmed',
+                    subtotal: 8000000,
+                    total: 8000000,
+                    note: '',
+                    createdBy: 2,
+                    items: [
+                        { id: 3, purchaseOrderId: 2, skuId: 103, quantity: 20, unitPrice: 400000 }
+                    ]
+                },
+                {
+                    id: 3,
+                    code: 'PO-003',
+                    supplierName: 'Nhà cung cấp DEF',
+                    warehouseId: 3,
+                    status: 'received',
+                    subtotal: 12000000,
+                    total: 12000000,
+                    note: 'Đã nhận đủ hàng',
+                    createdBy: 1,
+                    items: [
+                        { id: 4, purchaseOrderId: 3, skuId: 104, quantity: 8, unitPrice: 1500000 }
+                    ]
+                }
+            ];
+        }
+    </script>
+</body>
+</html>

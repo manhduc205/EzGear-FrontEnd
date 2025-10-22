@@ -107,6 +107,27 @@
 
   <script src="assets/js/api.js"></script>
   <script>
+    // api
+    async function request(url, options = {}) {
+      const fullUrl = 'http://localhost:8080/api' + url; // đổi URL nếu backend chạy port khác
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers
+      });
+
+      if (!response.ok) {
+        const msg = await response.text();
+        throw new Error(msg || 'Request failed');
+      }
+
+      return await response.json();
+    }
+
     // Hiển thị/ẩn mật khẩu
     document.getElementById('togglePassword').addEventListener('click', function() {
       const passwordInput = document.querySelector('input[name="password"]');
@@ -143,8 +164,10 @@
             password: password
         })
         });
+        // Nếu backend không trả về userId, tạm lưu email làm định danh
+        localStorage.setItem('userId', res.userId || res.email);
 
-        localStorage.setItem('token', res.accessToken);
+        localStorage.setItem('accessToken', res.accessToken);
         localStorage.setItem('refreshToken', res.refreshToken);
 
         alert('Đăng nhập thành công!');
