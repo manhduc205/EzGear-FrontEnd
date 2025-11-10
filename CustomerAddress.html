@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thêm địa chỉ mới | EzGear</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, Helvetica Neue, Segoe UI, Roboto, Ubuntu, sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f5;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    .address-form-container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .form-title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .form-row .form-group {
+      flex: 1;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-control:focus {
+      border-color: #ee4d2d;
+      outline: none;
+    }
+    
+    /* ==== Ô hiển thị địa chỉ chính ==== */
+    .location-input {
+      position: relative;
+      width: 100%;
+    }
+    
+    .location-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      padding: 12px 16px;
+      cursor: pointer;
+    }
+    
+    .location-display:hover { 
+      border-color: #ee4d2d; 
+    }
+    
+    .location-text {
+      font-size: 14px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 90%;
+    }
+    
+    /* ==== Modal chọn tỉnh-quận-phường ==== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .hidden { 
+      display: none; 
+    }
+    
+    .modal {
+      background: #fff;
+      width: 520px;
+      border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      animation: fadeIn 0.25s ease;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .modal-header h3 { 
+      margin: 0; 
+      font-size: 16px; 
+      font-weight: 600; 
+    }
+    
+    .close-btn {
+      border: none; 
+      background: none; 
+      cursor: pointer; 
+      font-size: 18px; 
+      color: #777;
+    }
+    
+    .close-btn:hover { 
+      color: #000; 
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .tabs button {
+      flex: 1; 
+      padding: 10px;
+      background: none; 
+      border: none;
+      font-weight: 500; 
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tabs button.active {
+      color: #ee4d2d;
+      border-color: #ee4d2d;
+    }
+    
+    /* Danh sách chọn */
+    .tab-content {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 8px 16px;
+    }
+    
+    .tab-content div {
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .tab-content div:hover { 
+      background: #f7f7f7; 
+    }
+    
+    .tab-content .selected {
+      color: #ee4d2d;
+      font-weight: 600;
+    }
+    
+    /* Nút footer */
+    .modal-footer {
+      text-align: right;
+      padding: 10px 20px 16px;
+      border-top: 1px solid #eee;
+    }
+    
+    .btn-confirm {
+      background: #ee4d2d;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    
+    .btn-confirm:hover { 
+      background: #d63b1f; 
+    }
+    
+    /* Loại địa chỉ */
+    .address-type-group {
+      margin-top: 8px;
+    }
+    
+    .address-type-label {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .address-type-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .type-btn {
+      padding: 8px 16px;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .type-btn.active {
+      border-color: #ee4d2d;
+      color: #ee4d2d;
+      background-color: #fff0ee;
+    }
+    
+    /* Checkbox */
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    
+    .checkbox-input {
+      margin: 0;
+      accent-color: #ee4d2d;
+    }
+    
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e8e8e8;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      min-width: 80px;
+    }
+    
+    .btn-secondary {
+      background-color: #fff;
+      border: 1px solid #e8e8e8;
+      color: #555;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #f8f8f8;
+    }
+    
+    .btn-primary {
+      background-color: #ee4d2d;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #d73211;
+    }
+    
+    @keyframes fadeIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+    
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+    }
+    
+    .loading i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="address-form-container">
+    <h2 class="form-title">Địa chỉ mới</h2>
+    
+    <form id="addressForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="receiverName">Họ và tên</label>
+          <input type="text" class="form-control" id="receiverName" placeholder="Họ và tên" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="receiverPhone">Số điện thoại</label>
+          <input type="tel" class="form-control" id="receiverPhone" placeholder="Số điện thoại" required>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Tỉnh/Thành phố, Quận/Huyện, Phường/Xã</label>
+        <div class="location-input">
+          <div class="location-display" id="openPicker">
+            <div class="location-text" id="locationText">Chọn địa chỉ</div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="selected-address" id="selectedAddress" style="margin-top: 8px; font-size: 13px; color: #666;"></div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="addressLine">Địa chỉ cụ thể</label>
+        <textarea class="form-control" id="addressLine" rows="3" placeholder="Số nhà, tên đường, phường/xã" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="address-type-label">Loại địa chỉ:</label>
+        <div class="address-type-buttons">
+          <button type="button" class="type-btn active" data-type="Nhà Riêng">Nhà Riêng</button>
+          <button type="button" class="type-btn" data-type="Văn Phòng">Văn Phòng</button>
+        </div>
+      </div>
+      
+      <label class="checkbox-label">
+        <input type="checkbox" class="checkbox-input" id="defaultAddress">
+        Đặt làm địa chỉ mặc định
+      </label>
+      
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Trở lại</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Hoàn thành</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal chọn địa chỉ -->
+  <div class="modal-overlay hidden" id="pickerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Chọn khu vực</h3>
+        <button class="close-btn" id="closeModal"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="tabs">
+        <button class="active" data-tab="provinceTab">Tỉnh/Thành phố</button>
+        <button data-tab="districtTab">Quận/Huyện</button>
+        <button data-tab="wardTab">Phường/Xã</button>
+      </div>
+
+      <div class="tab-content" id="provinceTab"></div>
+      <div class="tab-content hidden" id="districtTab"></div>
+      <div class="tab-content hidden" id="wardTab"></div>
+
+      <div class="modal-footer">
+        <button class="btn-confirm" id="confirmBtn">Xong</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // API endpoints
+    const GHN_API_BASE = "http://localhost:8080/api/ghn/location";
+    const ADDRESS_API = "http://localhost:8080/api/customer-addresses";
+
+    // Biến lưu trữ lựa chọn hiện tại
+    let selectedProvince = { id: '', name: '' };
+    let selectedDistrict = { id: '', name: '' };
+    let selectedWard = { code: '', name: '' };
+    let selectedAddressType = "Nhà Riêng";
+
+    // Lấy các phần tử DOM
+    const modal = document.getElementById("pickerModal");
+    const openPicker = document.getElementById("openPicker");
+    const closeModal = document.getElementById("closeModal");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const locationText = document.getElementById("locationText");
+    const selectedAddress = document.getElementById("selectedAddress");
+    const addressForm = document.getElementById("addressForm");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const typeButtons = document.querySelectorAll(".type-btn");
+
+    const provinceTab = document.getElementById("provinceTab");
+    const districtTab = document.getElementById("districtTab");
+    const wardTab = document.getElementById("wardTab");
+
+    // Xử lý chọn loại địa chỉ
+    typeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        typeButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedAddressType = btn.dataset.type;
+      });
+    });
+
+    // Mở/đóng modal
+    openPicker.onclick = () => modal.classList.remove("hidden");
+    closeModal.onclick = () => modal.classList.add("hidden");
+    
+    confirmBtn.onclick = () => {
+      if (selectedProvince.name && selectedDistrict.name && selectedWard.name) {
+        locationText.textContent = `${selectedProvince.name}, ${selectedDistrict.name}, ${selectedWard.name}`;
+        selectedAddress.textContent = `${selectedWard.name}, ${selectedDistrict.name}, ${selectedProvince.name}`;
+      }
+      modal.classList.add("hidden");
+    };
+
+    // Tabs
+    function showTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.add("hidden"));
+      document.querySelectorAll(".tabs button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(tabId).classList.remove("hidden");
+      document.querySelector(`[data-tab="${tabId}"]`).classList.add("active");
+    }
+    
+    document.querySelectorAll(".tabs button").forEach(btn => {
+      btn.onclick = () => showTab(btn.dataset.tab);
+    });
+
+    // Hiển thị loading
+    function showLoading(tab) {
+      tab.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    }
+
+    // Lấy danh sách tỉnh/thành phố
+    async function loadProvinces() {
+      showLoading(provinceTab);
+      
+      try {
+        // Sử dụng API thật hoặc dữ liệu mẫu nếu API không khả dụng
+        const response = await fetch(`${GHN_API_BASE}/provinces`);
+        const data = await response.json();
+        const provinces = data.data || data;
+        
+        provinceTab.innerHTML = '';
+        
+        provinces.forEach(province => {
+          const div = document.createElement("div");
+          div.textContent = province.ProvinceName;
+          div.onclick = () => {
+            selectedProvince = { id: province.ProvinceID, name: province.ProvinceName };
+            selectedDistrict = { id: '', name: '' };
+            selectedWard = { code: '', name: '' };
+            loadDistricts(province.ProvinceID);
+            showTab("districtTab");
+          };
+          provinceTab.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Lỗi khi load provinces:", error);
+        // Fallback dữ liệu mẫu
+        loadSampleProvinces();
+      }
+    }
+
+    // Lấy danh sách quận/huyện
+    async function loadDistricts(provinceId) {
+      showLoading(districtTab);
+      
+      try {
+        const response = await fetch(`${GHN_API_BASE}/districts?provinceId=${provinceId}`);
+        const data = await response.json();
+        const districts = data.data || data;
+        
+        districtTab.innerHTML = "";
+        
+        districts.forEach(district => {
+          const div = document.createElement("div");
+          div.textContent = district.DistrictName;
+          div.onclick = () => {
+            selectedDistrict = { id: district.DistrictID, name: district.DistrictName };
+            selectedWard = { code: '', name: '' };
+            loadWards(district.DistrictID);
+            showTab("wardTab");
+          };
+          districtTab.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Lỗi khi load districts:", error);
+        // Fallback dữ liệu mẫu
+        loadSampleDistricts(provinceId);
+      }
+    }
+
+    // Lấy danh sách phường/xã
+    async function loadWards(districtId) {
+      showLoading(wardTab);
+      
+      try {
+        const response = await fetch(`${GHN_API_BASE}/wards?districtId=${districtId}`);
+        const data = await response.json();
+        const wards = data.data || data;
+        
+        wardTab.innerHTML = "";
+        
+        wards.forEach(ward => {
+          const div = document.createElement("div");
+          div.textContent = ward.WardName;
+          div.onclick = () => {
+            selectedWard = { code: ward.WardCode, name: ward.WardName };
+            document.querySelectorAll(".tab-content div").forEach(d => d.classList.remove("selected"));
+            div.classList.add("selected");
+          };
+          wardTab.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Lỗi khi load wards:", error);
+        // Fallback dữ liệu mẫu
+        loadSampleWards(districtId);
+      }
+    }
+
+    // Dữ liệu mẫu fallback
+    const sampleData = {
+      "Bà Rịa - Vũng Tàu": {
+        "Huyện Côn Đảo": ["Xã Côn Đảo"],
+        "TP. Vũng Tàu": ["Phường 1", "Phường 2"]
+      },
+      "Hà Nội": {
+        "Quận Ba Đình": ["Phường Ngọc Hà", "Phường Kim Mã"],
+        "Quận Cầu Giấy": ["Phường Dịch Vọng", "Phường Nghĩa Tân"]
+      },
+      "TP. Hồ Chí Minh": {
+        "Quận 1": ["Phường Bến Nghé", "Phường Đa Kao"],
+        "Quận Bình Thạnh": ["Phường 11", "Phường 12"]
+      }
+    };
+
+    function loadSampleProvinces() {
+      provinceTab.innerHTML = "";
+      Object.keys(sampleData).forEach(province => {
+        const div = document.createElement("div");
+        div.textContent = province;
+        div.onclick = () => {
+          selectedProvince = { id: province, name: province };
+          selectedDistrict = { id: '', name: '' };
+          selectedWard = { code: '', name: '' };
+          loadSampleDistricts(province);
+          showTab("districtTab");
+        };
+        provinceTab.appendChild(div);
+      });
+    }
+
+    function loadSampleDistricts(province) {
+      districtTab.innerHTML = "";
+      Object.keys(sampleData[province]).forEach(district => {
+        const div = document.createElement("div");
+        div.textContent = district;
+        div.onclick = () => {
+          selectedDistrict = { id: district, name: district };
+          selectedWard = { code: '', name: '' };
+          loadSampleWards(province, district);
+          showTab("wardTab");
+        };
+        districtTab.appendChild(div);
+      });
+    }
+
+    function loadSampleWards(province, district) {
+      wardTab.innerHTML = "";
+      sampleData[province][district].forEach(ward => {
+        const div = document.createElement("div");
+        div.textContent = ward;
+        div.onclick = () => {
+          selectedWard = { code: ward, name: ward };
+          document.querySelectorAll(".tab-content div").forEach(d => d.classList.remove("selected"));
+          div.classList.add("selected");
+        };
+        wardTab.appendChild(div);
+      });
+    }
+
+    // Xử lý submit form
+    addressForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!selectedProvince.name || !selectedDistrict.name || !selectedWard.name) {
+        alert('Vui lòng chọn đầy đủ địa chỉ');
+        return;
+      }
+      
+      const receiverName = document.getElementById('receiverName').value;
+      const receiverPhone = document.getElementById('receiverPhone').value;
+      const addressLine = document.getElementById('addressLine').value;
+      const isDefault = document.getElementById('defaultAddress').checked;
+      
+      const body = {
+        userId: 1, // Tạm thời hardcode, có thể lấy từ session hoặc context
+        receiverName,
+        receiverPhone,
+        locationCode: selectedWard.code,
+        addressLine,
+        label: selectedAddressType,
+        isDefault
+      };
+      
+      console.log('Submitting:', body);
+      
+      try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        
+        const response = await fetch(ADDRESS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          alert('Thêm địa chỉ thành công!');
+          // Có thể redirect hoặc làm mới form ở đây
+          addressForm.reset();
+          selectedProvince = { id: '', name: '' };
+          selectedDistrict = { id: '', name: '' };
+          selectedWard = { code: '', name: '' };
+          locationText.textContent = 'Chọn địa chỉ';
+          selectedAddress.textContent = '';
+          
+          // Reset loại địa chỉ
+          typeButtons.forEach(b => b.classList.remove("active"));
+          document.querySelector('.type-btn[data-type="Nhà Riêng"]').classList.add("active");
+          selectedAddressType = "Nhà Riêng";
+        } else {
+          throw new Error(data.message || 'Có lỗi xảy ra');
+        }
+      } catch (error) {
+        console.error('Lỗi khi gửi địa chỉ:', error);
+        alert('Lỗi khi thêm địa chỉ: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Hoàn thành';
+      }
+    });
+
+    // Xử lý nút hủy
+    cancelBtn.addEventListener('click', () => {
+      if (confirm('Bạn có chắc muốn hủy thêm địa chỉ?')) {
+        // Có thể redirect hoặc làm mới form ở đây
+        addressForm.reset();
+        selectedProvince = { id: '', name: '' };
+        selectedDistrict = { id: '', name: '' };
+        selectedWard = { code: '', name: '' };
+        locationText.textContent = 'Chọn địa chỉ';
+        selectedAddress.textContent = '';
+        
+        // Reset loại địa chỉ
+        typeButtons.forEach(b => b.classList.remove("active"));
+        document.querySelector('.type-btn[data-type="Nhà Riêng"]').classList.add("active");
+        selectedAddressType = "Nhà Riêng";
+      }
+    });
+
+    // Khởi tạo
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProvinces();
+    });
+  </script>
+</body>
+</html>
