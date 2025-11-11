@@ -105,29 +105,9 @@
     </div>
   </div>
 
-  <script src="assets/js/api.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+
   <script>
-    // api
-    async function request(url, options = {}) {
-      const fullUrl = 'http://localhost:8080/api' + url; // đổi URL nếu backend chạy port khác
-      const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-      };
-
-      const response = await fetch(fullUrl, {
-        ...options,
-        headers
-      });
-
-      if (!response.ok) {
-        const msg = await response.text();
-        throw new Error(msg || 'Request failed');
-      }
-
-      return await response.json();
-    }
-
     // Hiển thị/ẩn mật khẩu
     document.getElementById('togglePassword').addEventListener('click', function() {
       const passwordInput = document.querySelector('input[name="password"]');
@@ -146,38 +126,32 @@
     
     // Hiệu ứng loading khi submit form
     document.getElementById('login-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const email = this.email.value;
-    const password = this.password.value;
-    const btn = this.querySelector('.login-btn');
-    const originalText = btn.innerHTML;
+      e.preventDefault();
+      
+      const email = this.email.value.trim();
+      const password = this.password.value.trim();
+      const btn = this.querySelector('.login-btn');
+      const originalText = btn.innerHTML;
 
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-    btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+      btn.disabled = true;
 
-    try {
-        const res = await request('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-            email: email,   
-            password: password
-        })
-        });
-        // Nếu backend không trả về userId, tạm lưu email làm định danh
-        localStorage.setItem('userId', res.userId || res.email);
-
-        localStorage.setItem('accessToken', res.accessToken);
-        localStorage.setItem('refreshToken', res.refreshToken);
+      try {
+        const res = await AuthAPI.login(email, password);
+        
+        // Lưu thông tin đăng nhập
+        TokenHelper.saveTokens(res.accessToken, res.refreshToken, res.userId);
 
         alert('Đăng nhập thành công!');
-        window.location.href = 'index.html';
-    } catch (err) {
+        // Chuyển về trang chủ
+        window.location.href = '../../index.html';
+      } catch (err) {
+        console.error('Login error:', err);
         alert('Sai email hoặc mật khẩu!');
-    } finally {
+      } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
-    }
+      }
     });
 
   </script>

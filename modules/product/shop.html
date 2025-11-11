@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cửa Hàng - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./shop.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="shop-container">
+        <!-- Header -->
+        <div class="shop-header">
+            <div class="shop-header-left">
+                <i class="fas fa-store shop-logo"></i>
+                <div>
+                    <h1>EzGear Shop</h1>
+                    <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
+                        Gear up cho mọi game thủ
+                    </p>
+                </div>
+            </div>
+            <div class="shop-header-right">
+                <button class="btn-cart" onclick="window.location.href='../cart/index.html'">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Giỏ Hàng</span>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span class="user-name" id="userName">User</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #aaa;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchInput"
+                    placeholder="Tìm kiếm sản phẩm (VD: chuột, bàn phím, tai nghe...)"
+                    autocomplete="off"
+                >
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i>
+                    Tìm Kiếm
+                </button>
+            </form>
+        </div>
+
+        <!-- Filter & Sort Bar -->
+        <div class="filter-sort-bar">
+            <div class="filter-group">
+                <span class="filter-label">Lọc:</span>
+                <select class="filter-select" id="categoryFilter" onchange="handleFilterChange()">
+                    <option value="">Tất cả danh mục</option>
+                    <!-- Categories will be loaded by JS -->
+                </select>
+                <select class="filter-select" id="brandFilter" onchange="handleFilterChange()">
+                    <option value="">Tất cả thương hiệu</option>
+                    <!-- Brands will be loaded by JS -->
+                </select>
+                <select class="filter-select" id="priceFilter" onchange="handleFilterChange()">
+                    <option value="">Tất cả giá</option>
+                    <option value="0-1000000">Dưới 1 triệu</option>
+                    <option value="1000000-5000000">1 - 5 triệu</option>
+                    <option value="5000000-10000000">5 - 10 triệu</option>
+                    <option value="10000000-999999999">Trên 10 triệu</option>
+                </select>
+            </div>
+            <div class="sort-group">
+                <span class="filter-label">Sắp xếp:</span>
+                <button class="sort-btn active" data-sort="newest" onclick="handleSort('newest')">
+                    <i class="fas fa-clock"></i> Mới nhất
+                </button>
+                <button class="sort-btn" data-sort="price-asc" onclick="handleSort('price-asc')">
+                    <i class="fas fa-sort-amount-up"></i> Giá tăng
+                </button>
+                <button class="sort-btn" data-sort="price-desc" onclick="handleSort('price-desc')">
+                    <i class="fas fa-sort-amount-down"></i> Giá giảm
+                </button>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be rendered here by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-box-open"></i>
+            <h3>Không tìm thấy sản phẩm</h3>
+            <p>Không có sản phẩm nào phù hợp với bộ lọc của bạn</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="page-btn" id="prevBtn" onclick="previousPage()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div id="pageNumbers"></div>
+            <button class="page-btn" id="nextBtn" onclick="nextPage()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/core/api.js?v=6"></script>
+    <script src="../../assets/js/core/config.js?v=6"></script>
+    <script src="../../assets/js/core/utils.js?v=6"></script>
+    <script src="./shop.js?v=6"></script>
+</body>
+</html>

@@ -85,16 +85,9 @@
     </button>
   </div>
 
-  <script>
-    // ====== HÀM DÙNG CHUNG ======
-    async function request(url, options = {}) {
-      const fullUrl = 'http://localhost:8080/api' + url;
-      const headers = { 'Content-Type': 'application/json', ...options.headers };
-      const res = await fetch(fullUrl, { ...options, headers });
-      if (!res.ok) throw new Error(await res.text() || 'Request failed');
-      return await res.json();
-    }
+  <script src="../../assets/js/core/api.js"></script>
 
+  <script>
     // ====== HIỂN THỊ / ẨN MẬT KHẨU ======
     document.getElementById('togglePassword').addEventListener('click', () => {
       const input = document.querySelector('input[name="password"]');
@@ -118,14 +111,9 @@
       btn.disabled = true;
 
       try {
-        const res = await request('/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({ email, password })
-        });
-
-        localStorage.setItem('token', res.accessToken);
-        localStorage.setItem('refreshToken', res.refreshToken);
-        localStorage.setItem('userId', res.userId);
+        const res = await AuthAPI.login(email, password);
+        
+        TokenHelper.saveTokens(res.accessToken, res.refreshToken, res.userId);
         alert('Đăng nhập thành công!');
 
         // Ẩn form đăng nhập, hiển thị nút logout
@@ -142,11 +130,11 @@
 
     // ====== LOGOUT ======
     document.getElementById('logout-btn').addEventListener('click', async () => {
-      const accessToken = localStorage.getItem('token');
-      const refreshToken = localStorage.getItem('refreshToken');
-      const userId = localStorage.getItem('userId');
+      const accessToken = TokenHelper.getAccessToken();
+      const refreshToken = TokenHelper.getRefreshToken();
+      const userId = TokenHelper.getUserId();
 
-      if (!accessToken || !refreshToken || !userId) {
+      if (!TokenHelper.isLoggedIn()) {
         alert("Không tìm thấy thông tin đăng nhập!");
         return;
       }
@@ -157,27 +145,16 @@
       btn.disabled = true;
 
       try {
-        await fetch('http://localhost:8080/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + accessToken
-          },
-          body: JSON.stringify({
-            userId: Number(userId),
-            accessToken: accessToken,
-            refreshToken: refreshToken
-          })
-        });
-
+        await AuthAPI.logout(Number(userId), accessToken, refreshToken);
+        
         // Xóa token
-        localStorage.clear();
+        TokenHelper.clearTokens();
         alert("Đăng xuất thành công!");
         document.getElementById('login-form').style.display = 'block';
         document.getElementById('logout-btn').style.display = 'none';
       } catch (err) {
-        alert("Đăng xuất thất bại!");
-        console.error(err);
+        console.error("Logout error:", err);
+        alert("Đăng xuất thất bại: " + err.message);
       } finally {
         btn.innerHTML = original;
         btn.disabled = false;
@@ -186,8 +163,7 @@
 
     // ====== KIỂM TRA TRẠNG THÁI LOGIN ======
     window.addEventListener('load', () => {
-      const token = localStorage.getItem('token');
-      if (token) {
+      if (TokenHelper.isLoggedIn()) {
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'inline-block';
       }
