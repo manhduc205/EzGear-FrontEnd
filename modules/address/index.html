@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thêm địa chỉ mới | EzGear</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="./address.css">
+</head>
+<body>
+  <div class="address-form-container">
+    <!-- Header -->
+    <div class="form-header">
+      <button class="back-btn" id="backBtn" title="Quay lại">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h2 class="form-title">Địa chỉ mới</h2>
+    </div>
+    
+    <!-- Form -->
+    <form id="addressForm">
+      <!-- Họ tên và SĐT -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="receiverName">
+            Họ và tên<span class="required">*</span>
+          </label>
+          <input type="text" class="form-control" id="receiverName" 
+                 placeholder="Nhập họ và tên người nhận" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="receiverPhone">
+            Số điện thoại<span class="required">*</span>
+          </label>
+          <input type="tel" class="form-control" id="receiverPhone" 
+                 placeholder="Nhập số điện thoại" pattern="[0-9]{10,11}" required>
+        </div>
+      </div>
+      
+      <!-- Địa chỉ (Tỉnh/Quận/Phường) -->
+      <div class="form-group">
+        <label class="form-label">
+          Tỉnh/Thành phố, Quận/Huyện, Phường/Xã<span class="required">*</span>
+        </label>
+        <div class="location-input">
+          <div class="location-display" id="openPicker">
+            <div class="location-text placeholder" id="locationText">Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã</div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="selected-address" id="selectedAddress"></div>
+      </div>
+      
+      <!-- Địa chỉ cụ thể -->
+      <div class="form-group">
+        <label class="form-label" for="addressLine">
+          Địa chỉ cụ thể<span class="required">*</span>
+        </label>
+        <textarea class="form-control" id="addressLine" rows="3" 
+                  placeholder="Số nhà, tên đường..." required></textarea>
+      </div>
+      
+      <!-- Loại địa chỉ -->
+      <div class="form-group">
+        <label class="address-type-label">Loại địa chỉ:</label>
+        <div class="address-type-buttons">
+          <button type="button" class="type-btn active" data-type="Nhà Riêng">
+            <i class="fas fa-home"></i> Nhà Riêng
+          </button>
+          <button type="button" class="type-btn" data-type="Văn Phòng">
+            <i class="fas fa-building"></i> Văn Phòng
+          </button>
+        </div>
+      </div>
+      
+      <!-- Đặt làm mặc định -->
+      <label class="checkbox-label">
+        <input type="checkbox" class="checkbox-input" id="defaultAddress">
+        <span>Đặt làm địa chỉ mặc định</span>
+      </label>
+      
+      <!-- Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <i class="fas fa-check"></i> Hoàn thành
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal chọn địa chỉ -->
+  <div class="modal-overlay hidden" id="pickerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Chọn khu vực</h3>
+        <button class="close-btn" id="closeModal" type="button">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="tabs">
+        <button type="button" class="active" data-tab="provinceTab">Tỉnh/Thành phố</button>
+        <button type="button" data-tab="districtTab" disabled>Quận/Huyện</button>
+        <button type="button" data-tab="wardTab" disabled>Phường/Xã</button>
+      </div>
+
+      <div class="tab-content" id="provinceTab"></div>
+      <div class="tab-content hidden" id="districtTab"></div>
+      <div class="tab-content hidden" id="wardTab"></div>
+
+      <div class="modal-footer">
+        <button class="btn-confirm" id="confirmBtn" type="button" disabled>Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="./address.js"></script>
+</body>
+</html>

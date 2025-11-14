@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Sản Phẩm - Admin EzGear</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Admin Common CSS -->
+    <link rel="stylesheet" href="./admin-common.css">
+    
+    <!-- Add Product CSS -->
+    <link rel="stylesheet" href="./add-product.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- Admin Container -->
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Thêm Sản Phẩm Mới</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / 
+                        <a href="./products.html">Sản phẩm</a> / 
+                        Thêm mới
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+    
+            <!-- Form Container -->
+            <div class="content">
+                <form class="form-container" id="productForm" enctype="multipart/form-data" style="background: white; padding: 30px; border-radius: 10px;">
+            <!-- Thông tin cơ bản -->
+            <div class="form-section">
+                <h2><i class="fas fa-info-circle"></i> Thông Tin Cơ Bản</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name">Tên sản phẩm <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="slug">Slug (URL thân thiện)</label>
+                        <input type="text" id="slug" name="slug" class="form-control" placeholder="Tự động tạo từ tên">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryId">Danh mục <span class="required">*</span></label>
+                        <select id="categoryId" name="categoryId" class="form-control" required>
+                            <option value="">-- Chọn danh mục --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="brandId">Thương hiệu <span class="required">*</span></label>
+                        <select id="brandId" name="brandId" class="form-control" required>
+                            <option value="">-- Chọn thương hiệu --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="warrantyMonths">Bảo hành (tháng)</label>
+                        <input type="number" id="warrantyMonths" name="warrantyMonths" class="form-control" value="12" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="isActive">Trạng thái</label>
+                        <select id="isActive" name="isActive" class="form-control">
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Tạm ẩn</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-grid single" style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="shortDesc">Mô tả ngắn</label>
+                        <textarea id="shortDesc" name="shortDesc" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hình ảnh -->
+            <div class="form-section">
+                <h2><i class="fas fa-images"></i> Hình Ảnh Sản Phẩm</h2>
+                <div class="image-upload-container">
+                    <div class="image-upload-box" onclick="document.getElementById('imageInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+                        <small style="color: #888;">Hỗ trợ: JPG, PNG, GIF (Tối đa 10MB/ảnh)</small>
+                    </div>
+                    <input type="file" id="imageInput" name="files" multiple accept="image/*" style="display: none;">
+                    
+                    <div class="image-preview-grid" id="imagePreviewGrid">
+                        <!-- Preview images will be shown here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SKU (Product Variants) -->
+            <div class="form-section">
+                <h2><i class="fas fa-boxes"></i> Biến Thể Sản Phẩm (SKU)</h2>
+                <div class="sku-list" id="skuList">
+                    <!-- SKU items will be added here -->
+                </div>
+                <button type="button" class="btn-add-sku" onclick="addSKU()">
+                    <i class="fas fa-plus"></i>
+                    Thêm biến thể
+                </button>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='./products.html'">
+                    <i class="fas fa-times"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-preview" onclick="previewProduct()">
+                    <i class="fas fa-eye"></i>
+                    Xem trước
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Lưu sản phẩm
+                </button>
+            </div>
+        </form>
+            </div>
+        </main>
+    </div>
+    
+    <script src="./admin-common.js"></script>
+    <script src="./add-product.js"></script>
+</body>
+</html>
