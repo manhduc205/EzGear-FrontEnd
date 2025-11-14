@@ -25,7 +25,7 @@ const CONFIG = {
     PRODUCT_DETAIL: '/modules/product/detail.html',
     
     // Cart & Checkout
-    CART: '/modules/cart/index.html',
+    CART: '/modules/cart/cart.html',
     CHECKOUT: '/modules/checkout/index.html',
     
     // Order

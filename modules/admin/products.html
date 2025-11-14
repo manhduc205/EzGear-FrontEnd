@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sản Phẩm - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+    <link rel="stylesheet" href="./products.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Quản Lý Sản Phẩm</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Sản phẩm
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="action-bar">
+                    <a href="./add-product.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Thêm Sản Phẩm
+                    </a>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Hình Ảnh</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Danh Mục</th>
+                                <th>Thương Hiệu</th>
+                                <th>Bảo Hành</th>
+                                <th>Trạng Thái</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
+                                    <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" style="display: none; margin-top: 20px; text-align: center;">
+                    <button class="btn btn-secondary btn-sm" id="prevBtn" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i> Trước
+                    </button>
+                    <span id="pageInfo" style="margin: 0 15px; color: #666;"></span>
+                    <button class="btn btn-secondary btn-sm" id="nextBtn" onclick="nextPage()">
+                        Sau <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Product Detail Modal -->
+    <div class="modal" id="productDetailModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Chi Tiết Sản Phẩm</h2>
+                <button class="btn-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="productDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./admin-common.js"></script>
+    <script src="./products.js"></script>
+</body>
+</html>
