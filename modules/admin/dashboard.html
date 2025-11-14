@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EzGear</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Admin Common CSS -->
+    <link rel="stylesheet" href="./admin-common.css">
+    
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay active" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Dashboard</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Trang chủ</a> / Dashboard
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="--card-color: #c8102e;">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalProducts">0</div>
+                                <div class="stat-label">Tổng Sản Phẩm</div>
+                                <div class="stat-change up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>12%</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="--card-color: #2ed573;">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalBrands">0</div>
+                                <div class="stat-label">Thương Hiệu</div>
+                                <div class="stat-change up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>5%</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="--card-color: #ffa502;">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="totalBranches">0</div>
+                                <div class="stat-label">Chi Nhánh</div>
+                                <div class="stat-change up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>8%</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="--card-color: #5f27cd;">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value" id="pendingOrders">0</div>
+                                <div class="stat-label">Đơn Chờ Xử Lý</div>
+                                <div class="stat-change down">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>3%</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Purchase Orders -->
+                <div class="recent-orders">
+                    <div class="orders-header">
+                        <h2 class="chart-title">Đơn Nhập Hàng Gần Đây</h2>
+                        <a href="./purchase-orders.html" style="color: #c8102e; text-decoration: none; font-weight: 600;">
+                            Xem tất cả <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Mã Đơn</th>
+                                <th>Nhà Cung Cấp</th>
+                                <th>Ngày Tạo</th>
+                                <th>Tổng Tiền</th>
+                                <th>Trạng Thái</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 15px; display: block;"></i>
+                                    Đang tải dữ liệu...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./admin-common.js"></script>
+    <script src="./dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Danh Mục - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Quản Lý Danh Mục</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Danh mục
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Thêm Danh Mục
+                    </button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm danh mục..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>Tên Danh Mục</th>
+                                <th>Slug</th>
+                                <th style="width: 120px;">Sắp Xếp</th>
+                                <th style="width: 120px;">Trạng Thái</th>
+                                <th style="width: 180px;">Ngày Tạo</th>
+                                <th style="width: 150px;">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+                                    <p>Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Danh Mục</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="categoryForm" onsubmit="saveCategory(event)">
+                <input type="hidden" id="categoryId">
+                
+                <div class="form-group">
+                    <label for="categoryName">Tên Danh Mục <span class="required">*</span></label>
+                    <input type="text" id="categoryName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="categorySlug">Slug (URL)</label>
+                    <input type="text" id="categorySlug" class="form-control" placeholder="Tự động tạo từ tên">
+                    <small style="color: #666;">Để trống để tự động tạo từ tên danh mục</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="sortOrder">Thứ Tự Sắp Xếp</label>
+                    <input type="number" id="sortOrder" class="form-control" value="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="isActive" checked>
+                        <span>Kích hoạt</span>
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="./admin-common.js"></script>
+    <script src="./categories.js"></script>
+</body>
+</html>
