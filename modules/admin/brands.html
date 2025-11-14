@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thương Hiệu - EzGear Admin</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./admin-common.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Quản Lý Thương Hiệu</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Thương hiệu
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Thêm Thương Hiệu
+                    </button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm thương hiệu..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+
+                <!-- Brands Table -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên Thương Hiệu</th>
+                                <th>Slug</th>
+                                <th>Ngày Tạo</th>
+                                <th>Cập Nhật</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="brandsTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
+                                    <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="brandModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Thương Hiệu</h2>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="brandForm">
+                <div class="modal-body">
+                    <input type="hidden" id="brandId">
+                    
+                    <div class="form-group">
+                        <label for="brandName">Tên Thương Hiệu <span class="required">*</span></label>
+                        <input type="text" id="brandName" class="form-control" required placeholder="VD: Logitech, Razer...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="brandSlug">Slug <span class="required">*</span></label>
+                        <input type="text" id="brandSlug" class="form-control" required placeholder="VD: logitech, razer...">
+                        <small class="form-text">URL-friendly version của tên thương hiệu</small>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./admin-common.js"></script>
+    <script src="./brands.js"></script>
+</body>
+</html>

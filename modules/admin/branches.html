@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Chi Nhánh - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Quản Lý Chi Nhánh</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Chi nhánh
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Thêm Chi Nhánh
+                    </button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm chi nhánh..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên Chi Nhánh</th>
+                                <th>Địa Chỉ</th>
+                                <th>Số Điện Thoại</th>
+                                <th>Email</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="branchesTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
+                                    <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="branchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Chi Nhánh</h2>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="branchForm">
+                <div class="modal-body">
+                    <input type="hidden" id="branchId">
+                    
+                    <div class="form-group">
+                        <label for="branchName">Tên Chi Nhánh <span class="required">*</span></label>
+                        <input type="text" id="branchName" class="form-control" required placeholder="VD: Chi nhánh Hà Nội">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="branchAddress">Địa Chỉ <span class="required">*</span></label>
+                        <textarea id="branchAddress" class="form-control" required placeholder="Nhập địa chỉ chi nhánh"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="branchPhone">Số Điện Thoại</label>
+                        <input type="tel" id="branchPhone" class="form-control" placeholder="VD: 0123456789">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="branchEmail">Email</label>
+                        <input type="email" id="branchEmail" class="form-control" placeholder="VD: hanoi@ezgear.vn">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./admin-common.js"></script>
+    <script src="./branches.js"></script>
+</body>
+</html>
