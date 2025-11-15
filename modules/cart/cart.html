@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ Hàng - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./cart.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="cart-container">
+        <!-- Header -->
+        <div class="cart-header">
+            <i class="fas fa-shopping-cart"></i>
+            <h1>Giỏ Hàng Của Bạn</h1>
+            <span class="cart-count" id="cartCount">0</span>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="cart-layout">
+            <!-- Left: Cart Items -->
+            <div class="cart-items-section">
+                <!-- Select All Bar -->
+                <div class="select-all-bar">
+                    <div class="select-all-left">
+                        <input type="checkbox" id="selectAllCheckbox">
+                        <label for="selectAllCheckbox">Chọn Tất Cả (<span id="selectedCount">0</span>)</label>
+                    </div>
+                    <button class="delete-selected-btn" id="deleteSelectedBtn">
+                        <i class="fas fa-trash-alt"></i> Xóa Đã Chọn
+                    </button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cartItemsList">
+                    <!-- Items will be rendered here by JavaScript -->
+                </div>
+
+                <!-- Empty Cart State -->
+                <div class="empty-cart" id="emptyCart" style="display: none;">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h3>Giỏ hàng trống</h3>
+                    <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+                    <button class="btn-shopping" onclick="window.location.href='/index.html'">
+                        <i class="fas fa-shopping-bag"></i>
+                        Tiếp Tục Mua Sắm
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Summary -->
+            <div class="cart-summary">
+                <div class="summary-card">
+                    <h3>Thông Tin Đơn Hàng</h3>
+
+                    <!-- Voucher Section -->
+                    <div class="voucher-section">
+                        <div class="voucher-input">
+                            <input 
+                                type="text" 
+                                id="voucherInput" 
+                                placeholder="Nhập mã giảm giá"
+                                autocomplete="off"
+                            >
+                            <button id="applyVoucherBtn">
+                                <i class="fas fa-check"></i> Áp dụng
+                            </button>
+                        </div>
+                        <!-- Applied Voucher -->
+                        <div class="voucher-applied" id="voucherApplied" style="display: none;">
+                            <div class="voucher-applied-left">
+                                <i class="fas fa-check-circle"></i>
+                                <span id="voucherName">-</span>
+                            </div>
+                            <button class="voucher-remove" id="removeVoucherBtn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Rows -->
+                    <div class="summary-row">
+                        <span class="label">Tạm tính (<span id="summaryItemCount">0</span> sản phẩm)</span>
+                        <span class="value" id="subtotalAmount">0₫</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="label">Giảm giá voucher</span>
+                        <span class="value discount" id="discountAmount">-0₫</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="label">Phí vận chuyển</span>
+                        <span class="value" id="shippingFee">Miễn phí</span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span class="label">Tổng cộng</span>
+                        <span class="value" id="totalAmount">0₫</span>
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <button class="btn-checkout" id="checkoutBtn" disabled>
+                        <i class="fas fa-credit-card"></i>
+                        Tiến Hành Thanh Toán
+                    </button>
+
+                    <!-- Benefits -->
+                    <div class="summary-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Thanh toán an toàn 100%</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-truck"></i>
+                            <span>Miễn phí vận chuyển từ 500.000₫</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-undo-alt"></i>
+                            <span>Đổi trả trong 7 ngày</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-headset"></i>
+                            <span>Hỗ trợ 24/7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./cart.js"></script>
+</body>
+</html>

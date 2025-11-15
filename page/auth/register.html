@@ -208,6 +208,8 @@
     </div>
   </div>
 
+  <script src="../../assets/js/core/api.js"></script>
+
   <script>
     // Hiển thị/ẩn mật khẩu
     document.getElementById('togglePassword').addEventListener('click', function() {
@@ -332,10 +334,10 @@
     document.getElementById('register-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const fullName = this.fullName.value;
-      const email = this.email.value;
-      const password = this.password.value;
-      const confirmPassword = this.confirmPassword.value;
+      const fullName = this.fullName.value.trim();
+      const email = this.email.value.trim();
+      const password = this.password.value.trim();
+      const confirmPassword = this.confirmPassword.value.trim();
       const agreeTerms = document.getElementById('agreeTerms').checked;
 
       // Kiểm tra điều khoản
@@ -361,13 +363,24 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
       submitBtn.disabled = true;
       
-      // Giả lập gửi form
-      setTimeout(() => {
+      try {
+        const res = await AuthAPI.register(fullName, email, password, confirmPassword);
+
+        if (res.success) {
+          alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
+          window.location.href = 'login.html';
+        } else {
+          // Hiển thị lỗi từ backend
+          const errorMsg = res.errors ? res.errors.join('\n') : res.error || res.message;
+          alert('Đăng ký thất bại:\n' + errorMsg);
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        alert('Đăng ký thất bại: ' + err.message);
+      } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        alert('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
-        window.location.href = 'login.html';
-      }, 2000);
+      }
     });
   </script>
 </body>

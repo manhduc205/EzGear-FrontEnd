@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Kho Hàng - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Quản Lý Kho Hàng</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Kho hàng
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Thêm Kho Hàng
+                    </button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm kho hàng..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên Kho</th>
+                                <th>Địa Chỉ</th>
+                                <th>Chi Nhánh</th>
+                                <th>Số Điện Thoại</th>
+                                <th>Email</th>
+                                <th>Trạng Thái</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warehousesTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+                                    <p>Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Kho Hàng</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="warehouseForm" onsubmit="saveWarehouse(event)">
+                <input type="hidden" id="warehouseId">
+                
+                <div class="form-group">
+                    <label for="warehouseName">Tên Kho <span class="required">*</span></label>
+                    <input type="text" id="warehouseName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="warehouseAddress">Địa Chỉ <span class="required">*</span></label>
+                    <input type="text" id="warehouseAddress" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="branchId">Chi Nhánh <span class="required">*</span></label>
+                    <select id="branchId" class="form-control" required>
+                        <option value="">-- Chọn chi nhánh --</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="warehousePhone">Số Điện Thoại</label>
+                        <input type="tel" id="warehousePhone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="warehouseEmail">Email</label>
+                        <input type="email" id="warehouseEmail" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="warehouseNotes">Ghi Chú</label>
+                    <textarea id="warehouseNotes" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="isActive" checked>
+                        <span>Kích hoạt</span>
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="./admin-common.js"></script>
+    <script src="./warehouses.js"></script>
+</body>
+</html>

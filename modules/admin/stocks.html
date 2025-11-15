@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý Tồn kho - EzGear Admin</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+    <link rel="stylesheet" href="./stocks.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Tồn kho</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Tồn kho
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="action-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input id="searchInput" type="text" placeholder="Tìm theo sku, tên sản phẩm hoặc kho..." onkeyup="handleSearch()">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" onclick="loadStocks()"><i class="fas fa-sync"></i> Tải lại</button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">STT</th>
+                                <th>SKU</th>
+                                <th>Sản phẩm</th>
+                                <th>Kho hàng</th>
+                                <th style="width: 120px;">Tồn kho</th>
+                                <th style="width: 120px;">Đã đặt</th>
+                                <th style="width: 120px;">Buffer</th>
+                                <th style="width: 120px;">Khả dụng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stocksTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align:center; padding:40px; color:#999;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:8px;"></i>
+                                    <p>Đang tải dữ liệu tồn kho...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="./admin-common.js"></script>
+    <script src="./stocks.js"></script>
+</body>
+</html>

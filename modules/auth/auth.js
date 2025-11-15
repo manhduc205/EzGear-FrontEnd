@@ -312,15 +312,15 @@ async function handleLogin(e) {
     const isAdmin = checkAdminRole(tokenData.accessToken);
     
     console.log('🎯 IS ADMIN?', isAdmin);
-    console.log('🔗 Will redirect to:', isAdmin ? '../../page/admin/add-product.html' : '../product/shop.html');
+    console.log('🔗 Will redirect to:', isAdmin ? '../admin/dashboard.html' : '../product/shop.html');
     
     if (isAdmin) {
       showToast('Đăng nhập thành công! Đang chuyển đến trang quản trị...', 'success');
       
       // Redirect đến trang admin sau 1 giây
       setTimeout(() => {
-        console.log('🚀 Redirecting to admin page...');
-        window.location.href = '../../page/admin/add-product.html';
+        console.log('🚀 Redirecting to admin dashboard...');
+        window.location.href = '../admin/dashboard.html';
       }, 1000);
     } else {
       showToast('Đăng nhập thành công! Đang chuyển đến cửa hàng...', 'success');

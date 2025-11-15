@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div class="shop-header-right">
-                <button class="btn-cart" onclick="window.location.href='../cart/index.html'">
+                <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Giỏ Hàng</span>
                     <span class="cart-badge" id="cartBadge">0</span>
@@ -69,61 +69,176 @@
             </form>
         </div>
 
-        <!-- Filter & Sort Bar -->
-        <div class="filter-sort-bar">
-            <div class="filter-group">
-                <span class="filter-label">Lọc:</span>
-                <select class="filter-select" id="categoryFilter" onchange="handleFilterChange()">
-                    <option value="">Tất cả danh mục</option>
-                    <!-- Categories will be loaded by JS -->
-                </select>
-                <select class="filter-select" id="brandFilter" onchange="handleFilterChange()">
-                    <option value="">Tất cả thương hiệu</option>
-                    <!-- Brands will be loaded by JS -->
-                </select>
-                <select class="filter-select" id="priceFilter" onchange="handleFilterChange()">
-                    <option value="">Tất cả giá</option>
-                    <option value="0-1000000">Dưới 1 triệu</option>
-                    <option value="1000000-5000000">1 - 5 triệu</option>
-                    <option value="5000000-10000000">5 - 10 triệu</option>
-                    <option value="10000000-999999999">Trên 10 triệu</option>
-                </select>
-            </div>
-            <div class="sort-group">
-                <span class="filter-label">Sắp xếp:</span>
-                <button class="sort-btn active" data-sort="newest" onclick="handleSort('newest')">
-                    <i class="fas fa-clock"></i> Mới nhất
-                </button>
-                <button class="sort-btn" data-sort="price-asc" onclick="handleSort('price-asc')">
-                    <i class="fas fa-sort-amount-up"></i> Giá tăng
-                </button>
-                <button class="sort-btn" data-sort="price-desc" onclick="handleSort('price-desc')">
-                    <i class="fas fa-sort-amount-down"></i> Giá giảm
-                </button>
-            </div>
-        </div>
-
-        <!-- Products Grid -->
-        <div class="products-grid" id="productsGrid">
-            <!-- Products will be rendered here by JavaScript -->
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <i class="fas fa-box-open"></i>
-            <h3>Không tìm thấy sản phẩm</h3>
-            <p>Không có sản phẩm nào phù hợp với bộ lọc của bạn</p>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination" id="pagination" style="display: none;">
-            <button class="page-btn" id="prevBtn" onclick="previousPage()">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div id="pageNumbers"></div>
-            <button class="page-btn" id="nextBtn" onclick="nextPage()">
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-item" id="navLaptop">
+                <i class="fas fa-laptop"></i>
+                <span>Laptop</span>
                 <i class="fas fa-chevron-right"></i>
-            </button>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-tag"></i>
+                <span>Hot Deal | Laptop</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-newspaper"></i>
+                <span>Tin tức</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-tools"></i>
+                <span>Dịch vụ kỹ thuật tại nhà</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-gift"></i>
+                <span>Thu cũ đổi mới</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>Tra cứu bảo hành</span>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content-wrapper">
+            <!-- Sidebar Categories -->
+            <div class="sidebar-categories">
+                <div class="category-item active" data-category="all">
+                    <i class="fas fa-laptop"></i>
+                    <span>Laptop</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="gaming">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Laptop Gaming</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="pc">
+                    <i class="fas fa-desktop"></i>
+                    <span>PC GVN</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="cpu">
+                    <i class="fas fa-microchip"></i>
+                    <span>Main, CPU, VGA</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="case">
+                    <i class="fas fa-box"></i>
+                    <span>Case, Nguồn, Tản</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="storage">
+                    <i class="fas fa-hdd"></i>
+                    <span>Ổ cứng, RAM, Thẻ nhớ</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="audio">
+                    <i class="fas fa-headphones"></i>
+                    <span>Loa, Micro, Webcam</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="monitor">
+                    <i class="fas fa-tv"></i>
+                    <span>Màn hình</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="keyboard">
+                    <i class="fas fa-keyboard"></i>
+                    <span>Bàn phím</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="mouse">
+                    <i class="fas fa-mouse"></i>
+                    <span>Chuột + Lót chuột</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="headset">
+                    <i class="fas fa-headset"></i>
+                    <span>Tai Nghe</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="chair">
+                    <i class="fas fa-chair"></i>
+                    <span>Ghế - Bàn</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="accessories">
+                    <i class="fas fa-plug"></i>
+                    <span>Phần mềm, mạng</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="console">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Handheld, Console</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="other">
+                    <i class="fas fa-ellipsis-h"></i>
+                    <span>Phụ kiện (Hub, sạc, cáp..)</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="category-item" data-category="service">
+                    <i class="fas fa-gift"></i>
+                    <span>Dịch vụ và thông tin khác</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="products-section">
+                <!-- Filter & Sort Bar -->
+                <div class="filter-sort-bar">
+                    <div class="filter-group">
+                        <span class="filter-label">Lọc:</span>
+                        <select class="filter-select" id="brandFilter" onchange="handleFilterChange()">
+                            <option value="">Tất cả thương hiệu</option>
+                            <!-- Brands will be loaded by JS -->
+                        </select>
+                        <select class="filter-select" id="priceFilter" onchange="handleFilterChange()">
+                            <option value="">Tất cả giá</option>
+                            <option value="0-1000000">Dưới 1 triệu</option>
+                            <option value="1000000-5000000">1 - 5 triệu</option>
+                            <option value="5000000-10000000">5 - 10 triệu</option>
+                            <option value="10000000-999999999">Trên 10 triệu</option>
+                        </select>
+                    </div>
+                    <div class="sort-group">
+                        <span class="filter-label">Sắp xếp:</span>
+                        <button class="sort-btn active" data-sort="newest" onclick="handleSort('newest')">
+                            <i class="fas fa-clock"></i> Mới nhất
+                        </button>
+                        <button class="sort-btn" data-sort="price-asc" onclick="handleSort('price-asc')">
+                            <i class="fas fa-sort-amount-up"></i> Giá tăng
+                        </button>
+                        <button class="sort-btn" data-sort="price-desc" onclick="handleSort('price-desc')">
+                            <i class="fas fa-sort-amount-down"></i> Giá giảm
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be rendered here by JavaScript -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fas fa-box-open"></i>
+                    <h3>Không tìm thấy sản phẩm</h3>
+                    <p>Không có sản phẩm nào phù hợp với bộ lọc của bạn</p>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button class="page-btn" id="prevBtn" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="pageNumbers"></div>
+                    <button class="page-btn" id="nextBtn" onclick="nextPage()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

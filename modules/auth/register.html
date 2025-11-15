@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký - EzGear</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="./auth.css">
+</head>
+<body>
+  <div class="auth-container">
+    <!-- Bên trái - Giới thiệu -->
+    <div class="auth-left">
+      <div class="intro-box">
+        <div class="logo-large">EzGear</div>
+        <h1>Trở thành thành viên EzGear</h1>
+        <p>Đăng ký ngay để tận hưởng ưu đãi độc quyền!</p>
+        
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-shipping-fast"></i>
+            <span>Miễn phí giao hàng</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-gift"></i>
+            <span>Quà tặng đặc biệt</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-tag"></i>
+            <span>Giảm giá thành viên</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-star"></i>
+            <span>Tích điểm đổi quà</span>
+          </div>
+        </div>
+        
+        <div class="testimonial">
+          <p>"Đăng ký EzGear là quyết định đúng đắn nhất của tôi trong năm nay!"</p>
+          <div class="customer">- Trần Thị B, TP.HCM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bên phải - Form đăng ký -->
+    <div class="auth-right">
+      <div class="form-card">
+        <div class="logo">EzGear</div>
+        <h2>Tạo tài khoản</h2>
+        <p class="subtitle">Điền thông tin để trở thành thành viên EzGear</p>
+
+        <form id="register-form">
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-user"></i>
+            </div>
+            <input type="text" name="fullName" placeholder="Họ và tên" required autocomplete="name">
+            <div class="success-message" id="name-success">
+              <i class="fas fa-check"></i> Hợp lệ
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <input type="email" name="email" placeholder="Email" required autocomplete="email">
+            <div class="error-message" id="email-error">Email không hợp lệ</div>
+            <div class="success-message" id="email-success">
+              <i class="fas fa-check"></i> Email hợp lệ
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-lock"></i>
+            </div>
+            <input type="password" name="password" placeholder="Mật khẩu" required autocomplete="new-password">
+            <button type="button" class="toggle-password">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          
+          <div class="password-strength">
+            <div class="password-strength-bar" id="password-strength-bar"></div>
+          </div>
+          <div class="password-strength-text" id="password-strength-text">Độ mạnh mật khẩu</div>
+          
+          <div class="input-group">
+            <div class="input-icon">
+              <i class="fas fa-lock"></i>
+            </div>
+            <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" required autocomplete="new-password">
+            <button type="button" class="toggle-password">
+              <i class="fas fa-eye"></i>
+            </button>
+            <div class="error-message" id="confirm-password-error">Mật khẩu không khớp</div>
+            <div class="success-message" id="confirm-password-success">
+              <i class="fas fa-check"></i> Mật khẩu khớp
+            </div>
+          </div>
+          
+          <div class="terms">
+            <input type="checkbox" id="agreeTerms" required>
+            <label for="agreeTerms">
+              Tôi đồng ý với <a href="#" target="_blank">Điều khoản dịch vụ</a> và 
+              <a href="#" target="_blank">Chính sách bảo mật</a> của EzGear
+            </label>
+          </div>
+
+          <button type="submit" class="login-btn">
+            <span>Đăng ký</span>
+            <i class="fas fa-user-plus"></i>
+          </button>
+        </form>
+
+        <div class="divider">
+          <span>Hoặc đăng ký bằng</span>
+        </div>
+
+        <div class="social-login">
+          <button class="social-btn google" type="button">
+            <i class="fab fa-google"></i>
+            <span>Google</span>
+          </button>
+          <button class="social-btn zalo" type="button">
+            <i class="fab fa-facebook"></i>
+            <span>Facebook</span>
+          </button>
+        </div>
+
+        <p class="register-link">
+          Đã có tài khoản? 
+          <a href="./login.html">Đăng nhập</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="./auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+/* Stocks Page Styles */
+
+.topbar .breadcrumb a {
+    color: #666;
+}
+
+.stock-qty {
+    font-weight: 600;
+}
+
+.small-muted {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 4px 8px;
+    border-radius: 10px;
+}
