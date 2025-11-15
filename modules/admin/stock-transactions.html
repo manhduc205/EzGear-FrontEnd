@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Giao Dịch Kho - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-common.css">
+    <link rel="stylesheet" href="./stock-transactions.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Lịch Sử Giao Dịch Kho</h1>
+                    <div class="breadcrumb">
+                        <a href="./dashboard.html">Dashboard</a> / Lịch sử giao dịch
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <h4><i class="fas fa-arrow-down"></i> Nhập Kho</h4>
+                        <div class="value" id="totalImport">0</div>
+                        <div class="change positive" id="importChange">+0 hôm nay</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4><i class="fas fa-arrow-up"></i> Xuất Kho</h4>
+                        <div class="value" id="totalExport">0</div>
+                        <div class="change negative" id="exportChange">-0 hôm nay</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4><i class="fas fa-exchange-alt"></i> Điều Chỉnh</h4>
+                        <div class="value" id="totalAdjust">0</div>
+                        <div class="change" id="adjustChange">0 hôm nay</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4><i class="fas fa-boxes"></i> Tổng Giao Dịch</h4>
+                        <div class="value" id="totalTransactions">0</div>
+                        <div class="change" id="totalChange">Tất cả thời gian</div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-section">
+                    <div class="filter-header">
+                        <i class="fas fa-filter"></i>
+                        <h3>Bộ Lọc</h3>
+                    </div>
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label>Khoảng Thời Gian</label>
+                            <div class="date-range">
+                                <input type="date" id="fromDate">
+                                <span>đến</span>
+                                <input type="date" id="toDate">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Tìm Kiếm</label>
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="searchInput" placeholder="Nhập SKU, tên sản phẩm, kho, người thực hiện...">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn-primary" onclick="applyFilter()">
+                                <i class="fas fa-filter"></i> Áp Dụng
+                            </button>
+                            <button class="btn-secondary" onclick="resetFilter()">
+                                <i class="fas fa-redo"></i> Đặt Lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Danh Sách Giao Dịch</h3>
+                        <button class="export-btn" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> Xuất Excel
+                        </button>
+                    </div>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Sản Phẩm</th>
+                                <th>SKU</th>
+                                <th>Kho</th>
+                                <th>Loại GD</th>
+                                <th>Tồn Trước</th>
+                                <th>Số Lượng</th>
+                                <th>Tồn Sau</th>
+                                <th>Giá Nhập</th>
+                                <th>Giá Bán</th>
+                                <th>Người TH</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                            <tr>
+                                <td colspan="11" class="empty-state">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="./admin-common.js"></script>
+    <script src="./stock-transactions.js"></script>
+</body>
+</html>

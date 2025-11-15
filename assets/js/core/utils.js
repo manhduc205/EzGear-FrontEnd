@@ -29,6 +29,32 @@ const TokenHelper = {
   // Kiểm tra đã đăng nhập chưa
   isLoggedIn: () => {
     return !!localStorage.getItem('accessToken');
+  },
+  
+  // Lấy thông tin user từ localStorage
+  getUserInfo: () => {
+    const userId = localStorage.getItem('userId');
+    const username = localStorage.getItem('username');
+    const email = localStorage.getItem('email');
+    const role = localStorage.getItem('role');
+    
+    if (userId) {
+      return {
+        id: parseInt(userId),
+        username: username || '',
+        email: email || '',
+        role: role || ''
+      };
+    }
+    return null;
+  },
+  
+  // Lưu thông tin user
+  saveUserInfo: (userId, username, email, role) => {
+    localStorage.setItem('userId', userId);
+    if (username) localStorage.setItem('username', username);
+    if (email) localStorage.setItem('email', email);
+    if (role) localStorage.setItem('role', role);
   }
 };
 
@@ -66,7 +92,13 @@ async function httpRequest(url, options = {}) {
   }
 }
 
-// ==================== DOM HELPERS ====================
+/**
+ * Get user info from localStorage
+ * @returns {object|null} - User info object hoặc null
+ */
+function getUserInfo() {
+  return TokenHelper.getUserInfo();
+}
 
 /**
  * Hiển thị/ẩn loading state cho button
@@ -359,6 +391,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     TokenHelper,
     httpRequest,
+    getUserInfo,
     toggleButtonLoading,
     showToast,
     formatPrice,
