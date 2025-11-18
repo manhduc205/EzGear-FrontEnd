@@ -4,6 +4,8 @@ let filteredProducts = [];
 let currentPage = 0;
 let totalPages = 0;
 const pageSize = 10;
+let searchKeyword = '';
+let currentEditingSku = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadProducts();
@@ -14,13 +16,23 @@ async function loadProducts() {
     showLoading(true);
     
     try {
+        // Build search request
+        const searchRequest = {
+            page: currentPage,
+            size: pageSize
+        };
+        
+        // Add search keyword if exists
+        if (searchKeyword && searchKeyword.trim()) {
+            searchRequest.productName = searchKeyword;
+            searchRequest.name = searchKeyword;
+            searchRequest.sku = searchKeyword;
+        }
+        
         const response = await fetch(`${BASE_URL}/product-skus/search`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({
-                page: currentPage,
-                size: pageSize
-            })
+            body: JSON.stringify(searchRequest)
         });
         
         if (!response.ok) throw new Error('Failed to load products');
@@ -92,7 +104,10 @@ function renderProducts() {
                     <button class="btn btn-sm btn-primary" onclick="viewProduct(${sku.id})" title="Xem chi tiết">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${sku.id}, '${sku.name}')" title="Xóa">
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal(${sku.id})" title="Sửa">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${sku.id}, '${sku.name.replace(/'/g, "\\'")}'" title="Xóa">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -136,19 +151,9 @@ function nextPage() {
 
 // Search products
 function handleSearch() {
-    const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
-    
-    if (!keyword) {
-        filteredProducts = [...products];
-    } else {
-        filteredProducts = products.filter(sku => 
-            sku.name.toLowerCase().includes(keyword) ||
-            sku.sku.toLowerCase().includes(keyword) ||
-            (sku.product?.name && sku.product.name.toLowerCase().includes(keyword))
-        );
-    }
-    
-    renderProducts();
+    searchKeyword = document.getElementById('searchInput').value.trim();
+    currentPage = 0; // Reset to first page when searching
+    loadProducts();
 }
 
 // View product details
@@ -285,6 +290,98 @@ function displayProductDetail(sku) {
 // Close detail modal
 function closeDetailModal() {
     document.getElementById('productDetailModal').classList.remove('active');
+}
+
+// Open edit modal
+function openEditModal(id) {
+    const sku = filteredProducts.find(p => p.id === id);
+    if (!sku) {
+        showToast('Không tìm thấy sản phẩm', 'error');
+        return;
+    }
+    
+    currentEditingSku = sku;
+    
+    // Fill form
+    document.getElementById('editSkuId').value = sku.id;
+    document.getElementById('editSkuName').value = sku.name || '';
+    document.getElementById('editSkuCode').value = sku.sku || '';
+    document.getElementById('editSkuPrice').value = sku.price || 0;
+    document.getElementById('editSkuBarcode').value = sku.barcode || '';
+    document.getElementById('editSkuWeight').value = sku.weightGram || '';
+    document.getElementById('editSkuLength').value = sku.lengthCm || '';
+    document.getElementById('editSkuWidth').value = sku.widthCm || '';
+    document.getElementById('editSkuHeight').value = sku.heightCm || '';
+    document.getElementById('editSkuActive').value = sku.isActive ? 'true' : 'false';
+    
+    // Show modal
+    document.getElementById('editModal').classList.add('active');
+}
+
+// Close edit modal
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    currentEditingSku = null;
+}
+
+// Save edited SKU
+async function saveEditedSku() {
+    if (!currentEditingSku) return;
+    
+    const id = currentEditingSku.id;
+    const productSkuDTO = {
+        productId: currentEditingSku.product?.id,
+        sku: document.getElementById('editSkuCode').value.trim(),
+        name: document.getElementById('editSkuName').value.trim(),
+        price: parseFloat(document.getElementById('editSkuPrice').value),
+        barcode: document.getElementById('editSkuBarcode').value.trim() || null,
+        weightGram: parseInt(document.getElementById('editSkuWeight').value) || null,
+        lengthCm: parseInt(document.getElementById('editSkuLength').value) || null,
+        widthCm: parseInt(document.getElementById('editSkuWidth').value) || null,
+        heightCm: parseInt(document.getElementById('editSkuHeight').value) || null,
+        isActive: document.getElementById('editSkuActive').value === 'true'
+    };
+    
+    // Validate
+    if (!productSkuDTO.sku || !productSkuDTO.name || !productSkuDTO.price) {
+        showToast('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
+        return;
+    }
+    
+    if (productSkuDTO.price <= 0) {
+        showToast('Giá phải lớn hơn 0', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${BASE_URL}/product-skus/${id}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(productSkuDTO)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || errorData.error || 'Failed to update SKU');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Cập nhật SKU thành công!', 'success');
+            closeEditModal();
+            await loadProducts();
+        } else {
+            throw new Error(data.message || data.error || 'Failed to update');
+        }
+    } catch (error) {
+        console.error('Error updating SKU:', error);
+        showToast('Lỗi: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // Delete product SKU

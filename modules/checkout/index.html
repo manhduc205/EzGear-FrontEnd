@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./checkout.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Đang xử lý...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="checkout-container">
+        <!-- Header -->
+        <div class="checkout-header">
+            <button class="btn-back" onclick="window.location.href='../cart/cart.html'">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1><i class="fas fa-credit-card"></i> Thanh Toán</h1>
+            <div class="steps">
+                <div class="step active">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Giỏ hàng</span>
+                </div>
+                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+                <div class="step active">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Thanh toán</span>
+                </div>
+                <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Hoàn tất</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="checkout-layout">
+            <!-- Left: Checkout Information -->
+            <div class="checkout-info">
+                <!-- Shipping Address Section -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h2>Địa Chỉ Nhận Hàng</h2>
+                    </div>
+                    <div class="section-content">
+                        <!-- No Address Selected -->
+                        <div class="no-address" id="noAddress">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <p>Bạn chưa chọn địa chỉ nhận hàng</p>
+                            <button class="btn btn-primary" onclick="openAddressModal()">
+                                <i class="fas fa-plus"></i> Chọn Địa Chỉ
+                            </button>
+                        </div>
+
+                        <!-- Selected Address -->
+                        <div class="selected-address-card" id="selectedAddressCard" style="display: none;">
+                            <div class="address-info">
+                                <div class="address-label" id="addressLabel">
+                                    <i class="fas fa-home"></i> Nhà Riêng
+                                </div>
+                                <div class="address-name" id="addressName">Nguyễn Văn A</div>
+                                <div class="address-phone" id="addressPhone">
+                                    <i class="fas fa-phone"></i> 0123456789
+                                </div>
+                                <div class="address-detail" id="addressDetail">
+                                    123 Đường ABC, Phường XYZ, Quận 1, TP.HCM
+                                </div>
+                            </div>
+                            <button class="btn btn-change" onclick="openAddressModal()">
+                                <i class="fas fa-edit"></i> Thay Đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Review Section -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <i class="fas fa-box"></i>
+                        <h2>Sản Phẩm Đặt Hàng (<span id="productCount">0</span>)</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="products-list" id="productsList">
+                            <!-- Products will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voucher Section -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <i class="fas fa-ticket-alt"></i>
+                        <h2>Mã Giảm Giá</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="voucher-input-group">
+                            <input 
+                                type="text" 
+                                id="voucherInput" 
+                                placeholder="Nhập mã giảm giá"
+                                class="form-control"
+                            >
+                            <button class="btn btn-apply" onclick="applyVoucher()">
+                                <i class="fas fa-check"></i> Áp dụng
+                            </button>
+                        </div>
+                        
+                        <!-- Applied Voucher -->
+                        <div class="voucher-applied" id="voucherApplied" style="display: none;">
+                            <div class="voucher-info">
+                                <i class="fas fa-check-circle"></i>
+                                <div>
+                                    <div class="voucher-code" id="appliedVoucherCode">EZGEAR10</div>
+                                    <div class="voucher-desc">Giảm <span id="voucherDiscountValue">100.000₫</span></div>
+                                </div>
+                            </div>
+                            <button class="btn-remove-voucher" onclick="removeVoucher()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Section -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <i class="fas fa-wallet"></i>
+                        <h2>Phương Thức Thanh Toán</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="payment-methods">
+                            <label class="payment-method active">
+                                <input type="radio" name="paymentMethod" value="COD" checked>
+                                <div class="method-content">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <div>
+                                        <div class="method-name">Thanh toán khi nhận hàng (COD)</div>
+                                        <div class="method-desc">Thanh toán bằng tiền mặt khi nhận hàng</div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-check-circle"></i>
+                            </label>
+
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="BANK_TRANSFER">
+                                <div class="method-content">
+                                    <i class="fas fa-university"></i>
+                                    <div>
+                                        <div class="method-name">Chuyển khoản ngân hàng</div>
+                                        <div class="method-desc">Chuyển khoản qua QR Code hoặc số tài khoản</div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-check-circle"></i>
+                            </label>
+
+                            <label class="payment-method">
+                                <input type="radio" name="paymentMethod" value="VNPAY">
+                                <div class="method-content">
+                                    <i class="fas fa-credit-card"></i>
+                                    <div>
+                                        <div class="method-name">Thanh toán VNPay</div>
+                                        <div class="method-desc">Thanh toán qua ví điện tử VNPay</div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-check-circle"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Order Summary -->
+            <div class="order-summary-wrapper">
+                <div class="order-summary">
+                    <h3>Thông Tin Đơn Hàng</h3>
+                    
+                    <div class="summary-rows">
+                        <div class="summary-row">
+                            <span>Tạm tính (<span id="summaryItemCount">0</span> sản phẩm)</span>
+                            <span id="subtotal">0₫</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Phí vận chuyển</span>
+                            <span id="shippingFee">0₫</span>
+                        </div>
+                        
+                        <div class="summary-row discount-row" id="discountRow" style="display: none;">
+                            <span>Giảm giá</span>
+                            <span class="discount" id="discount">-0₫</span>
+                        </div>
+                        
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-row total-row">
+                            <span>Tổng cộng</span>
+                            <span class="total-amount" id="totalAmount">0₫</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-checkout" id="btnCheckout" onclick="processCheckout()">
+                        <i class="fas fa-check-circle"></i>
+                        Đặt Hàng
+                    </button>
+                    
+                    <div class="checkout-notes">
+                        <div class="note-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Thanh toán an toàn & bảo mật</span>
+                        </div>
+                        <div class="note-item">
+                            <i class="fas fa-undo-alt"></i>
+                            <span>Đổi trả miễn phí trong 7 ngày</span>
+                        </div>
+                        <div class="note-item">
+                            <i class="fas fa-headset"></i>
+                            <span>Hỗ trợ 24/7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Selection Modal -->
+    <div class="modal" id="addressModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Chọn Địa Chỉ Nhận Hàng</h3>
+                <button class="btn-close-modal" onclick="closeAddressModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="address-list" id="addressList">
+                    <!-- Addresses will be loaded here -->
+                    <div class="loading-addresses">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tải địa chỉ...
+                    </div>
+                </div>
+                
+                <button class="btn btn-add-address" onclick="addNewAddress()">
+                    <i class="fas fa-plus"></i> Thêm Địa Chỉ Mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content success">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Đặt Hàng Thành Công!</h2>
+            <p>Mã đơn hàng: <strong id="orderCode">-</strong></p>
+            <p class="success-message" id="successMessage">
+                Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.
+            </p>
+            <div class="success-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='../../index.html'">
+                    <i class="fas fa-home"></i> Về Trang Chủ
+                </button>
+                <button class="btn btn-primary" onclick="viewOrderDetails()">
+                    <i class="fas fa-receipt"></i> Xem Đơn Hàng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./checkout.js"></script>
+</body>
+</html>

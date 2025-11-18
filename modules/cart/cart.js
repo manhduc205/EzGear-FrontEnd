@@ -207,51 +207,63 @@ function renderCartItems() {
     emptyCart.style.display = 'none';
     document.getElementById('cartCount').textContent = cartState.items.length;
 
-    container.innerHTML = cartState.items.map(item => `
-        <div class="cart-item ${cartState.selectedItems.has(item.skuId) ? 'selected' : ''}" data-sku-id="${item.skuId}">
+    container.innerHTML = cartState.items.map(item => {
+        // Safely extract data with fallbacks
+        const productName = item.productName || item.name || item.skuName || 'Sản phẩm';
+        const productImage = item.imageUrl || item.image || item.productImage || '../../assets/img/placeholder.svg';
+        const price = item.price || item.unitPrice || item.retailPrice || 0;
+        const originalPrice = item.originalPrice || item.originalRetailPrice || 0;
+        const skuId = item.skuId || item.id;
+        const productId = item.productId || 0;
+        const quantity = item.quantity || 1;
+        const stockQuantity = item.stockQuantity || item.stock || 100;
+        const variant = item.variant || item.variantName || '';
+        
+        return `
+        <div class="cart-item ${cartState.selectedItems.has(skuId) ? 'selected' : ''}" data-sku-id="${skuId}">
             <!-- Checkbox -->
             <div class="item-checkbox">
                 <input 
                     type="checkbox" 
                     class="item-select-checkbox"
-                    data-sku-id="${item.skuId}"
-                    ${cartState.selectedItems.has(item.skuId) ? 'checked' : ''}
+                    data-sku-id="${skuId}"
+                    ${cartState.selectedItems.has(skuId) ? 'checked' : ''}
                 >
             </div>
 
             <!-- Image -->
             <div class="item-image">
-                <img src="${item.imageUrl || '../../assets/img/placeholder.svg'}" 
-                     alt="${item.productName}"
+                <img src="${productImage}" 
+                     alt="${productName}"
                      onerror="this.src='../../assets/img/placeholder.svg'">
             </div>
 
             <!-- Info -->
             <div class="item-info">
-                <div class="item-name" onclick="viewProduct(${item.productId})">
-                    ${item.productName}
+                <div class="item-name" onclick="viewProduct(${productId})">
+                    ${productName}
                 </div>
                 
-                ${item.variant ? `
+                ${variant ? `
                     <div class="item-variant">
-                        <i class="fas fa-tag"></i> ${item.variant}
+                        <i class="fas fa-tag"></i> ${variant}
                     </div>
                 ` : ''}
 
-                <div class="item-stock ${getStockClass(item.stockQuantity)}">
+                <div class="item-stock ${getStockClass(stockQuantity)}">
                     <i class="fas fa-box"></i>
-                    ${getStockText(item.stockQuantity)}
+                    ${getStockText(stockQuantity)}
                 </div>
 
                 <!-- Bottom Row -->
                 <div class="item-bottom">
                     <!-- Price -->
                     <div class="item-price">
-                        <div class="price-current">${formatPrice(item.price)}</div>
-                        ${item.originalPrice && item.originalPrice > item.price ? `
+                        <div class="price-current">${formatPrice(price)}</div>
+                        ${originalPrice && originalPrice > price ? `
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <span class="price-original">${formatPrice(item.originalPrice)}</span>
-                                <span class="price-discount">-${Math.round((1 - item.price / item.originalPrice) * 100)}%</span>
+                                <span class="price-original">${formatPrice(originalPrice)}</span>
+                                <span class="price-discount">-${Math.round((1 - price / originalPrice) * 100)}%</span>
                             </div>
                         ` : ''}
                     </div>
@@ -261,35 +273,36 @@ function renderCartItems() {
                         <!-- Quantity Control -->
                         <div class="quantity-control">
                             <button 
-                                onclick="changeQuantity(${item.skuId}, ${item.quantity - 1})"
-                                ${item.quantity <= 1 ? 'disabled' : ''}
+                                onclick="changeQuantity(${skuId}, ${quantity - 1})"
+                                ${quantity <= 1 ? 'disabled' : ''}
                             >
                                 <i class="fas fa-minus"></i>
                             </button>
                             <input 
                                 type="number" 
-                                value="${item.quantity}" 
+                                value="${quantity}" 
                                 min="1" 
-                                max="${item.stockQuantity}"
-                                onchange="changeQuantity(${item.skuId}, parseInt(this.value))"
+                                max="${stockQuantity}"
+                                onchange="changeQuantity(${skuId}, parseInt(this.value))"
                             >
                             <button 
-                                onclick="changeQuantity(${item.skuId}, ${item.quantity + 1})"
-                                ${item.quantity >= item.stockQuantity ? 'disabled' : ''}
+                                onclick="changeQuantity(${skuId}, ${quantity + 1})"
+                                ${quantity >= stockQuantity ? 'disabled' : ''}
                             >
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
 
                         <!-- Remove Button -->
-                        <button class="btn-remove" onclick="removeItem(${item.skuId})" title="Xóa sản phẩm">
+                        <button class="btn-remove" onclick="removeItem(${skuId})" title="Xóa sản phẩm">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Attach event listeners to checkboxes
     document.querySelectorAll('.item-select-checkbox').forEach(checkbox => {
@@ -322,10 +335,15 @@ function getStockText(quantity) {
  */
 function updateSummary() {
     const selectedItems = cartState.items.filter(item => 
-        cartState.selectedItems.has(item.skuId)
+        cartState.selectedItems.has(item.skuId || item.id)
     );
 
-    const subtotal = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = selectedItems.reduce((sum, item) => {
+        const price = item.price || item.unitPrice || item.retailPrice || 0;
+        const quantity = item.quantity || 1;
+        return sum + (price * quantity);
+    }, 0);
+    
     const discount = cartState.voucher ? (subtotal * cartState.voucher.discountPercent / 100) : 0;
     const total = subtotal - discount;
 
@@ -381,30 +399,30 @@ function handleItemSelect(e) {
  * Change item quantity
  */
 async function changeQuantity(skuId, newQuantity) {
-    const item = cartState.items.find(i => i.skuId === skuId);
+    const item = cartState.items.find(i => (i.skuId || i.id) === skuId);
     
     if (!item) return;
     
+    const stockQuantity = item.stockQuantity || item.stock || 100;
+    const currentQuantity = item.quantity || 1;
+    
     // Validate quantity
     if (newQuantity < 1) newQuantity = 1;
-    if (newQuantity > item.stockQuantity) {
-        showToast(`Chỉ còn ${item.stockQuantity} sản phẩm trong kho`, 'warning');
-        newQuantity = item.stockQuantity;
+    if (newQuantity > stockQuantity) {
+        showToast(`Chỉ còn ${stockQuantity} sản phẩm trong kho`, 'warning');
+        newQuantity = stockQuantity;
     }
     
-    if (newQuantity === item.quantity) return;
+    if (newQuantity === currentQuantity) return;
     
     // Show loading
     showLoading(true);
     
     try {
-        const updatedCart = await updateQuantityAPI(skuId, newQuantity);
-        
-        if (updatedCart) {
-            cartState.items = updatedCart.items || [];
-            renderCartItems();
-            showToast('Cập nhật số lượng thành công', 'success');
-        }
+        await updateQuantityAPI(skuId, newQuantity);
+        // Reload cart to get latest data from backend
+        await loadCart();
+        showToast('Cập nhật số lượng thành công', 'success');
     } catch (error) {
         console.error('Change quantity error:', error);
     } finally {
@@ -421,14 +439,11 @@ async function removeItem(skuId) {
     showLoading(true);
     
     try {
-        const updatedCart = await removeItemAPI(skuId);
-        
-        if (updatedCart) {
-            cartState.items = updatedCart.items || [];
-            cartState.selectedItems.delete(skuId);
-            renderCartItems();
-            showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'success');
-        }
+        await removeItemAPI(skuId);
+        cartState.selectedItems.delete(skuId);
+        // Reload cart to get latest data from backend
+        await loadCart();
+        showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'success');
     } catch (error) {
         console.error('Remove item error:', error);
     } finally {
@@ -513,7 +528,7 @@ function removeVoucher() {
  */
 function proceedToCheckout() {
     const selectedItems = cartState.items.filter(item => 
-        cartState.selectedItems.has(item.skuId)
+        cartState.selectedItems.has(item.skuId || item.id)
     );
     
     if (selectedItems.length === 0) {
@@ -521,14 +536,32 @@ function proceedToCheckout() {
         return;
     }
     
-    // Save selected items and voucher to session storage
-    sessionStorage.setItem('checkoutItems', JSON.stringify(selectedItems));
+    // Prepare cart items with only necessary fields
+    const checkoutItems = selectedItems.map(item => ({
+        skuId: item.skuId || item.id,
+        quantity: item.quantity,
+        // Keep additional info for display in checkout page
+        productName: item.productName || item.name,
+        skuName: item.skuName || item.name,
+        imageUrl: item.imageUrl || item.image,
+        price: item.price || item.unitPrice,
+        productId: item.productId
+    }));
+    
+    console.log('🛒 Proceeding to checkout with items:', checkoutItems);
+    
+    // Save to session storage
+    sessionStorage.setItem('checkoutItems', JSON.stringify(checkoutItems));
+    
+    // Save voucher if applied
     if (cartState.voucher) {
         sessionStorage.setItem('checkoutVoucher', JSON.stringify(cartState.voucher));
+    } else {
+        sessionStorage.removeItem('checkoutVoucher');
     }
     
     // Redirect to checkout
-    window.location.href = '/modules/checkout/index.html';
+    window.location.href = '../checkout/index.html';
 }
 
 /**
@@ -593,8 +626,23 @@ async function loadCart() {
     try {
         const cart = await getCartAPI();
         
+        console.log('📦 Cart data received:', cart);
+        
         if (cart) {
-            cartState.items = cart.items || [];
+            // Backend có thể trả về cart.items hoặc cart.cartItems hoặc trực tiếp là array
+            if (Array.isArray(cart)) {
+                cartState.items = cart;
+            } else if (cart.items) {
+                cartState.items = cart.items;
+            } else if (cart.cartItems) {
+                cartState.items = cart.cartItems;
+            } else {
+                cartState.items = [];
+            }
+            
+            console.log('✅ Cart items loaded:', cartState.items.length, 'items');
+            console.log('First item sample:', cartState.items[0]);
+            
             renderCartItems();
         }
     } catch (error) {

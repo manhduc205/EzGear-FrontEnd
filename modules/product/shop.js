@@ -98,14 +98,36 @@ async function addItemToCartAPI(cartItem) {
         console.log('📡 Response status:', response.status);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Add to cart failed:', response.status, errorText);
+            // Try to parse error response as JSON first
+            let errorMessage = 'Không thể thêm sản phẩm vào giỏ hàng';
+            
+            try {
+                const errorData = await response.json();
+                console.error('❌ Add to cart failed:', response.status, errorData);
+                
+                // Extract error message from different response formats
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } catch (e) {
+                // If not JSON, try to get text
+                const errorText = await response.text();
+                console.error('❌ Add to cart failed (text):', response.status, errorText);
+                if (errorText) {
+                    errorMessage = errorText;
+                }
+            }
             
             if (response.status === 401) {
                 TokenHelper.clearTokens();
                 throw new Error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại');
             }
-            throw new Error(errorText || 'Không thể thêm sản phẩm vào giỏ hàng');
+            
+            throw new Error(errorMessage);
         }
 
         const result = await response.json();
@@ -392,7 +414,21 @@ async function addToCart(skuId, productName, event) {
         showToast(`Đã thêm "${productName}" vào giỏ hàng!`, 'success');
     } catch (error) {
         console.error('❌ Add to cart failed:', error);
-        showToast(error.message || 'Lỗi thêm vào giỏ hàng', 'error');
+        
+        // Hiển thị thông báo lỗi rõ ràng
+        let errorMessage = error.message || 'Lỗi thêm vào giỏ hàng';
+        
+        // Customize message for common errors
+        if (errorMessage.toLowerCase().includes('out of stock') || 
+            errorMessage.toLowerCase().includes('hết hàng') ||
+            errorMessage.toLowerCase().includes('không đủ') ||
+            errorMessage.toLowerCase().includes('stock')) {
+            showToast(` ${errorMessage}`, 'error');
+        } else if (errorMessage.includes('đăng nhập')) {
+            showToast(`${errorMessage}`, 'warning');
+        } else {
+            showToast(` ${errorMessage}`, 'error');
+        }
     } finally {
         showLoading(false);
     }
@@ -501,6 +537,9 @@ function formatPrice(price) {
 /**
  * Show toast
  */
+/**
+ * Show toast
+ */
 function showToast(message, type = 'success') {
     document.querySelectorAll('.toast').forEach(toast => toast.remove());
     
@@ -513,9 +552,12 @@ function showToast(message, type = 'success') {
     
     document.body.appendChild(toast);
     
+    // Hiển thị lâu hơn cho error/warning (5s thay vì 3s)
+    const duration = (type === 'error' || type === 'warning') ? 5000 : 3000;
+    
     setTimeout(() => {
         toast.remove();
-    }, 3000);
+    }, duration);
 }
 
 // ==================== LOAD DATA ====================
