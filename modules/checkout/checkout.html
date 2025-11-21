@@ -106,37 +106,28 @@
                     </div>
                 </div>
 
-                <!-- Voucher Section -->
+                <!-- Shipping Method Section -->
                 <div class="checkout-section">
                     <div class="section-header">
-                        <i class="fas fa-ticket-alt"></i>
-                        <h2>Mã Giảm Giá</h2>
+                        <i class="fas fa-shipping-fast"></i>
+                        <h2>Phương Thức Vận Chuyển</h2>
                     </div>
                     <div class="section-content">
-                        <div class="voucher-input-group">
-                            <input 
-                                type="text" 
-                                id="voucherInput" 
-                                placeholder="Nhập mã giảm giá"
-                                class="form-control"
-                            >
-                            <button class="btn btn-apply" onclick="applyVoucher()">
-                                <i class="fas fa-check"></i> Áp dụng
-                            </button>
+                        <!-- Loading State -->
+                        <div class="shipping-loading" id="shippingLoading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Đang tải phương thức vận chuyển...</span>
                         </div>
                         
-                        <!-- Applied Voucher -->
-                        <div class="voucher-applied" id="voucherApplied" style="display: none;">
-                            <div class="voucher-info">
-                                <i class="fas fa-check-circle"></i>
-                                <div>
-                                    <div class="voucher-code" id="appliedVoucherCode">EZGEAR10</div>
-                                    <div class="voucher-desc">Giảm <span id="voucherDiscountValue">100.000₫</span></div>
-                                </div>
-                            </div>
-                            <button class="btn-remove-voucher" onclick="removeVoucher()">
-                                <i class="fas fa-times"></i>
-                            </button>
+                        <!-- No Address State -->
+                        <div class="shipping-no-address" id="shippingNoAddress" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Vui lòng chọn địa chỉ nhận hàng để xem phí vận chuyển</span>
+                        </div>
+                        
+                        <!-- Shipping Services -->
+                        <div class="shipping-services" id="shippingServices" style="display: none;">
+                            <!-- Services will be rendered here -->
                         </div>
                     </div>
                 </div>
@@ -205,6 +196,23 @@
                             <span id="shippingFee">0₫</span>
                         </div>
                         
+                        <!-- Voucher Section in Summary -->
+                        <div class="summary-voucher">
+                            <div class="voucher-input-group">
+                                <input type="text" id="voucherInput" placeholder="Mã giảm giá" class="voucher-input">
+                                <button class="btn-voucher" onclick="applyVoucher()">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                            <div id="voucherApplied" class="voucher-tag" style="display: none;">
+                                <i class="fas fa-tag"></i>
+                                <span id="appliedVoucherCode"></span>
+                                <button class="btn-remove" onclick="removeVoucher()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="summary-row discount-row" id="discountRow" style="display: none;">
                             <span>Giảm giá</span>
                             <span class="discount" id="discount">-0₫</span>
@@ -262,6 +270,121 @@
                 <button class="btn btn-add-address" onclick="addNewAddress()">
                     <i class="fas fa-plus"></i> Thêm Địa Chỉ Mới
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Address Modal -->
+    <div class="modal" id="editAddressModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Sửa Địa Chỉ Nhận Hàng</h3>
+                <button class="btn-close-modal" onclick="closeEditAddressModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editAddressForm" onsubmit="saveEditAddress(event)">
+                    <input type="hidden" id="editAddressId">
+                    
+                    <div class="form-group">
+                        <label>Họ và tên người nhận <span class="required">*</span></label>
+                        <input type="text" id="editReceiverName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Số điện thoại <span class="required">*</span></label>
+                        <input type="tel" id="editReceiverPhone" required pattern="[0-9]{10}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tỉnh/Thành - Quận/Huyện - Phường/Xã <span class="required">*</span></label>
+                        <div class="location-picker">
+                            <button type="button" class="location-picker-btn" onclick="openEditLocationModal()">
+                                <span id="editSelectedLocation">Chọn tỉnh/thành, quận/huyện, phường/xã</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <input type="hidden" id="editProvinceId" required>
+                            <input type="hidden" id="editDistrictId" required>
+                            <input type="hidden" id="editWardCode" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Địa chỉ chi tiết <span class="required">*</span></label>
+                        <input type="text" id="editAddressLine" placeholder="Số nhà, tên đường..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nhãn địa chỉ</label>
+                        <select id="editLabel">
+                            <option value="Nhà Riêng">Nhà Riêng</option>
+                            <option value="Văn Phòng">Văn Phòng</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editIsDefault">
+                            <span>Đặt làm địa chỉ mặc định</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditAddressModal()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu Thay Đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Location Modal -->
+    <div class="modal modal-location" id="editLocationModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Chọn Tỉnh/Thành - Quận/Huyện - Phường/Xã</h3>
+                <button class="btn-close-modal" onclick="closeEditLocationModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="location-tabs">
+                    <button class="location-tab active" data-tab="editProvince">
+                        <span class="tab-label">Tỉnh/Thành phố</span>
+                        <span class="tab-value" id="editProvinceTab">Chọn</span>
+                    </button>
+                    <button class="location-tab" data-tab="editDistrict">
+                        <span class="tab-label">Quận/Huyện</span>
+                        <span class="tab-value" id="editDistrictTab">Chọn</span>
+                    </button>
+                    <button class="location-tab" data-tab="editWard">
+                        <span class="tab-label">Phường/Xã</span>
+                        <span class="tab-value" id="editWardTab">Chọn</span>
+                    </button>
+                </div>
+                
+                <div class="location-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="editLocationSearch" placeholder="Tìm kiếm...">
+                </div>
+                
+                <div class="location-list" id="editLocationList">
+                    <!-- Location items will be loaded here -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeEditLocationModal()">
+                        <i class="fas fa-times"></i> Đóng
+                    </button>
+                    <button class="btn btn-primary" onclick="confirmEditLocation()">
+                        <i class="fas fa-check"></i> Xác Nhận
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -1,19 +1,24 @@
 /* ==================== CHECKOUT MODULE JS ==================== */
-/* Xử lý flow thanh toán hoàn chỉnh - POST /cart -> POST /checkout */
+/* Xử lý flow thanh toán với phương thức vận chuyển */
 
 // ==================== STATE MANAGEMENT ====================
 let checkoutState = {
-    cartItems: [], // Sản phẩm từ giỏ hàng (từ cart page)
+    cartItems: [], // Sản phẩm từ giỏ hàng
     selectedAddress: null,
     voucherCode: null,
     paymentMethod: 'COD',
-    orderPreview: null, // Kết quả từ POST /cart
+    selectedServiceId: null, // Service ID được chọn
+    availableServices: [], // Danh sách dịch vụ vận chuyển
+    currentShippingFee: 0,
+    branchId: null,
     isProcessing: false
 };
 
 // ==================== API ENDPOINTS ====================
 const CHECKOUT_API = `${window.BASE_URL}/checkout`;
 const ADDRESS_API = `${window.BASE_URL}/api/customer-addresses`;
+const SHIPPING_SERVICES_API = `${window.BASE_URL}/api/shipping/available-services`;
+const SHIPPING_FEE_API = `${window.BASE_URL}/api/shipping/fee`;
 
 // ==================== INITIALIZATION ====================
 
@@ -62,6 +67,10 @@ async function initCheckout() {
         
         // Load user addresses
         await loadUserAddresses();
+        
+        // Show message to select address first
+        document.getElementById('shippingLoading').style.display = 'none';
+        document.getElementById('shippingNoAddress').style.display = 'block';
         
     } catch (error) {
         console.error('❌ Init error:', error);
@@ -128,16 +137,15 @@ function renderProductsFromCart() {
 }
 
 /**
- * Calculate order summary locally (client-side)
+ * Calculate order summary locally
  */
 function calculateLocalSummary() {
     const subtotal = checkoutState.cartItems.reduce((sum, item) => {
         return sum + ((item.price || 0) * (item.quantity || 1));
     }, 0);
     
-    // For now, no discount calculation (will be done by backend)
-    const discount = 0;
-    const shippingFee = 0; // No shipping fee display
+    const discount = 0; // Backend tính
+    const shippingFee = checkoutState.currentShippingFee || 0;
     const total = subtotal - discount + shippingFee;
     
     // Update UI
@@ -256,7 +264,7 @@ async function loadUserAddresses() {
             // Auto-select default address
             const defaultAddress = addresses.find(addr => addr.isDefault);
             if (defaultAddress) {
-                selectAddress(defaultAddress);
+                await selectAddress(defaultAddress);
             }
         }
         
@@ -323,6 +331,14 @@ async function openAddressModal() {
                         ${addr.fullAddress || addr.addressLine}
                     </div>
                 </div>
+                <div class="address-actions" onclick="event.stopPropagation()">
+                    <button class="btn-icon" onclick="editAddress(${addr.id})" title="Sửa địa chỉ">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteAddress(${addr.id})" title="Xóa địa chỉ">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
         `).join('');
         
@@ -345,10 +361,522 @@ function closeAddressModal() {
 }
 
 /**
- * Select address
- * @param {Object} address - Address object
+ * Delete address
  */
-function selectAddress(address) {
+async function deleteAddress(addressId) {
+    if (!confirm('Bạn có chắc muốn xóa địa chỉ này?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${ADDRESS_API}/${addressId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Không thể xóa địa chỉ');
+        }
+        
+        showToast('Đã xóa địa chỉ', 'success');
+        
+        // Reload address list
+        await openAddressModal();
+        
+        // If deleted address was selected, clear selection
+        if (checkoutState.selectedAddress?.id === addressId) {
+            checkoutState.selectedAddress = null;
+            document.getElementById('shippingAddress').innerHTML = `
+                <div class="no-address">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>Vui lòng chọn địa chỉ nhận hàng</p>
+                </div>
+            `;
+            document.getElementById('shippingNoAddress').style.display = 'block';
+            document.getElementById('shippingServices').style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('❌ Delete address error:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+/**
+ * Edit address
+ */
+async function editAddress(addressId) {
+    try {
+        // Load all addresses
+        const response = await fetch(ADDRESS_API, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Không thể tải thông tin địa chỉ');
+        }
+        
+        const data = await response.json();
+        const addresses = data.payload || data.data || data;
+        const address = addresses.find(addr => addr.id === addressId);
+        
+        if (!address) {
+            throw new Error('Không tìm thấy địa chỉ');
+        }
+        
+        // Close address selection modal
+        closeAddressModal();
+        
+        // Open edit modal
+        openEditAddressModal(address);
+        
+    } catch (error) {
+        console.error('❌ Load address error:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+// ==================== EDIT ADDRESS MODAL ====================
+
+// Edit location state
+let editSelectedProvince = { id: null, name: '' };
+let editSelectedDistrict = { id: null, name: '' };
+let editSelectedWard = { code: '', name: '' };
+
+const GHN_API = `${window.BASE_URL}/api/ghn/location`;
+
+/**
+ * Open edit address modal
+ */
+async function openEditAddressModal(address) {
+    // Fill form with address data
+    document.getElementById('editAddressId').value = address.id;
+    document.getElementById('editReceiverName').value = address.receiverName;
+    document.getElementById('editReceiverPhone').value = address.receiverPhone;
+    document.getElementById('editAddressLine').value = address.addressLine;
+    document.getElementById('editLabel').value = address.label || 'Nhà Riêng';
+    document.getElementById('editIsDefault').checked = address.isDefault || false;
+    
+    // Set location data
+    document.getElementById('editProvinceId').value = address.provinceId;
+    document.getElementById('editDistrictId').value = address.districtId;
+    document.getElementById('editWardCode').value = address.wardCode;
+    
+    // Load location names
+    try {
+        // Load province name
+        const provincesResponse = await fetch(`${GHN_API}/provinces`, {
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        const provincesData = await provincesResponse.json();
+        const provinces = provincesData.payload || provincesData.data || provincesData;
+        const province = provinces.find(p => p.ProvinceID === address.provinceId);
+        
+        if (province) {
+            editSelectedProvince = { id: province.ProvinceID, name: province.ProvinceName };
+            
+            // Load districts
+            const districtsResponse = await fetch(`${GHN_API}/districts?provinceId=${address.provinceId}`, {
+                headers: {
+                    'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                }
+            });
+            const districtsData = await districtsResponse.json();
+            const districts = districtsData.payload || districtsData.data || districtsData;
+            const district = districts.find(d => d.DistrictID === address.districtId);
+            
+            if (district) {
+                editSelectedDistrict = { id: district.DistrictID, name: district.DistrictName };
+                
+                // Load wards
+                const wardsResponse = await fetch(`${GHN_API}/wards?districtId=${address.districtId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                    }
+                });
+                const wardsData = await wardsResponse.json();
+                const wards = wardsData.payload || wardsData.data || wardsData;
+                const ward = wards.find(w => w.WardCode === address.wardCode);
+                
+                if (ward) {
+                    editSelectedWard = { code: ward.WardCode, name: ward.WardName };
+                }
+            }
+        }
+        
+        // Update UI
+        updateEditLocationDisplay();
+        
+    } catch (error) {
+        console.error('❌ Load location error:', error);
+    }
+    
+    // Show modal
+    document.getElementById('editAddressModal').classList.add('show');
+}
+
+/**
+ * Close edit address modal
+ */
+function closeEditAddressModal() {
+    document.getElementById('editAddressModal').classList.remove('show');
+    document.getElementById('editAddressForm').reset();
+    editSelectedProvince = { id: null, name: '' };
+    editSelectedDistrict = { id: null, name: '' };
+    editSelectedWard = { code: '', name: '' };
+}
+
+/**
+ * Open edit location modal
+ */
+function openEditLocationModal() {
+    document.getElementById('editLocationModal').classList.add('show');
+    loadEditProvinces();
+}
+
+/**
+ * Close edit location modal
+ */
+function closeEditLocationModal() {
+    document.getElementById('editLocationModal').classList.remove('show');
+}
+
+/**
+ * Load provinces for edit
+ */
+async function loadEditProvinces() {
+    const list = document.getElementById('editLocationList');
+    list.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    
+    try {
+        const response = await fetch(`${GHN_API}/provinces`, {
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        const provinces = data.payload || data.data || data;
+        
+        list.innerHTML = provinces.map(province => `
+            <div class="location-item ${editSelectedProvince.id === province.ProvinceID ? 'selected' : ''}" 
+                 onclick="selectEditProvince(${province.ProvinceID}, '${province.ProvinceName}')">
+                <span>${province.ProvinceName}</span>
+                ${editSelectedProvince.id === province.ProvinceID ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+        `).join('');
+        
+        // Setup search
+        setupEditLocationSearch(provinces, 'province');
+        
+    } catch (error) {
+        console.error('❌ Load provinces error:', error);
+        list.innerHTML = '<div class="error">Không thể tải danh sách tỉnh/thành</div>';
+    }
+}
+
+/**
+ * Select province for edit
+ */
+function selectEditProvince(id, name) {
+    editSelectedProvince = { id, name };
+    editSelectedDistrict = { id: null, name: '' };
+    editSelectedWard = { code: '', name: '' };
+    
+    document.getElementById('editProvinceId').value = id;
+    document.getElementById('editDistrictId').value = '';
+    document.getElementById('editWardCode').value = '';
+    
+    updateEditLocationDisplay();
+    switchEditTab('editDistrict');
+    loadEditDistricts();
+}
+
+/**
+ * Load districts for edit
+ */
+async function loadEditDistricts() {
+    if (!editSelectedProvince.id) {
+        return;
+    }
+    
+    const list = document.getElementById('editLocationList');
+    list.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    
+    try {
+        const response = await fetch(`${GHN_API}/districts?provinceId=${editSelectedProvince.id}`, {
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        const districts = data.payload || data.data || data;
+        
+        list.innerHTML = districts.map(district => `
+            <div class="location-item ${editSelectedDistrict.id === district.DistrictID ? 'selected' : ''}" 
+                 onclick="selectEditDistrict(${district.DistrictID}, '${district.DistrictName}')">
+                <span>${district.DistrictName}</span>
+                ${editSelectedDistrict.id === district.DistrictID ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+        `).join('');
+        
+        setupEditLocationSearch(districts, 'district');
+        
+    } catch (error) {
+        console.error('❌ Load districts error:', error);
+        list.innerHTML = '<div class="error">Không thể tải danh sách quận/huyện</div>';
+    }
+}
+
+/**
+ * Select district for edit
+ */
+function selectEditDistrict(id, name) {
+    editSelectedDistrict = { id, name };
+    editSelectedWard = { code: '', name: '' };
+    
+    document.getElementById('editDistrictId').value = id;
+    document.getElementById('editWardCode').value = '';
+    
+    updateEditLocationDisplay();
+    switchEditTab('editWard');
+    loadEditWards();
+}
+
+/**
+ * Load wards for edit
+ */
+async function loadEditWards() {
+    if (!editSelectedDistrict.id) {
+        return;
+    }
+    
+    const list = document.getElementById('editLocationList');
+    list.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    
+    try {
+        const response = await fetch(`${GHN_API}/wards?districtId=${editSelectedDistrict.id}`, {
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        const wards = data.payload || data.data || data;
+        
+        list.innerHTML = wards.map(ward => `
+            <div class="location-item ${editSelectedWard.code === ward.WardCode ? 'selected' : ''}" 
+                 onclick="selectEditWard('${ward.WardCode}', '${ward.WardName}')">
+                <span>${ward.WardName}</span>
+                ${editSelectedWard.code === ward.WardCode ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+        `).join('');
+        
+        setupEditLocationSearch(wards, 'ward');
+        
+    } catch (error) {
+        console.error('❌ Load wards error:', error);
+        list.innerHTML = '<div class="error">Không thể tải danh sách phường/xã</div>';
+    }
+}
+
+/**
+ * Select ward for edit
+ */
+function selectEditWard(code, name) {
+    editSelectedWard = { code, name };
+    document.getElementById('editWardCode').value = code;
+    updateEditLocationDisplay();
+}
+
+/**
+ * Update edit location display
+ */
+function updateEditLocationDisplay() {
+    document.getElementById('editProvinceTab').textContent = editSelectedProvince.name || 'Chọn';
+    document.getElementById('editDistrictTab').textContent = editSelectedDistrict.name || 'Chọn';
+    document.getElementById('editWardTab').textContent = editSelectedWard.name || 'Chọn';
+    
+    if (editSelectedProvince.name && editSelectedDistrict.name && editSelectedWard.name) {
+        document.getElementById('editSelectedLocation').textContent = 
+            `${editSelectedWard.name}, ${editSelectedDistrict.name}, ${editSelectedProvince.name}`;
+    }
+}
+
+/**
+ * Switch edit tab
+ */
+function switchEditTab(tabName) {
+    // Update tab active state
+    document.querySelectorAll('.location-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Load data for selected tab
+    if (tabName === 'editProvince') {
+        loadEditProvinces();
+    } else if (tabName === 'editDistrict') {
+        loadEditDistricts();
+    } else if (tabName === 'editWard') {
+        loadEditWards();
+    }
+}
+
+// Add event listeners for edit tabs
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#editLocationModal .location-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            switchEditTab(tab.dataset.tab);
+        });
+    });
+});
+
+/**
+ * Setup edit location search
+ */
+function setupEditLocationSearch(items, type) {
+    const searchInput = document.getElementById('editLocationSearch');
+    searchInput.value = '';
+    
+    searchInput.oninput = (e) => {
+        const keyword = e.target.value.toLowerCase();
+        const list = document.getElementById('editLocationList');
+        
+        let filteredItems = items;
+        if (keyword) {
+            filteredItems = items.filter(item => {
+                const name = type === 'province' ? item.ProvinceName :
+                            type === 'district' ? item.DistrictName :
+                            item.WardName;
+                return name.toLowerCase().includes(keyword);
+            });
+        }
+        
+        if (filteredItems.length === 0) {
+            list.innerHTML = '<div class="no-results">Không tìm thấy kết quả</div>';
+            return;
+        }
+        
+        list.innerHTML = filteredItems.map(item => {
+            const id = type === 'province' ? item.ProvinceID :
+                      type === 'district' ? item.DistrictID :
+                      item.WardCode;
+            const name = type === 'province' ? item.ProvinceName :
+                        type === 'district' ? item.DistrictName :
+                        item.WardName;
+            const isSelected = type === 'province' ? editSelectedProvince.id === id :
+                             type === 'district' ? editSelectedDistrict.id === id :
+                             editSelectedWard.code === id;
+            const selectFn = type === 'province' ? 'selectEditProvince' :
+                           type === 'district' ? 'selectEditDistrict' :
+                           'selectEditWard';
+            
+            return `
+                <div class="location-item ${isSelected ? 'selected' : ''}" 
+                     onclick="${selectFn}(${type === 'ward' ? `'${id}'` : id}, '${name}')">
+                    <span>${name}</span>
+                    ${isSelected ? '<i class="fas fa-check"></i>' : ''}
+                </div>
+            `;
+        }).join('');
+    };
+}
+
+/**
+ * Confirm edit location
+ */
+function confirmEditLocation() {
+    if (!editSelectedProvince.id || !editSelectedDistrict.id || !editSelectedWard.code) {
+        showToast('Vui lòng chọn đầy đủ tỉnh/thành, quận/huyện, phường/xã', 'warning');
+        return;
+    }
+    closeEditLocationModal();
+}
+
+/**
+ * Save edit address
+ */
+async function saveEditAddress(event) {
+    event.preventDefault();
+    
+    const addressId = document.getElementById('editAddressId').value;
+    const addressData = {
+        userId: null,
+        receiverName: document.getElementById('editReceiverName').value,
+        receiverPhone: document.getElementById('editReceiverPhone').value,
+        provinceId: parseInt(document.getElementById('editProvinceId').value),
+        districtId: parseInt(document.getElementById('editDistrictId').value),
+        wardCode: document.getElementById('editWardCode').value,
+        addressLine: document.getElementById('editAddressLine').value,
+        label: document.getElementById('editLabel').value,
+        isDefault: document.getElementById('editIsDefault').checked
+    };
+    
+    if (!addressData.provinceId || !addressData.districtId || !addressData.wardCode) {
+        showToast('Vui lòng chọn đầy đủ địa chỉ', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${ADDRESS_API}/${addressId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            },
+            body: JSON.stringify(addressData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Không thể cập nhật địa chỉ');
+        }
+        
+        showToast('Đã cập nhật địa chỉ', 'success');
+        closeEditAddressModal();
+        
+        // If updated address was selected, reload shipping services
+        if (checkoutState.selectedAddress?.id === parseInt(addressId)) {
+            // Reload address list to get updated data
+            const listResponse = await fetch(ADDRESS_API, {
+                headers: {
+                    'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                }
+            });
+            const listData = await listResponse.json();
+            const addresses = listData.payload || listData.data || listData;
+            const updatedAddress = addresses.find(addr => addr.id === parseInt(addressId));
+            
+            if (updatedAddress) {
+                await selectAddress(updatedAddress);
+            }
+        }
+        
+        // Reload address modal if it's open
+        if (document.getElementById('addressModal').classList.contains('show')) {
+            await openAddressModal();
+        }
+        
+    } catch (error) {
+        console.error('❌ Update address error:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+/**
+ * Select address and load shipping services
+ */
+async function selectAddress(address) {
     if (typeof address === 'string') {
         address = JSON.parse(address);
     }
@@ -374,6 +902,9 @@ function selectAddress(address) {
     // Close modal
     closeAddressModal();
     
+    // Load shipping services
+    await loadShippingServices();
+    
     // Enable checkout button
     updateCheckoutButton();
 }
@@ -384,6 +915,230 @@ function selectAddress(address) {
 function addNewAddress() {
     // Redirect to address page
     window.location.href = '../address/index.html';
+}
+
+// ==================== SHIPPING SERVICES ====================
+
+/**
+ * Load available shipping services
+ */
+async function loadShippingServices() {
+    if (!checkoutState.selectedAddress) {
+        document.getElementById('shippingNoAddress').style.display = 'block';
+        document.getElementById('shippingServices').style.display = 'none';
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('shippingNoAddress').style.display = 'none';
+    document.getElementById('shippingLoading').style.display = 'block';
+    document.getElementById('shippingServices').style.display = 'none';
+    
+    try {
+        // First, get nearest branch based on address
+        // If backend doesn't provide branch API, we can let backend auto-detect in shipping service call
+        const branchResponse = await fetch(`${window.BASE_URL}/api/warehouses/nearest?addressId=${checkoutState.selectedAddress.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
+        
+        let branchId = 1; // Fallback to default
+        
+        if (branchResponse.ok) {
+            const branchData = await branchResponse.json();
+            branchId = branchData.payload?.id || branchData.id || 1;
+            checkoutState.branchId = branchId;
+            console.log('🏢 Selected branch:', branchId);
+        } else {
+            console.warn('⚠️ Cannot get nearest branch, using default branchId = 1');
+            checkoutState.branchId = 1;
+        }
+        
+        // Gọi API để lấy danh sách dịch vụ vận chuyển
+        const response = await fetch(SHIPPING_SERVICES_API, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            },
+            body: JSON.stringify({
+                branchId: checkoutState.branchId,
+                addressId: checkoutState.selectedAddress.id
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Không thể tải phương thức vận chuyển');
+        }
+        
+        const data = await response.json();
+        console.log('🚚 Shipping services:', data);
+        
+        const result = data.payload || data;
+        checkoutState.availableServices = result.services || [];
+        checkoutState.selectedServiceId = result.defaultServiceId;
+        
+        // Render shipping services
+        renderShippingServices();
+        
+        // Load fee for default service
+        if (checkoutState.selectedServiceId) {
+            await loadShippingFee(checkoutState.selectedServiceId);
+            updateCheckoutButton(); // Enable checkout after loading fee
+        }
+        
+    } catch (error) {
+        console.error('❌ Load shipping services error:', error);
+        showToast('Lỗi tải phương thức vận chuyển: ' + error.message, 'error');
+        
+        document.getElementById('shippingLoading').style.display = 'none';
+        document.getElementById('shippingServices').innerHTML = `
+            <div class="shipping-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Không thể tải phương thức vận chuyển</span>
+            </div>
+        `;
+        document.getElementById('shippingServices').style.display = 'block';
+    }
+}
+
+/**
+ * Render shipping services
+ */
+function renderShippingServices() {
+    const container = document.getElementById('shippingServices');
+    
+    if (!checkoutState.availableServices || checkoutState.availableServices.length === 0) {
+        container.innerHTML = '<p>Không có phương thức vận chuyển</p>';
+        container.style.display = 'block';
+        return;
+    }
+    
+    container.innerHTML = checkoutState.availableServices.map(service => {
+        const isActive = checkoutState.selectedServiceId === service.service_id;
+        const icon = getServiceIcon(service.short_name);
+        
+        return `
+            <label class="shipping-service ${isActive ? 'active' : ''}" data-service-id="${service.service_id}">
+                <input type="radio" name="shippingService" value="${service.service_id}" ${isActive ? 'checked' : ''}>
+                <div class="service-content">
+                    <div class="service-icon">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="service-info">
+                        <div class="service-name">${service.short_name}</div>
+                        <div class="service-desc">${service.service_type_id === 2 ? 'Giao hàng tiết kiệm' : 'Giao hàng nhanh'}</div>
+                    </div>
+                </div>
+                <div class="service-fee" id="serviceFee${service.service_id}">
+                    <div class="service-price">Đang tính...</div>
+                </div>
+                <i class="fas fa-check-circle"></i>
+            </label>
+        `;
+    }).join('');
+    
+    document.getElementById('shippingLoading').style.display = 'none';
+    container.style.display = 'flex';
+    
+    // Add event listeners
+    container.querySelectorAll('input[name="shippingService"]').forEach(radio => {
+        radio.addEventListener('change', async (e) => {
+            const serviceId = parseInt(e.target.value);
+            await selectShippingService(serviceId);
+        });
+    });
+}
+
+/**
+ * Get icon for service
+ */
+function getServiceIcon(shortName) {
+    if (shortName && shortName.toLowerCase().includes('nhanh')) {
+        return 'fa-rocket';
+    } else if (shortName && shortName.toLowerCase().includes('tiết kiệm')) {
+        return 'fa-box';
+    }
+    return 'fa-truck';
+}
+
+/**
+ * Select shipping service
+ */
+async function selectShippingService(serviceId) {
+    checkoutState.selectedServiceId = serviceId;
+    
+    // Update UI active state
+    document.querySelectorAll('.shipping-service').forEach(service => {
+        service.classList.remove('active');
+    });
+    document.querySelector(`.shipping-service[data-service-id="${serviceId}"]`).classList.add('active');
+    
+    // Load shipping fee
+    await loadShippingFee(serviceId);
+    
+    // Enable checkout button
+    updateCheckoutButton();
+}
+
+/**
+ * Load shipping fee for selected service
+ */
+async function loadShippingFee(serviceId) {
+    if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
+        return;
+    }
+    
+    const firstSkuId = checkoutState.cartItems[0].skuId || checkoutState.cartItems[0].id;
+    
+    try {
+        const response = await fetch(SHIPPING_FEE_API, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            },
+            body: JSON.stringify({
+                branchId: checkoutState.branchId || 1,
+                addressId: checkoutState.selectedAddress.id,
+                skuId: firstSkuId,
+                serviceId: serviceId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Không thể tính phí vận chuyển');
+        }
+        
+        const data = await response.json();
+        console.log('💰 Shipping fee:', data);
+        
+        const feeData = data.payload?.data || data.data;
+        const shippingFee = feeData?.total || 0;
+        
+        // Update fee in service display
+        const serviceFeeElement = document.getElementById(`serviceFee${serviceId}`);
+        if (serviceFeeElement) {
+            serviceFeeElement.innerHTML = `
+                <div class="service-price">${formatPrice(shippingFee)}</div>
+                ${feeData?.expected_delivery_time ? `<div class="service-time">${feeData.expected_delivery_time}</div>` : ''}
+            `;
+        }
+        
+        // Update checkout state and summary
+        checkoutState.currentShippingFee = shippingFee;
+        calculateLocalSummary();
+        
+    } catch (error) {
+        console.error('❌ Load shipping fee error:', error);
+        const serviceFeeElement = document.getElementById(`serviceFee${serviceId}`);
+        if (serviceFeeElement) {
+            serviceFeeElement.innerHTML = '<div class="service-price">Lỗi</div>';
+        }
+    }
 }
 
 // ==================== VOUCHER MANAGEMENT ====================
@@ -456,7 +1211,9 @@ function showAppliedVoucher(voucher) {
 function updateCheckoutButton() {
     const btnCheckout = document.getElementById('btnCheckout');
     
-    if (checkoutState.selectedAddress && checkoutState.cartItems.length > 0) {
+    if (checkoutState.selectedAddress && 
+        checkoutState.selectedServiceId && 
+        checkoutState.cartItems.length > 0) {
         btnCheckout.disabled = false;
         btnCheckout.classList.remove('disabled');
     } else {
@@ -477,6 +1234,11 @@ async function processCheckout() {
         return;
     }
     
+    if (!checkoutState.selectedServiceId) {
+        showToast('Vui lòng chọn phương thức vận chuyển', 'warning');
+        return;
+    }
+    
     if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
         showToast('Không có sản phẩm trong đơn hàng', 'error');
         return;
@@ -493,7 +1255,8 @@ async function processCheckout() {
             })),
             addressId: checkoutState.selectedAddress.id,
             voucherCode: checkoutState.voucherCode || null,
-            paymentMethod: checkoutState.paymentMethod
+            paymentMethod: checkoutState.paymentMethod,
+            serviceId: checkoutState.selectedServiceId
         };
         
         console.log('📤 POST /checkout request:', requestBody);

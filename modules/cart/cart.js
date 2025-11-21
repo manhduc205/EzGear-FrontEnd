@@ -561,7 +561,7 @@ function proceedToCheckout() {
     }
     
     // Redirect to checkout
-    window.location.href = '../checkout/index.html';
+    window.location.href = '../checkout/checkout.html';
 }
 
 /**

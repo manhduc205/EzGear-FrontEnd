@@ -110,7 +110,13 @@ async function loadProvinces() {
     showLoading(provinceTab);
     
     try {
-        const response = await fetch(`${GHN_API_BASE}/provinces`);
+        const response = await fetch(`${GHN_API_BASE}/provinces`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
         
         if (!response.ok) {
             throw new Error('Không thể tải danh sách tỉnh/thành phố');
@@ -172,7 +178,13 @@ async function loadDistricts(provinceId) {
     showLoading(districtTab);
     
     try {
-        const response = await fetch(`${GHN_API_BASE}/districts?provinceId=${provinceId}`);
+        const response = await fetch(`${GHN_API_BASE}/districts?provinceId=${provinceId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
         
         if (!response.ok) {
             throw new Error('Không thể tải danh sách quận/huyện');
@@ -229,7 +241,13 @@ async function loadWards(districtId) {
     showLoading(wardTab);
     
     try {
-        const response = await fetch(`${GHN_API_BASE}/wards?districtId=${districtId}`);
+        const response = await fetch(`${GHN_API_BASE}/wards?districtId=${districtId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
+        });
         
         if (!response.ok) {
             throw new Error('Không thể tải danh sách phường/xã');
@@ -381,9 +399,12 @@ async function handleSubmit(e) {
     
     // Prepare request body
     const body = {
+        userId: null, // Backend will use authenticated user
         receiverName,
         receiverPhone,
-        locationCode: selectedWard.code,
+        provinceId: selectedProvince.id,
+        districtId: selectedDistrict.id,
+        wardCode: selectedWard.code,
         addressLine,
         label: selectedAddressType,
         isDefault

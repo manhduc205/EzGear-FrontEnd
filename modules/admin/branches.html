@@ -84,20 +84,32 @@
                         <label for="branchName">Tên Chi Nhánh <span class="required">*</span></label>
                         <input type="text" id="branchName" class="form-control" required placeholder="VD: Chi nhánh Hà Nội">
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="branchAddress">Địa Chỉ <span class="required">*</span></label>
-                        <textarea id="branchAddress" class="form-control" required placeholder="Nhập địa chỉ chi nhánh"></textarea>
+                        <label for="branchCode">Mã Chi Nhánh <span class="required">*</span></label>
+                        <input type="text" id="branchCode" class="form-control" required placeholder="VD: HN, HCM">
+                    </div>
+
+                    <!-- Location Picker -->
+                    <div class="form-group">
+                        <label>Khu Vực <span class="required">*</span></label>
+                        <div class="location-picker" id="locationPicker" onclick="openLocationModal()">
+                            <span id="selectedLocation">Chọn Tỉnh/Thành, Quận/Huyện, Phường/Xã</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <input type="hidden" id="provinceId" required>
+                        <input type="hidden" id="districtId" required>
+                        <input type="hidden" id="wardCode" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="branchPhone">Số Điện Thoại</label>
-                        <input type="tel" id="branchPhone" class="form-control" placeholder="VD: 0123456789">
+                        <label for="branchAddress">Địa Chỉ Chi Tiết <span class="required">*</span></label>
+                        <textarea id="branchAddress" class="form-control" required placeholder="Số nhà, tên đường..."></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label for="branchEmail">Email</label>
-                        <input type="email" id="branchEmail" class="form-control" placeholder="VD: hanoi@ezgear.vn">
+                        <label for="branchPhone">Số Điện Thoại <span class="required">*</span></label>
+                        <input type="tel" id="branchPhone" class="form-control" required placeholder="VD: 0123456789">
                     </div>
                 </div>
                 
@@ -110,6 +122,45 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Location Picker Modal -->
+    <div class="modal" id="locationModal">
+        <div class="modal-content modal-location">
+            <div class="modal-header">
+                <h2>Chọn Khu Vực</h2>
+                <button class="btn-close" onclick="closeLocationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="location-tabs">
+                    <button type="button" class="tab-btn active" onclick="switchTab('province')">
+                        <span id="provinceLabel">Tỉnh/Thành phố</span>
+                    </button>
+                    <button type="button" class="tab-btn" id="districtTabBtn" onclick="switchTab('district')" disabled>
+                        <span id="districtLabel">Quận/Huyện</span>
+                    </button>
+                    <button type="button" class="tab-btn" id="wardTabBtn" onclick="switchTab('ward')" disabled>
+                        <span id="wardLabel">Phường/Xã</span>
+                    </button>
+                </div>
+                
+                <div class="location-search">
+                    <input type="text" id="locationSearch" placeholder="Tìm kiếm...">
+                </div>
+                
+                <div class="location-list" id="provinceList"></div>
+                <div class="location-list" id="districtList" style="display: none;"></div>
+                <div class="location-list" id="wardList" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeLocationModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmLocationBtn" onclick="confirmLocation()" disabled>
+                    <i class="fas fa-check"></i> Xác Nhận
+                </button>
+            </div>
         </div>
     </div>
 
