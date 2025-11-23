@@ -126,6 +126,14 @@ async function loadSidebar() {
             </div>
 
             <div class="menu-section">
+                <div class="menu-section-title">Khuyến Mãi</div>
+                <a href="./vouchers.html" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span class="menu-item-text">Voucher</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
                 <div class="menu-section-title">Hệ Thống</div>
                 <a href="./users.html" class="menu-item ${currentPage === 'users.html' ? 'active' : ''}">
                     <i class="fas fa-users"></i>
