@@ -206,7 +206,10 @@
                             </div>
                             <div id="voucherApplied" class="voucher-tag" style="display: none;">
                                 <i class="fas fa-tag"></i>
-                                <span id="appliedVoucherCode"></span>
+                                <div class="voucher-info">
+                                    <span class="voucher-code" id="appliedVoucherCode"></span>
+                                    <span class="voucher-value" id="appliedVoucherValue">-0₫</span>
+                                </div>
                                 <button class="btn-remove" onclick="removeVoucher()">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -277,8 +280,11 @@
     <!-- Edit Address Modal -->
     <div class="modal" id="editAddressModal">
         <div class="modal-content large">
-            <div class="modal-header">
-                <h3>Sửa Địa Chỉ Nhận Hàng</h3>
+            <div class="modal-header edit-address-header">
+                <div class="header-title">
+                    <i class="fas fa-edit"></i>
+                    <h3>Chỉnh Sửa Địa Chỉ</h3>
+                </div>
                 <button class="btn-close-modal" onclick="closeEditAddressModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -287,18 +293,20 @@
                 <form id="editAddressForm" onsubmit="saveEditAddress(event)">
                     <input type="hidden" id="editAddressId">
                     
-                    <div class="form-group">
-                        <label>Họ và tên người nhận <span class="required">*</span></label>
-                        <input type="text" id="editReceiverName" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Họ và tên người nhận <span class="required">*</span></label>
+                            <input type="text" id="editReceiverName" placeholder="Nhập họ và tên" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Số điện thoại <span class="required">*</span></label>
+                            <input type="tel" id="editReceiverPhone" placeholder="0123456789" required pattern="[0-9]{10}">
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Số điện thoại <span class="required">*</span></label>
-                        <input type="tel" id="editReceiverPhone" required pattern="[0-9]{10}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Tỉnh/Thành - Quận/Huyện - Phường/Xã <span class="required">*</span></label>
+                        <label><i class="fas fa-map-marker-alt"></i> Tỉnh/Thành - Quận/Huyện - Phường/Xã <span class="required">*</span></label>
                         <div class="location-picker">
                             <button type="button" class="location-picker-btn" onclick="openEditLocationModal()">
                                 <span id="editSelectedLocation">Chọn tỉnh/thành, quận/huyện, phường/xã</span>
@@ -311,31 +319,37 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Địa chỉ chi tiết <span class="required">*</span></label>
-                        <input type="text" id="editAddressLine" placeholder="Số nhà, tên đường..." required>
+                        <label><i class="fas fa-home"></i> Địa chỉ chi tiết <span class="required">*</span></label>
+                        <input type="text" id="editAddressLine" placeholder="Số nhà, tên đường, tòa nhà..." required>
                     </div>
                     
                     <div class="form-group">
-                        <label>Nhãn địa chỉ</label>
-                        <select id="editLabel">
-                            <option value="Nhà Riêng">Nhà Riêng</option>
-                            <option value="Văn Phòng">Văn Phòng</option>
-                        </select>
+                        <label><i class="fas fa-tag"></i> Nhãn địa chỉ</label>
+                        <div class="label-buttons">
+                            <button type="button" class="label-btn active" data-value="Nhà Riêng" onclick="selectAddressLabel(this, 'Nhà Riêng')">
+                                Nhà Riêng
+                            </button>
+                            <button type="button" class="label-btn" data-value="Văn Phòng" onclick="selectAddressLabel(this, 'Văn Phòng')">
+                                Văn Phòng
+                            </button>
+                        </div>
+                        <input type="hidden" id="editLabel" value="Nhà Riêng">
                     </div>
                     
                     <div class="form-group">
-                        <label class="checkbox-label">
+                        <label class="checkbox-container">
                             <input type="checkbox" id="editIsDefault">
-                            <span>Đặt làm địa chỉ mặc định</span>
+                            <span class="checkmark"></span>
+                            Đặt làm địa chỉ mặc định
                         </label>
                     </div>
                     
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeEditAddressModal()">
-                            <i class="fas fa-times"></i> Hủy
+                            <i class="fas fa-times"></i> Hủy Bỏ
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Lưu Thay Đổi
+                            <i class="fas fa-check"></i> Lưu Thay Đổi
                         </button>
                     </div>
                 </form>
@@ -378,10 +392,7 @@
                 </div>
                 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeEditLocationModal()">
-                        <i class="fas fa-times"></i> Đóng
-                    </button>
-                    <button class="btn btn-primary" onclick="confirmEditLocation()">
+                    <button class="btn btn-primary btn-block" onclick="confirmEditLocation()">
                         <i class="fas fa-check"></i> Xác Nhận
                     </button>
                 </div>

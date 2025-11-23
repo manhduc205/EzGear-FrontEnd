@@ -6,6 +6,7 @@ let checkoutState = {
     cartItems: [], // Sản phẩm từ giỏ hàng
     selectedAddress: null,
     voucherCode: null,
+    voucherDiscount: 0, // Số tiền giảm từ voucher
     paymentMethod: 'COD',
     selectedServiceId: null, // Service ID được chọn
     availableServices: [], // Danh sách dịch vụ vận chuyển
@@ -19,6 +20,7 @@ const CHECKOUT_API = `${window.BASE_URL}/checkout`;
 const ADDRESS_API = `${window.BASE_URL}/api/customer-addresses`;
 const SHIPPING_SERVICES_API = `${window.BASE_URL}/api/shipping/available-services`;
 const SHIPPING_FEE_API = `${window.BASE_URL}/api/shipping/fee`;
+const APPLY_VOUCHER_API = `${window.BASE_URL}/api/voucher/apply`;
 
 // ==================== INITIALIZATION ====================
 
@@ -144,7 +146,7 @@ function calculateLocalSummary() {
         return sum + ((item.price || 0) * (item.quantity || 1));
     }, 0);
     
-    const discount = 0; // Backend tính
+    const discount = checkoutState.voucherDiscount || 0;
     const shippingFee = checkoutState.currentShippingFee || 0;
     const total = subtotal - discount + shippingFee;
     
@@ -154,8 +156,14 @@ function calculateLocalSummary() {
     document.getElementById('shippingFee').textContent = formatPrice(shippingFee);
     document.getElementById('totalAmount').textContent = formatPrice(total);
     
-    // Hide discount row initially
-    document.getElementById('discountRow').style.display = 'none';
+    // Show/hide discount row
+    const discountRow = document.getElementById('discountRow');
+    if (discount > 0) {
+        discountRow.style.display = 'flex';
+        document.getElementById('discount').textContent = `-${formatPrice(discount)}`;
+    } else {
+        discountRow.style.display = 'none';
+    }
 }
 
 // ==================== ORDER PREVIEW (DEPRECATED - NOT USED) ====================
@@ -450,19 +458,52 @@ let editSelectedProvince = { id: null, name: '' };
 let editSelectedDistrict = { id: null, name: '' };
 let editSelectedWard = { code: '', name: '' };
 
-const GHN_API = `${window.BASE_URL}/api/ghn/location`;
+const GHN_API = `${window.BASE_URL}/api/ghn-locations`;
+
+/**
+ * Select address label (Nhà Riêng / Văn Phòng)
+ */
+function selectAddressLabel(button, value) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.label-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Add active class to clicked button
+    button.classList.add('active');
+    
+    // Update hidden input
+    document.getElementById('editLabel').value = value;
+}
 
 /**
  * Open edit address modal
  */
 async function openEditAddressModal(address) {
+    console.log('📝 Opening edit modal with address:', address);
+    
     // Fill form with address data
     document.getElementById('editAddressId').value = address.id;
     document.getElementById('editReceiverName').value = address.receiverName;
     document.getElementById('editReceiverPhone').value = address.receiverPhone;
     document.getElementById('editAddressLine').value = address.addressLine;
-    document.getElementById('editLabel').value = address.label || 'Nhà Riêng';
-    document.getElementById('editIsDefault').checked = address.isDefault || false;
+    
+    // Set label buttons
+    const labelValue = address.label || 'Nhà Riêng';
+    document.getElementById('editLabel').value = labelValue;
+    document.querySelectorAll('.label-btn').forEach(btn => {
+        if (btn.dataset.value === labelValue) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Set default checkbox (backend trả về field 'default', không phải 'isDefault')
+    const isDefaultCheckbox = document.getElementById('editIsDefault');
+    const isDefault = address.default !== undefined ? address.default : address.isDefault;
+    isDefaultCheckbox.checked = Boolean(isDefault === true || isDefault === 1);
+    console.log('🔳 Checkbox mặc định:', isDefaultCheckbox.checked, '| address.default:', address.default);
     
     // Set location data
     document.getElementById('editProvinceId').value = address.provinceId;
@@ -477,12 +518,11 @@ async function openEditAddressModal(address) {
                 'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
             }
         });
-        const provincesData = await provincesResponse.json();
-        const provinces = provincesData.payload || provincesData.data || provincesData;
-        const province = provinces.find(p => p.ProvinceID === address.provinceId);
+        const provinces = await provincesResponse.json();
+        const province = provinces.find(p => p.id === address.provinceId);
         
         if (province) {
-            editSelectedProvince = { id: province.ProvinceID, name: province.ProvinceName };
+            editSelectedProvince = { id: province.id, name: province.name };
             
             // Load districts
             const districtsResponse = await fetch(`${GHN_API}/districts?provinceId=${address.provinceId}`, {
@@ -490,12 +530,11 @@ async function openEditAddressModal(address) {
                     'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
                 }
             });
-            const districtsData = await districtsResponse.json();
-            const districts = districtsData.payload || districtsData.data || districtsData;
-            const district = districts.find(d => d.DistrictID === address.districtId);
+            const districts = await districtsResponse.json();
+            const district = districts.find(d => d.id === address.districtId);
             
             if (district) {
-                editSelectedDistrict = { id: district.DistrictID, name: district.DistrictName };
+                editSelectedDistrict = { id: district.id, name: district.name };
                 
                 // Load wards
                 const wardsResponse = await fetch(`${GHN_API}/wards?districtId=${address.districtId}`, {
@@ -503,12 +542,13 @@ async function openEditAddressModal(address) {
                         'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
                     }
                 });
-                const wardsData = await wardsResponse.json();
-                const wards = wardsData.payload || wardsData.data || wardsData;
-                const ward = wards.find(w => w.WardCode === address.wardCode);
+                const wards = await wardsResponse.json();
+                // WardCode có thể là string "20102" hoặc number
+                const ward = wards.find(w => String(w.id) === String(address.wardCode));
+                console.log('📍 Ward found:', ward, '| Looking for:', address.wardCode);
                 
                 if (ward) {
-                    editSelectedWard = { code: ward.WardCode, name: ward.WardName };
+                    editSelectedWard = { code: ward.id, name: ward.name };
                 }
             }
         }
@@ -564,14 +604,13 @@ async function loadEditProvinces() {
             }
         });
         
-        const data = await response.json();
-        const provinces = data.payload || data.data || data;
+        const provinces = await response.json();
         
         list.innerHTML = provinces.map(province => `
-            <div class="location-item ${editSelectedProvince.id === province.ProvinceID ? 'selected' : ''}" 
-                 onclick="selectEditProvince(${province.ProvinceID}, '${province.ProvinceName}')">
-                <span>${province.ProvinceName}</span>
-                ${editSelectedProvince.id === province.ProvinceID ? '<i class="fas fa-check"></i>' : ''}
+            <div class="location-item ${editSelectedProvince.id === province.id ? 'selected' : ''}" 
+                 onclick="selectEditProvince(${province.id}, '${province.name}')">
+                <span>${province.name}</span>
+                ${editSelectedProvince.id === province.id ? '<i class="fas fa-check"></i>' : ''}
             </div>
         `).join('');
         
@@ -619,14 +658,13 @@ async function loadEditDistricts() {
             }
         });
         
-        const data = await response.json();
-        const districts = data.payload || data.data || data;
+        const districts = await response.json();
         
         list.innerHTML = districts.map(district => `
-            <div class="location-item ${editSelectedDistrict.id === district.DistrictID ? 'selected' : ''}" 
-                 onclick="selectEditDistrict(${district.DistrictID}, '${district.DistrictName}')">
-                <span>${district.DistrictName}</span>
-                ${editSelectedDistrict.id === district.DistrictID ? '<i class="fas fa-check"></i>' : ''}
+            <div class="location-item ${editSelectedDistrict.id === district.id ? 'selected' : ''}" 
+                 onclick="selectEditDistrict(${district.id}, '${district.name}')">
+                <span>${district.name}</span>
+                ${editSelectedDistrict.id === district.id ? '<i class="fas fa-check"></i>' : ''}
             </div>
         `).join('');
         
@@ -671,14 +709,13 @@ async function loadEditWards() {
             }
         });
         
-        const data = await response.json();
-        const wards = data.payload || data.data || data;
+        const wards = await response.json();
         
         list.innerHTML = wards.map(ward => `
-            <div class="location-item ${editSelectedWard.code === ward.WardCode ? 'selected' : ''}" 
-                 onclick="selectEditWard('${ward.WardCode}', '${ward.WardName}')">
-                <span>${ward.WardName}</span>
-                ${editSelectedWard.code === ward.WardCode ? '<i class="fas fa-check"></i>' : ''}
+            <div class="location-item ${editSelectedWard.code === ward.id ? 'selected' : ''}" 
+                 onclick="selectEditWard('${ward.id}', '${ward.name}')">
+                <span>${ward.name}</span>
+                ${editSelectedWard.code === ward.id ? '<i class="fas fa-check"></i>' : ''}
             </div>
         `).join('');
         
@@ -756,9 +793,7 @@ function setupEditLocationSearch(items, type) {
         let filteredItems = items;
         if (keyword) {
             filteredItems = items.filter(item => {
-                const name = type === 'province' ? item.ProvinceName :
-                            type === 'district' ? item.DistrictName :
-                            item.WardName;
+                const name = item.name;
                 return name.toLowerCase().includes(keyword);
             });
         }
@@ -769,12 +804,8 @@ function setupEditLocationSearch(items, type) {
         }
         
         list.innerHTML = filteredItems.map(item => {
-            const id = type === 'province' ? item.ProvinceID :
-                      type === 'district' ? item.DistrictID :
-                      item.WardCode;
-            const name = type === 'province' ? item.ProvinceName :
-                        type === 'district' ? item.DistrictName :
-                        item.WardName;
+            const id = item.id;
+            const name = item.name;
             const isSelected = type === 'province' ? editSelectedProvince.id === id :
                              type === 'district' ? editSelectedDistrict.id === id :
                              editSelectedWard.code === id;
@@ -1144,7 +1175,7 @@ async function loadShippingFee(serviceId) {
 // ==================== VOUCHER MANAGEMENT ====================
 
 /**
- * Apply voucher
+ * Apply voucher - Call API to validate and calculate discount
  */
 async function applyVoucher() {
     const voucherInput = document.getElementById('voucherInput');
@@ -1155,15 +1186,82 @@ async function applyVoucher() {
         return;
     }
     
-    checkoutState.voucherCode = voucherCode;
+    // Validate có sản phẩm và địa chỉ
+    if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
+        showToast('Vui lòng thêm sản phẩm vào giỏ hàng', 'warning');
+        return;
+    }
     
-    // Show applied voucher UI (actual discount calculated by backend)
-    document.getElementById('voucherApplied').style.display = 'flex';
-    document.getElementById('appliedVoucherCode').textContent = voucherCode;
-    document.getElementById('voucherDiscountValue').textContent = 'Sẽ áp dụng khi đặt hàng';
-    voucherInput.value = '';
+    showLoading(true, 'Đang kiểm tra mã giảm giá...');
     
-    showToast('Mã giảm giá sẽ được áp dụng khi đặt hàng', 'success');
+    try {
+        // Calculate subtotal
+        const subtotal = checkoutState.cartItems.reduce((sum, item) => {
+            return sum + ((item.price || 0) * (item.quantity || 1));
+        }, 0);
+        
+        const shippingFee = checkoutState.currentShippingFee || 0;
+        
+        // Build items for voucher validation
+        const items = checkoutState.cartItems.map(item => ({
+            skuId: item.skuId || item.id,
+            productId: item.productId,
+            categoryId: item.categoryId,
+            price: item.price || 0,
+            quantity: item.quantity || 1
+        }));
+        
+        const requestBody = {
+            code: voucherCode,
+            subtotal: subtotal,
+            shippingFee: shippingFee,
+            items: items
+        };
+        
+        console.log('📤 Apply voucher request:', requestBody);
+        
+        const response = await fetch(APPLY_VOUCHER_API, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Mã giảm giá không hợp lệ');
+        }
+        
+        const data = await response.json();
+        console.log('📥 Apply voucher response:', data);
+        
+        const result = data.payload || data;
+        const discount = result.discount || 0;
+        
+        // Update state
+        checkoutState.voucherCode = voucherCode;
+        checkoutState.voucherDiscount = discount;
+        
+        // Show applied voucher UI
+        document.getElementById('voucherApplied').style.display = 'flex';
+        document.getElementById('appliedVoucherCode').textContent = voucherCode;
+        document.getElementById('appliedVoucherValue').textContent = `-${formatPrice(discount)}`;
+        voucherInput.value = '';
+        
+        // Update summary
+        calculateLocalSummary();
+        
+        showToast(`Áp dụng mã thành công! Giảm ${formatPrice(discount)}`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Apply voucher error:', error);
+        showToast(error.message || 'Mã giảm giá không hợp lệ', 'error');
+        voucherInput.value = '';
+    } finally {
+        showLoading(false);
+    }
 }
 
 /**
@@ -1171,8 +1269,12 @@ async function applyVoucher() {
  */
 async function removeVoucher() {
     checkoutState.voucherCode = null;
+    checkoutState.voucherDiscount = 0;
     document.getElementById('voucherInput').value = '';
     document.getElementById('voucherApplied').style.display = 'none';
+    
+    // Update summary
+    calculateLocalSummary();
     
     showToast('Đã hủy mã giảm giá', 'success');
 }
