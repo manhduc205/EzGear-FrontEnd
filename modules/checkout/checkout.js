@@ -519,7 +519,12 @@ async function openEditAddressModal(address) {
             }
         });
         const provinces = await provincesResponse.json();
-        const province = provinces.find(p => p.id === address.provinceId);
+        console.log('🌍 Provinces loaded:', provinces.length, 'items');
+        console.log('🔍 Sample province:', provinces[0]);
+        
+        // 🔥 FIX: So sánh String với String
+        const province = provinces.find(p => String(p.id) === String(address.provinceId));
+        console.log('✅ Province found:', province);
         
         if (province) {
             editSelectedProvince = { id: province.id, name: province.name };
@@ -531,7 +536,11 @@ async function openEditAddressModal(address) {
                 }
             });
             const districts = await districtsResponse.json();
-            const district = districts.find(d => d.id === address.districtId);
+            console.log('🏙️ Districts loaded:', districts.length, 'items');
+            
+            // 🔥 FIX: So sánh String với String
+            const district = districts.find(d => String(d.id) === String(address.districtId));
+            console.log('✅ District found:', district);
             
             if (district) {
                 editSelectedDistrict = { id: district.id, name: district.name };
@@ -543,7 +552,9 @@ async function openEditAddressModal(address) {
                     }
                 });
                 const wards = await wardsResponse.json();
-                // WardCode có thể là string "20102" hoặc number
+                console.log('📍 Wards loaded:', wards.length, 'items');
+                
+                // 🔥 FIX: So sánh String với String
                 const ward = wards.find(w => String(w.id) === String(address.wardCode));
                 console.log('📍 Ward found:', ward, '| Looking for:', address.wardCode);
                 
@@ -552,6 +563,11 @@ async function openEditAddressModal(address) {
                 }
             }
         }
+        
+        // 🔥 FIX QUAN TRỌNG: Gán lại giá trị vào input hidden
+        document.getElementById('editProvinceId').value = String(address.provinceId);
+        document.getElementById('editDistrictId').value = String(address.districtId);
+        document.getElementById('editWardCode').value = String(address.wardCode);
         
         // Update UI
         updateEditLocationDisplay();
@@ -1053,7 +1069,10 @@ function renderShippingServices() {
         const icon = getServiceIcon(service.short_name);
         
         return `
-            <label class="shipping-service ${isActive ? 'active' : ''}" data-service-id="${service.service_id}">
+            <label class="shipping-service ${isActive ? 'active' : ''}" 
+                   id="serviceWrapper${service.service_id}"
+                   data-service-id="${service.service_id}"
+                   style="display: none;">
                 <input type="radio" name="shippingService" value="${service.service_id}" ${isActive ? 'checked' : ''}>
                 <div class="service-content">
                     <div class="service-icon">
@@ -1065,7 +1084,7 @@ function renderShippingServices() {
                     </div>
                 </div>
                 <div class="service-fee" id="serviceFee${service.service_id}">
-                    <div class="service-price">Đang tính...</div>
+                    <!-- sẽ cập nhật sau -->
                 </div>
                 <i class="fas fa-check-circle"></i>
             </label>
@@ -1152,22 +1171,38 @@ async function loadShippingFee(serviceId) {
         
         // Update fee in service display
         const serviceFeeElement = document.getElementById(`serviceFee${serviceId}`);
-        if (serviceFeeElement) {
-            serviceFeeElement.innerHTML = `
-                <div class="service-price">${formatPrice(shippingFee)}</div>
-                ${feeData?.expected_delivery_time ? `<div class="service-time">${feeData.expected_delivery_time}</div>` : ''}
-            `;
-        }
+        const serviceWrapper = document.getElementById(`serviceWrapper${serviceId}`);
         
-        // Update checkout state and summary
-        checkoutState.currentShippingFee = shippingFee;
-        calculateLocalSummary();
+        if (shippingFee > 0) {
+            // Cập nhật UI
+            if (serviceFeeElement) {
+                serviceFeeElement.innerHTML = `
+                    <div class="service-price">${formatPrice(shippingFee)}</div>
+                    ${feeData?.expected_delivery_time ? `<div class="service-time">${feeData.expected_delivery_time}</div>` : ''}
+                `;
+            }
+            
+            // 🔥 Hiển thị dịch vụ khi tính được phí
+            if (serviceWrapper) {
+                serviceWrapper.style.display = 'flex';
+            }
+            
+            // Update checkout state and summary
+            checkoutState.currentShippingFee = shippingFee;
+            calculateLocalSummary();
+        } else {
+            // 🔥 Ẩn dịch vụ nếu không tính được phí
+            if (serviceWrapper) {
+                serviceWrapper.style.display = 'none';
+            }
+        }
         
     } catch (error) {
         console.error('❌ Load shipping fee error:', error);
-        const serviceFeeElement = document.getElementById(`serviceFee${serviceId}`);
-        if (serviceFeeElement) {
-            serviceFeeElement.innerHTML = '<div class="service-price">Lỗi</div>';
+        // 🔥 Ẩn dịch vụ nếu lỗi
+        const serviceWrapper = document.getElementById(`serviceWrapper${serviceId}`);
+        if (serviceWrapper) {
+            serviceWrapper.style.display = 'none';
         }
     }
 }
