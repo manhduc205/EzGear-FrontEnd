@@ -1142,7 +1142,11 @@ async function loadShippingFee(serviceId) {
         return;
     }
     
-    const firstSkuId = checkoutState.cartItems[0].skuId || checkoutState.cartItems[0].id;
+    // 🔥 Chuẩn bị cartItems theo format backend yêu cầu
+    const cartItems = checkoutState.cartItems.map(item => ({
+        skuId: item.skuId || item.id,
+        quantity: item.quantity
+    }));
     
     try {
         const response = await fetch(SHIPPING_FEE_API, {
@@ -1154,7 +1158,7 @@ async function loadShippingFee(serviceId) {
             body: JSON.stringify({
                 branchId: checkoutState.branchId || 1,
                 addressId: checkoutState.selectedAddress.id,
-                skuId: firstSkuId,
+                cartItems: cartItems, // 🔥 Gửi đầy đủ cartItems
                 serviceId: serviceId
             })
         });
