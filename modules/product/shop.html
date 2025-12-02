@@ -39,6 +39,18 @@
                 </div>
             </div>
             <div class="shop-header-right">
+                <!-- Location Picker -->
+                <div class="header-location" id="headerLocation" onclick="openLocationModal()">
+                    <div class="location-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="location-text">
+                        <span class="text-small">Xem giá tại</span>
+                        <span class="text-large">Hà Nội</span>
+                    </div>
+                    <i class="fas fa-chevron-down location-arrow"></i>
+                </div>
+
                 <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Giỏ Hàng</span>
@@ -237,6 +249,28 @@
                     <button class="page-btn" id="nextBtn" onclick="nextPage()">
                         <i class="fas fa-chevron-right"></i>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Modal -->
+    <div class="modal" id="locationModal">
+        <div class="modal-content location-modal">
+            <div class="modal-header location-header">
+                <div class="location-search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="locationSearchInput" placeholder="Nhập tên tỉnh thành" oninput="handleLocationSearch()">
+                </div>
+                <button class="btn-close-location" onclick="closeLocationModal()">
+                    Đóng <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body location-body">
+                <p class="location-instruction">Vui lòng chọn tỉnh, thành phố để biết chính xác giá, khuyến mãi và tồn kho</p>
+                <div class="location-list" id="locationList">
+                    <!-- Locations will be rendered here -->
+                    <div class="loading-spinner" style="margin: 20px auto;"></div>
                 </div>
             </div>
         </div>

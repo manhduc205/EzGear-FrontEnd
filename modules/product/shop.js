@@ -72,8 +72,9 @@ async function searchProductSkusAPI(searchRequest) {
 /**
  * Add item to cart
  * @param {Object} cartItem - Cart item matching backend CartItem model
+ * @param {Number} provinceId - Optional province ID for location-based inventory
  */
-async function addItemToCartAPI(cartItem) {
+async function addItemToCartAPI(cartItem, provinceId = null) {
     try {
         const token = TokenHelper.getAccessToken();
         console.log('🛒 Adding to cart:', cartItem);
@@ -83,7 +84,12 @@ async function addItemToCartAPI(cartItem) {
             throw new Error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
         }
         
-        const url = `${window.BASE_URL}/api/cart/add`;
+        // Build URL with optional provinceId parameter
+        let url = `${window.BASE_URL}/api/cart/add`;
+        if (provinceId) {
+            url += `?provinceId=${provinceId}`;
+            console.log('🌍 Using provinceId:', provinceId);
+        }
         console.log('🌐 POST to:', url);
         
         const response = await fetch(url, {
@@ -408,8 +414,10 @@ async function addToCart(skuId, productName, event) {
         };
         
         console.log('🛒 Adding cart item:', cartItem);
+        console.log('🌍 Current provinceId:', locationState.selectedLocationId);
         
-        await addItemToCartAPI(cartItem);
+        // Pass current selected provinceId to check inventory at that location
+        await addItemToCartAPI(cartItem, locationState.selectedLocationId);
         await updateCartBadge();
         showToast(`Đã thêm "${productName}" vào giỏ hàng!`, 'success');
     } catch (error) {
@@ -509,6 +517,152 @@ function viewProductDetail(productId, event) {
     // TODO: Navigate to product detail page
     showToast('Chức năng xem chi tiết đang được phát triển', 'warning');
 }
+
+// ==================== LOCATION MANAGEMENT ====================
+
+let locationState = {
+    locations: [],
+    selectedLocationId: null
+};
+
+/**
+ * Fetch locations from API
+ */
+async function fetchLocations() {
+    try {
+        // Use public API or authenticated if needed
+        const token = TokenHelper.getAccessToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${window.BASE_URL}/api/locations`, {
+            headers: headers
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch locations');
+        
+        const data = await response.json();
+        // Handle array response directly or wrapped in payload
+        locationState.locations = Array.isArray(data) ? data : (data.payload || []);
+        
+        console.log('🌍 Locations loaded:', locationState.locations.length);
+        
+        // Initialize default location if not set
+        if (!locationState.selectedLocationId) {
+            const savedLocation = localStorage.getItem('selectedLocation');
+            if (savedLocation) {
+                const { id, name } = JSON.parse(savedLocation);
+                selectLocation(id, name, false);
+            } else {
+                // Default to Hanoi or first available
+                const defaultLoc = locationState.locations.find(l => l.name.includes('Hà Nội')) || locationState.locations[0];
+                if (defaultLoc) {
+                    selectLocation(defaultLoc.id, defaultLoc.name, false);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching locations:', error);
+        // Fallback data if API fails
+        locationState.locations = [
+            { id: 1, name: 'Hà Nội' },
+            { id: 2, name: 'Hồ Chí Minh' }
+        ];
+    }
+}
+
+/**
+ * Open location modal
+ */
+function openLocationModal() {
+    const modal = document.getElementById('locationModal');
+    modal.classList.add('show');
+    
+    // Reset search
+    document.getElementById('locationSearchInput').value = '';
+    
+    if (locationState.locations.length === 0) {
+        fetchLocations().then(() => renderLocations(locationState.locations));
+    } else {
+        renderLocations(locationState.locations);
+    }
+}
+
+/**
+ * Close location modal
+ */
+function closeLocationModal() {
+    document.getElementById('locationModal').classList.remove('show');
+}
+
+/**
+ * Render locations list
+ */
+function renderLocations(locations) {
+    const list = document.getElementById('locationList');
+    
+    if (locations.length === 0) {
+        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy kết quả</div>';
+        return;
+    }
+    
+    list.innerHTML = locations.map(loc => `
+        <div class="location-item ${loc.id === locationState.selectedLocationId ? 'selected' : ''}" 
+             onclick="selectLocation(${loc.id}, '${loc.name}')">
+            <span>${loc.name}</span>
+            <i class="fas fa-check-circle"></i>
+        </div>
+    `).join('');
+}
+
+/**
+ * Handle location search
+ */
+function handleLocationSearch() {
+    const keyword = document.getElementById('locationSearchInput').value.toLowerCase();
+    const filtered = locationState.locations.filter(loc => 
+        loc.name.toLowerCase().includes(keyword)
+    );
+    renderLocations(filtered);
+}
+
+/**
+ * Select location
+ */
+function selectLocation(id, name, close = true) {
+    locationState.selectedLocationId = id;
+    
+    // Update Header UI
+    const headerLocationText = document.querySelector('.header-location .text-large');
+    if (headerLocationText) {
+        headerLocationText.textContent = name;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('selectedLocation', JSON.stringify({ id, name }));
+    
+    // Re-render if modal is open
+    if (document.getElementById('locationModal').classList.contains('show')) {
+        handleLocationSearch(); // Re-render with current filter
+    }
+    
+    if (close) {
+        closeLocationModal();
+        showToast(`Đã chọn khu vực: ${name}`, 'success');
+        // Trigger reload products if needed
+        // loadProducts();
+    }
+}
+
+// Initialize locations on load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchLocations();
+});
 
 // ==================== UTILITY FUNCTIONS ====================
 
