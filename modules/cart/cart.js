@@ -6,15 +6,17 @@ let cartState = {
     items: [],
     selectedItems: new Set(),
     voucher: null,
-    isLoading: false
+    isLoading: false,
+    currentProvinceId: null  // Track current selected province for inventory checking
 };
 
 // ==================== API CALLS ====================
 
 /**
  * Get current user's cart
+ * @param {Number} provinceId - Optional province ID for location-based inventory
  */
-async function getCartAPI() {
+async function getCartAPI(provinceId = null) {
     try {
         const token = TokenHelper.getAccessToken();
         console.log('🔑 Getting cart with token:', token ? 'exists' : 'missing');
@@ -25,7 +27,13 @@ async function getCartAPI() {
             return null;
         }
         
-        const response = await fetch(`${window.BASE_URL}/api/cart`, {
+        // Build URL with optional provinceId parameter
+        let url = `${window.BASE_URL}/api/cart`;
+        if (provinceId) {
+            url += `?provinceId=${provinceId}`;
+        }
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -64,10 +72,17 @@ async function getCartAPI() {
 /**
  * Add item to cart
  * @param {Object} item - Cart item with skuId, quantity, etc.
+ * @param {Number} provinceId - Optional province ID for location-based inventory
  */
-async function addItemAPI(item) {
+async function addItemAPI(item, provinceId = null) {
     try {
-        const response = await fetch(`${window.BASE_URL}/api/cart/add`, {
+        // Build URL with optional provinceId parameter
+        let url = `${window.BASE_URL}/api/cart/add`;
+        if (provinceId) {
+            url += `?provinceId=${provinceId}`;
+        }
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -93,10 +108,17 @@ async function addItemAPI(item) {
  * Update item quantity
  * @param {Number} skuId - SKU ID
  * @param {Number} quantity - New quantity
+ * @param {Number} provinceId - Optional province ID for location-based inventory
  */
-async function updateQuantityAPI(skuId, quantity) {
+async function updateQuantityAPI(skuId, quantity, provinceId = null) {
     try {
-        const response = await fetch(`${window.BASE_URL}/api/cart/update/${skuId}?quantity=${quantity}`, {
+        // Build URL with quantity and optional provinceId parameters
+        let url = `${window.BASE_URL}/api/cart/update/${skuId}?quantity=${quantity}`;
+        if (provinceId) {
+            url += `&provinceId=${provinceId}`;
+        }
+        
+        const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -130,10 +152,17 @@ async function updateQuantityAPI(skuId, quantity) {
 /**
  * Remove item from cart
  * @param {Number} skuId - SKU ID
+ * @param {Number} provinceId - Optional province ID for location-based inventory
  */
-async function removeItemAPI(skuId) {
+async function removeItemAPI(skuId, provinceId = null) {
     try {
-        const response = await fetch(`${window.BASE_URL}/api/cart/remove/${skuId}`, {
+        // Build URL with optional provinceId parameter
+        let url = `${window.BASE_URL}/api/cart/remove/${skuId}`;
+        if (provinceId) {
+            url += `?provinceId=${provinceId}`;
+        }
+        
+        const response = await fetch(url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -216,11 +245,19 @@ function renderCartItems() {
         const skuId = item.skuId || item.id;
         const productId = item.productId || 0;
         const quantity = item.quantity || 1;
-        const stockQuantity = item.stockQuantity || item.stock || 100;
-        const variant = item.variant || item.variantName || '';
+        const stockQuantity = item.availableQuantity || item.stockQuantity || item.stock || 0;
+        const variant = item.variant || item.variantName || item.skuName || '';
+        
+        // Kiểm tra hết hàng - API trả về outOfStock hoặc availableQuantity === 0
+        const isOutOfStock = item.outOfStock === true || stockQuantity === 0;
         
         return `
-        <div class="cart-item ${cartState.selectedItems.has(skuId) ? 'selected' : ''}" data-sku-id="${skuId}">
+        <div class="cart-item ${cartState.selectedItems.has(skuId) ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}" data-sku-id="${skuId}">
+            ${isOutOfStock ? `
+            <div class="sold-out-tag">
+                <img src="../../assets/img/sold-out.png" alt="Hết hàng">
+            </div>` : ''}
+
             <!-- Checkbox -->
             <div class="item-checkbox">
                 <input 
@@ -228,6 +265,7 @@ function renderCartItems() {
                     class="item-select-checkbox"
                     data-sku-id="${skuId}"
                     ${cartState.selectedItems.has(skuId) ? 'checked' : ''}
+                    ${isOutOfStock ? 'disabled' : ''}
                 >
             </div>
 
@@ -235,6 +273,7 @@ function renderCartItems() {
             <div class="item-image">
                 <img src="${productImage}" 
                      alt="${productName}"
+                     class="product-img"
                      onerror="this.src='../../assets/img/placeholder.svg'">
             </div>
 
@@ -254,6 +293,10 @@ function renderCartItems() {
                     <i class="fas fa-box"></i>
                     ${getStockText(stockQuantity)}
                 </div>
+                
+                ${isOutOfStock ? `<div class="text-danger small" style="color: #d70018; font-weight: 500; margin-top: 5px;">
+                    <i class="fas fa-exclamation-circle"></i> Tạm hết hàng tại khu vực này
+                </div>` : ''}
 
                 <!-- Bottom Row -->
                 <div class="item-bottom">
@@ -274,7 +317,6 @@ function renderCartItems() {
                         <div class="quantity-control">
                             <button 
                                 onclick="changeQuantity(${skuId}, ${quantity - 1})"
-                                ${quantity <= 1 ? 'disabled' : ''}
                             >
                                 <i class="fas fa-minus"></i>
                             </button>
@@ -287,7 +329,6 @@ function renderCartItems() {
                             >
                             <button 
                                 onclick="changeQuantity(${skuId}, ${quantity + 1})"
-                                ${quantity >= stockQuantity ? 'disabled' : ''}
                             >
                                 <i class="fas fa-plus"></i>
                             </button>
@@ -419,7 +460,7 @@ async function changeQuantity(skuId, newQuantity) {
     showLoading(true);
     
     try {
-        await updateQuantityAPI(skuId, newQuantity);
+        await updateQuantityAPI(skuId, newQuantity, cartState.currentProvinceId);
         // Reload cart to get latest data from backend
         await loadCart();
         showToast('Cập nhật số lượng thành công', 'success');
@@ -439,7 +480,7 @@ async function removeItem(skuId) {
     showLoading(true);
     
     try {
-        await removeItemAPI(skuId);
+        await removeItemAPI(skuId, cartState.currentProvinceId);
         cartState.selectedItems.delete(skuId);
         // Reload cart to get latest data from backend
         await loadCart();
@@ -467,7 +508,7 @@ async function deleteSelected() {
     try {
         // Remove each selected item
         for (const skuId of cartState.selectedItems) {
-            await removeItemAPI(skuId);
+            await removeItemAPI(skuId, cartState.currentProvinceId);
         }
         
         // Reload cart
@@ -618,15 +659,16 @@ function showToast(message, type = 'success') {
 }
 
 /**
- * Load cart data
+ * Load cart data with current province ID
  */
 async function loadCart() {
     showLoading(true);
     
     try {
-        const cart = await getCartAPI();
+        const cart = await getCartAPI(cartState.currentProvinceId);
         
         console.log('📦 Cart data received:', cart);
+        console.log('🌍 Province ID used:', cartState.currentProvinceId);
         
         if (cart) {
             // Backend có thể trả về cart.items hoặc cart.cartItems hoặc trực tiếp là array
@@ -655,9 +697,203 @@ async function loadCart() {
 // ==================== INITIALIZATION ====================
 
 /**
+ * Initialize user info in header
+ */
+function initUserInfo() {
+    if (TokenHelper.isLoggedIn()) {
+        const userEmail = localStorage.getItem('user_email') || 'User';
+        const initial = userEmail.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').textContent = initial;
+        document.getElementById('userName').textContent = userEmail.split('@')[0];
+    } else {
+        document.getElementById('userInfo').innerHTML = `
+            <button class="btn-cart" style="background: transparent; border: 1px solid white; padding: 8px 20px;" 
+                    onclick="window.location.href='../auth/login.html'">
+                <i class="fas fa-sign-in-alt"></i>
+                Đăng nhập
+            </button>
+        `;
+    }
+}
+
+/**
+ * Update cart badge in header
+ */
+async function updateCartBadge() {
+    if (!TokenHelper.isLoggedIn()) {
+        document.getElementById('cartBadge').textContent = '0';
+        return;
+    }
+    
+    try {
+        const cart = await getCartAPI();
+        if (!cart) {
+            document.getElementById('cartBadge').textContent = '0';
+            return;
+        }
+        
+        const items = cart.items || cart.cartItems || [];
+        const count = items.length || 0;
+        document.getElementById('cartBadge').textContent = count;
+    } catch (error) {
+        console.error('Update cart badge error:', error);
+        document.getElementById('cartBadge').textContent = '0';
+    }
+}
+
+// ==================== LOCATION MANAGEMENT ====================
+
+let locationState = {
+    locations: [],
+    selectedLocationId: null
+};
+
+/**
+ * Fetch locations/provinces from API
+ */
+async function fetchLocations() {
+    try {
+        const token = TokenHelper.getAccessToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${window.BASE_URL}/api/locations`, {
+            headers: headers
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch locations');
+        
+        const data = await response.json();
+        locationState.locations = Array.isArray(data) ? data : (data.payload || []);
+        
+        console.log('🌍 Locations/Provinces loaded:', locationState.locations.length);
+        
+        // Initialize default location if not set
+        if (!locationState.selectedLocationId) {
+            const savedLocation = localStorage.getItem('selectedLocation');
+            if (savedLocation) {
+                const { id, name } = JSON.parse(savedLocation);
+                selectLocation(id, name, false);
+            } else {
+                const defaultLoc = locationState.locations.find(l => l.name.includes('Hà Nội')) || locationState.locations[0];
+                if (defaultLoc) {
+                    selectLocation(defaultLoc.id, defaultLoc.name, false);
+                }
+            }
+        } else {
+            // If location already selected, ensure cart state is synced
+            cartState.currentProvinceId = locationState.selectedLocationId;
+        }
+    } catch (error) {
+        console.error('Error fetching locations:', error);
+        locationState.locations = [
+            { id: 1, name: 'Hà Nội' },
+            { id: 2, name: 'Hồ Chí Minh' }
+        ];
+    }
+}
+
+/**
+ * Open location modal
+ */
+function openLocationModal() {
+    const modal = document.getElementById('locationModal');
+    modal.classList.add('show');
+    
+    document.getElementById('locationSearchInput').value = '';
+    
+    if (locationState.locations.length === 0) {
+        fetchLocations().then(() => renderLocations(locationState.locations));
+    } else {
+        renderLocations(locationState.locations);
+    }
+}
+
+/**
+ * Close location modal
+ */
+function closeLocationModal() {
+    document.getElementById('locationModal').classList.remove('show');
+}
+
+/**
+ * Render locations list
+ */
+function renderLocations(locations) {
+    const list = document.getElementById('locationList');
+    
+    if (locations.length === 0) {
+        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy kết quả</div>';
+        return;
+    }
+    
+    list.innerHTML = locations.map(loc => `
+        <div class="location-item ${loc.id === locationState.selectedLocationId ? 'selected' : ''}" 
+             onclick="selectLocation(${loc.id}, '${loc.name}')">
+            <span>${loc.name}</span>
+            <i class="fas fa-check-circle"></i>
+        </div>
+    `).join('');
+}
+
+/**
+ * Handle location search
+ */
+function handleLocationSearch() {
+    const keyword = document.getElementById('locationSearchInput').value.toLowerCase();
+    const filtered = locationState.locations.filter(loc => 
+        loc.name.toLowerCase().includes(keyword)
+    );
+    renderLocations(filtered);
+}
+
+/**
+ * Select location and reload cart with new province inventory
+ */
+function selectLocation(id, name, close = true) {
+    const previousLocationId = locationState.selectedLocationId;
+    locationState.selectedLocationId = id;
+    
+    const headerLocationText = document.querySelector('.header-location .text-large');
+    if (headerLocationText) {
+        headerLocationText.textContent = name;
+    }
+    
+    localStorage.setItem('selectedLocation', JSON.stringify({ id, name }));
+    
+    if (document.getElementById('locationModal').classList.contains('show')) {
+        handleLocationSearch();
+    }
+    
+    if (close) {
+        closeLocationModal();
+        showToast(`Đã chọn khu vực: ${name}`, 'success');
+    }
+    
+    // Update cart state with new province ID and reload cart to check inventory
+    cartState.currentProvinceId = id;
+    
+    // Only reload if location actually changed and we're logged in
+    if (previousLocationId !== id && TokenHelper.isLoggedIn()) {
+        console.log('🔄 Location changed, reloading cart with provinceId:', id);
+        loadCart();
+    }
+}
+
+/**
  * Initialize cart page
  */
 function initCart() {
+    // Initialize header
+    initUserInfo();
+    updateCartBadge();
+    fetchLocations();
+    
     // Check authentication
     if (!TokenHelper.isLoggedIn()) {
         showToast('Vui lòng đăng nhập để xem giỏ hàng', 'warning');
