@@ -1,0 +1,43 @@
+/* Stock Transfer Specific Styles */
+
+.transfer-info-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.transfer-info-row {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.transfer-info-label {
+    font-weight: 600;
+    width: 120px;
+    color: #6c757d;
+}
+
+.transfer-info-value {
+    flex: 1;
+    color: #212529;
+}
+
+.table-products th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.product-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+/* Status Badges Customization if needed */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
