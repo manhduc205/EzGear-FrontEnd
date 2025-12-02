@@ -63,7 +63,13 @@ async function loadSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     
-    const currentPage = window.location.pathname.split('/').pop();
+    const pathParts = window.location.pathname.split('/');
+    const currentPage = pathParts.pop();
+    const parentFolder = pathParts.pop();
+    
+    const isInSubDir = parentFolder === 'stock-transfer';
+    const base = isInSubDir ? '../' : './';
+    const stockTransferLink = isInSubDir ? './stock-transfer.html' : './stock-transfer/stock-transfer.html';
     
     sidebar.innerHTML = `
         <div class="sidebar-header">
@@ -74,7 +80,7 @@ async function loadSidebar() {
         <nav class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-section-title">Tổng Quan</div>
-                <a href="./dashboard.html" class="menu-item ${currentPage === 'dashboard.html' ? 'active' : ''}">
+                <a href="${base}dashboard.html" class="menu-item ${currentPage === 'dashboard.html' ? 'active' : ''}">
                     <i class="fas fa-chart-line"></i>
                     <span class="menu-item-text">Dashboard</span>
                 </a>
@@ -82,19 +88,19 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Quản Lý Sản Phẩm</div>
-                <a href="./products.html" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
+                <a href="${base}products.html" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
                     <i class="fas fa-box"></i>
                     <span class="menu-item-text">Sản phẩm</span>
                 </a>
-                <a href="./add-product.html" class="menu-item ${currentPage === 'add-product.html' ? 'active' : ''}">
+                <a href="${base}add-product.html" class="menu-item ${currentPage === 'add-product.html' ? 'active' : ''}">
                     <i class="fas fa-plus-circle"></i>
                     <span class="menu-item-text">Thêm sản phẩm</span>
                 </a>
-                <a href="./brands.html" class="menu-item ${currentPage === 'brands.html' ? 'active' : ''}">
+                <a href="${base}brands.html" class="menu-item ${currentPage === 'brands.html' ? 'active' : ''}">
                     <i class="fas fa-tag"></i>
                     <span class="menu-item-text">Thương hiệu</span>
                 </a>
-                <a href="./categories.html" class="menu-item ${currentPage === 'categories.html' ? 'active' : ''}">
+                <a href="${base}categories.html" class="menu-item ${currentPage === 'categories.html' ? 'active' : ''}">
                     <i class="fas fa-list"></i>
                     <span class="menu-item-text">Danh mục</span>
                 </a>
@@ -102,32 +108,36 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Quản Lý Kho</div>
-                <a href="./branches.html" class="menu-item ${currentPage === 'branches.html' ? 'active' : ''}">
+                <a href="${base}branches.html" class="menu-item ${currentPage === 'branches.html' ? 'active' : ''}">
                     <i class="fas fa-building"></i>
                     <span class="menu-item-text">Chi nhánh</span>
                 </a>
-                <a href="./warehouses.html" class="menu-item ${currentPage === 'warehouses.html' ? 'active' : ''}">
+                <a href="${base}warehouses.html" class="menu-item ${currentPage === 'warehouses.html' ? 'active' : ''}">
                     <i class="fas fa-warehouse"></i>
                     <span class="menu-item-text">Kho hàng</span>
                 </a>
-                <a href="./stock-transactions.html" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">
+                <a href="${base}stock-transactions.html" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">
                     <i class="fas fa-exchange-alt"></i>
                     <span class="menu-item-text">Lịch sử giao dịch</span>
                 </a>
-                <a href="./stocks.html" class="menu-item ${currentPage === 'stocks.html' ? 'active' : ''}">
+                <a href="${base}stocks.html" class="menu-item ${currentPage === 'stocks.html' ? 'active' : ''}">
                     <i class="fas fa-boxes"></i>
                     <span class="menu-item-text">Tồn kho</span>
                 </a>
-                <a href="./purchase-orders.html" class="menu-item ${currentPage === 'purchase-orders.html' ? 'active' : ''}">
+                <a href="${base}purchase-orders.html" class="menu-item ${currentPage === 'purchase-orders.html' ? 'active' : ''}">
                     <i class="fas fa-file-invoice"></i>
                     <span class="menu-item-text">Đơn nhập hàng</span>
                     <span class="menu-badge" id="pendingOrdersBadge">0</span>
+                </a>
+                <a href="${stockTransferLink}" class="menu-item ${currentPage === 'stock-transfer.html' ? 'active' : ''}">
+                    <i class="fas fa-dolly"></i>
+                    <span class="menu-item-text">Chuyển kho</span>
                 </a>
             </div>
 
             <div class="menu-section">
                 <div class="menu-section-title">Khuyến Mãi</div>
-                <a href="./vouchers.html" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
+                <a href="${base}vouchers.html" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
                     <i class="fas fa-ticket-alt"></i>
                     <span class="menu-item-text">Voucher</span>
                 </a>
@@ -135,11 +145,11 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Hệ Thống</div>
-                <a href="./users.html" class="menu-item ${currentPage === 'users.html' ? 'active' : ''}">
+                <a href="${base}users.html" class="menu-item ${currentPage === 'users.html' ? 'active' : ''}">
                     <i class="fas fa-users"></i>
                     <span class="menu-item-text">Người dùng</span>
                 </a>
-                <a href="./settings.html" class="menu-item ${currentPage === 'settings.html' ? 'active' : ''}">
+                <a href="${base}settings.html" class="menu-item ${currentPage === 'settings.html' ? 'active' : ''}">
                     <i class="fas fa-cog"></i>
                     <span class="menu-item-text">Cài đặt</span>
                 </a>

@@ -16,7 +16,7 @@ let checkoutState = {
 };
 
 // ==================== API ENDPOINTS ====================
-const CHECKOUT_API = `${window.BASE_URL}/checkout`;
+const CHECKOUT_API = `${window.BASE_URL}/api/orders/place`;
 const ADDRESS_API = `${window.BASE_URL}/api/customer-addresses`;
 const SHIPPING_SERVICES_API = `${window.BASE_URL}/api/shipping/available-services`;
 const SHIPPING_FEE_API = `${window.BASE_URL}/api/shipping/fee`;
@@ -39,8 +39,8 @@ async function initCheckout() {
         return;
     }
     
-    // Get cart items from sessionStorage (passed from cart page)
-    const savedCartItems = sessionStorage.getItem('checkoutItems');
+    // Get cart items from sessionStorage (passed from cart page) or localStorage (cart key)
+    const savedCartItems = sessionStorage.getItem('checkoutItems') || localStorage.getItem('cart');
     const savedVoucher = sessionStorage.getItem('checkoutVoucher');
     
     if (!savedCartItems) {
@@ -1364,44 +1364,54 @@ function updateCheckoutButton() {
 }
 
 /**
- * Process checkout - POST /checkout
+ * Process checkout - POST /api/orders/place
  */
 async function processCheckout() {
     if (checkoutState.isProcessing) return;
     
-    // Validate
-    if (!checkoutState.selectedAddress) {
+    // 1. Validation
+    // Check if selectedAddressId is set
+    if (!checkoutState.selectedAddress || !checkoutState.selectedAddress.id) {
         showToast('Vui lòng chọn địa chỉ nhận hàng', 'warning');
         return;
     }
     
+    // Check if cart is not empty
+    if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
+        showToast('Không có sản phẩm trong đơn hàng', 'error');
+        return;
+    }
+
+    // Check if shipping service is selected
     if (!checkoutState.selectedServiceId) {
         showToast('Vui lòng chọn phương thức vận chuyển', 'warning');
         return;
     }
     
-    if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
-        showToast('Không có sản phẩm trong đơn hàng', 'error');
-        return;
-    }
-    
+    // 2. Loading UI
     checkoutState.isProcessing = true;
     showLoading(true, 'Đang xử lý đơn hàng...');
     
     try {
+        // Gather data
+        const note = document.getElementById('orderNote') ? document.getElementById('orderNote').value : '';
+        
         const requestBody = {
             cartItems: checkoutState.cartItems.map(item => ({
                 skuId: item.skuId || item.id,
                 quantity: item.quantity
             })),
             addressId: checkoutState.selectedAddress.id,
+            branchId: checkoutState.branchId || 1, // Default to 1 if not set
+            note: note,
             voucherCode: checkoutState.voucherCode || null,
             paymentMethod: checkoutState.paymentMethod,
-            serviceId: checkoutState.selectedServiceId
+            shippingServiceId: checkoutState.selectedServiceId
         };
         
-        console.log('📤 POST /checkout request:', requestBody);
+        console.log('📤 Placing order:', requestBody);
         
+        // 3. API Call
         const response = await fetch(CHECKOUT_API, {
             method: 'POST',
             headers: {
@@ -1411,30 +1421,47 @@ async function processCheckout() {
             body: JSON.stringify(requestBody)
         });
         
+        const data = await response.json();
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Đặt hàng thất bại');
+            throw new Error(data.message || 'Đặt hàng thất bại');
         }
         
-        const data = await response.json();
-        console.log('📥 POST /checkout response:', data);
+        console.log('📥 Order response:', data);
         
-        // Backend trả về orderCode, paymentUrl, message
+        // 4. Handle Success
         const result = data.payload || data;
         
-        // Clear session storage
+        // If VNPAY (paymentUrl exists)
+        if (checkoutState.paymentMethod === 'VNPAY' && result.paymentUrl) {
+            window.location.href = result.paymentUrl;
+            return;
+        }
+        
+        // If COD (paymentUrl null) or other success
+        // Hide loading
+        showLoading(false);
+        
+        // Clear Cart from localStorage and sessionStorage
+        localStorage.removeItem('cart');
         sessionStorage.removeItem('checkoutItems');
         sessionStorage.removeItem('checkoutVoucher');
         
-        // Show success
+        // Set order code to #orderCode
+        if (document.getElementById('orderCode')) {
+            document.getElementById('orderCode').textContent = result.orderCode || '-';
+        }
+        
+        // Show #successModal
         showSuccessModal(result);
         
     } catch (error) {
+        // 5. Handle Error
         console.error('❌ Checkout error:', error);
-        showToast('Lỗi đặt hàng: ' + error.message, 'error');
+        alert(error.message || 'Có lỗi xảy ra khi đặt hàng');
+        showLoading(false);
     } finally {
         checkoutState.isProcessing = false;
-        showLoading(false);
     }
 }
 
