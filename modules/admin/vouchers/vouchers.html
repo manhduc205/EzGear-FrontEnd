@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Voucher - EzGear Admin</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../admin-common.css">
+    <link rel="stylesheet" href="./vouchers.css">
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1><i class="fas fa-ticket-alt"></i> Quản Lý Voucher</h1>
+                    <div class="breadcrumb">
+                        <a href="../dashboard.html">Dashboard</a> / Vouchers
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Mã Voucher</label>
+                            <input type="text" id="filterCode" placeholder="Nhập mã voucher...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Loại</label>
+                            <select id="filterType">
+                                <option value="">Tất cả</option>
+                                <option value="ORDER">Giảm đơn hàng</option>
+                                <option value="SHIPPING">Giảm ship</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Hình thức giảm</label>
+                            <select id="filterDiscountType">
+                                <option value="">Tất cả</option>
+                                <option value="PERCENT">Phần trăm</option>
+                                <option value="AMOUNT">Số tiền</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Trạng thái</label>
+                            <select id="filterStatus">
+                                <option value="">Tất cả</option>
+                                <option value="ACTIVE">Hoạt động</option>
+                                <option value="INACTIVE">Tạm dừng</option>
+                                <option value="EXPIRED">Hết hạn</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-secondary" onclick="searchVouchers()">
+                                <i class="fas fa-search"></i> Tìm kiếm
+                            </button>
+                            <button class="btn btn-outline" onclick="resetFilters()">
+                                <i class="fas fa-redo"></i> Đặt lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Tạo Voucher Mới
+                    </button>
+                    <div class="stats-summary">
+                        <span class="stat-item">
+                            <i class="fas fa-ticket-alt"></i>
+                            Tổng: <strong id="totalVouchers">0</strong>
+                        </span>
+                        <span class="stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            Hoạt động: <strong id="activeVouchers">0</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Vouchers Table -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">ID</th>
+                                <th style="width: 150px;">Mã Voucher</th>
+                                <th style="width: 120px;">Loại</th>
+                                <th style="width: 150px;">Giảm giá</th>
+                                <th style="width: 120px;">Đơn tối thiểu</th>
+                                <th style="width: 120px;">Giảm tối đa</th>
+                                <th style="width: 100px;">Sử dụng</th>
+                                <th style="width: 140px;">Thời gian</th>
+                                <th style="width: 100px;">Trạng thái</th>
+                                <th style="width: 150px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vouchersTableBody">
+                            <tr>
+                                <td colspan="10" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+                                    <p>Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="voucherModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fas fa-plus-circle"></i> Tạo Voucher Mới</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="voucherForm" onsubmit="saveVoucher(event)">
+                <input type="hidden" id="voucherId">
+                
+                <!-- Basic Info Section -->
+                <div class="form-section-header">
+                    <i class="fas fa-info-circle"></i>
+                    Thông Tin Cơ Bản
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="voucherCode">
+                            <i class="fas fa-tag"></i>
+                            Mã Voucher <span class="required">*</span>
+                        </label>
+                        <input type="text" id="voucherCode" class="form-control" required 
+                               placeholder="VD: SALE50, FREESHIP..." style="text-transform: uppercase;">
+                        <small>Chỉ chữ in hoa, số và dấu gạch dưới</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="voucherType">
+                            <i class="fas fa-layer-group"></i>
+                            Loại Voucher <span class="required">*</span>
+                        </label>
+                        <select id="voucherType" class="form-control" required>
+                            <option value="ORDER">🛒 Giảm đơn hàng</option>
+                            <option value="SHIPPING">🚚 Giảm phí ship</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Discount Config Section -->
+                <div class="form-section-header">
+                    <i class="fas fa-percentage"></i>
+                    Cấu Hình Giảm Giá
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="discountType">
+                            <i class="fas fa-calculator"></i>
+                            Hình thức giảm <span class="required">*</span>
+                        </label>
+                        <select id="discountType" class="form-control" required onchange="handleDiscountTypeChange()">
+                            <option value="PERCENT">📊 Phần trăm (%)</option>
+                            <option value="AMOUNT">💰 Số tiền cố định (₫)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="discountValue">
+                            <i class="fas fa-award"></i>
+                            Giá trị giảm <span class="required">*</span>
+                        </label>
+                        <input type="number" id="discountValue" class="form-control" required min="0" step="0.01">
+                        <small id="discountValueHint">Nhập % giảm (VD: 15 cho 15%)</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="minOrder">
+                            <i class="fas fa-shopping-cart"></i>
+                            Đơn hàng tối thiểu (₫)
+                        </label>
+                        <input type="number" id="minOrder" class="form-control" min="0" value="0" step="1000" placeholder="0">
+                        <small>Giá trị đơn hàng tối thiểu để áp dụng voucher</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxDiscount">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            Giảm tối đa (₫)
+                        </label>
+                        <input type="number" id="maxDiscount" class="form-control" min="0" step="1000" placeholder="Không giới hạn">
+                        <small>Để trống nếu không giới hạn</small>
+                    </div>
+                </div>
+
+                <!-- Time & Limit Section -->
+                <div class="form-section-header">
+                    <i class="fas fa-clock"></i>
+                    Thời Gian & Giới Hạn
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startAt">
+                            <i class="fas fa-calendar-plus"></i>
+                            Thời gian bắt đầu <span class="required">*</span>
+                        </label>
+                        <input type="datetime-local" id="startAt" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endAt">
+                            <i class="fas fa-calendar-times"></i>
+                            Thời gian kết thúc <span class="required">*</span>
+                        </label>
+                        <input type="datetime-local" id="endAt" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="usageLimit">
+                            <i class="fas fa-users"></i>
+                            Giới hạn sử dụng
+                        </label>
+                        <input type="number" id="usageLimit" class="form-control" min="1" value="100">
+                        <small>Số lần voucher có thể được sử dụng</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scope">
+                            <i class="fas fa-bullseye"></i>
+                            Phạm vi áp dụng <span class="required">*</span>
+                        </label>
+                        <select id="scope" class="form-control" required onchange="handleScopeChange()">
+                            <option value="ALL">🌐 Tất cả sản phẩm</option>
+                            <option value="CATEGORY">📁 Theo danh mục</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" id="categorySelectGroup" style="display: none;">
+                    <label for="categoryIds">
+                        <i class="fas fa-folder-open"></i>
+                        Chọn danh mục áp dụng
+                    </label>
+                    <select id="categoryIds" class="form-control" multiple size="5">
+                        <!-- Categories will be loaded here -->
+                    </select>
+                    <small>Giữ Ctrl (Cmd trên Mac) để chọn nhiều danh mục</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="voucherStatus">
+                        <i class="fas fa-toggle-on"></i>
+                        Trạng thái <span class="required">*</span>
+                    </label>
+                    <select id="voucherStatus" class="form-control" required>
+                        <option value="ACTIVE">✅ Hoạt động</option>
+                        <option value="INACTIVE">⏸️ Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu Voucher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../../assets/js/core/api.js"></script>
+    <script src="../../../assets/js/core/config.js"></script>
+    <script src="../../../assets/js/core/utils.js"></script>
+    <script src="../admin-common.js"></script>
+    <script src="./vouchers.js"></script>
+</body>
+</html>

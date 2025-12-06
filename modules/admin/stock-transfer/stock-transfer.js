@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     createModal = new bootstrap.Modal(document.getElementById('createTransferModal'));
     detailModal = new bootstrap.Modal(document.getElementById('detailTransferModal'));
 
+    // Load Sidebar (Assuming common admin structure)
+    loadSidebar();
+
     // Initial Data Load
     await Promise.all([
         loadWarehouses(),
@@ -31,20 +34,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('searchInput').addEventListener('input', debounce(handleSearch, 500));
 });
 
+function loadSidebar() {
+    const sidebarContainer = document.getElementById('sidebar-container');
+    if (sidebarContainer) {
+        fetch('../../../components/sidebar-admin.html')
+            .then(response => response.text())
+            .then(html => {
+                sidebarContainer.innerHTML = html;
+                // Highlight current menu item
+                const currentPath = window.location.pathname;
+                // Add active class logic here if needed
+            });
+    }
+}
+
 // ==================== DATA LOADING ====================
+
 async function loadWarehouses() {
     try {
         const response = await fetch(WAREHOUSES_API, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
         });
-        
+
         if (!response.ok) throw new Error('Failed to load warehouses');
-        
-        state.warehouses = await response.json();
+
+        const data = await response.json();
+        state.warehouses = data.payload || data; // Handle ApiResponse wrapper
+
         populateWarehouseSelects();
     } catch (error) {
         console.error('Error loading warehouses:', error);
-        showToast('Lỗi tải danh sách kho', 'error');
+        showToast('Không thể tải danh sách kho', 'error');
     }
 }
 
@@ -52,43 +74,48 @@ async function loadTransfers() {
     showLoading(true);
     try {
         const response = await fetch(TRANSFERS_API, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
         });
 
         if (!response.ok) throw new Error('Failed to load transfers');
 
-        state.transfers = await response.json();
-        renderTransfersTable(state.transfers);
+        const data = await response.json();
+        state.transfers = data.payload || data; // Handle ApiResponse wrapper
+
+        renderTransferTable(state.transfers);
     } catch (error) {
         console.error('Error loading transfers:', error);
-        showToast('Lỗi tải danh sách phiếu chuyển', 'error');
+        showToast('Không thể tải danh sách phiếu chuyển', 'error');
     } finally {
         showLoading(false);
     }
 }
 
 // ==================== RENDERING ====================
+
 function populateWarehouseSelects() {
     const fromSelect = document.getElementById('fromWarehouse');
     const toSelect = document.getElementById('toWarehouse');
     
     const options = state.warehouses.map(w => 
-        `<option value="${w.id}">${w.name}</option>`
+        `<option value="${w.id}">${w.name} - ${w.address || ''}</option>`
     ).join('');
 
     fromSelect.innerHTML = '<option value="">Chọn kho nguồn...</option>' + options;
     toSelect.innerHTML = '<option value="">Chọn kho đích...</option>' + options;
 }
 
-function renderTransfersTable(transfers) {
+function renderTransferTable(transfers) {
     const tbody = document.getElementById('transfersTableBody');
     
-    if (transfers.length === 0) {
+    if (!transfers || transfers.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-4 text-muted">
-                    <i class="fas fa-inbox fa-2x mb-2"></i>
-                    <p class="mb-0">Không tìm thấy phiếu chuyển nào</p>
+                    <i class="fas fa-box-open fa-2x mb-2"></i><br>
+                    Không có phiếu chuyển nào
                 </td>
             </tr>
         `;
@@ -96,16 +123,16 @@ function renderTransfersTable(transfers) {
     }
 
     tbody.innerHTML = transfers.map(t => `
-        <tr onclick="viewTransferDetail(${t.id})" style="cursor: pointer;">
-            <td class="ps-4">#${t.id}</td>
-            <td class="fw-medium text-primary">${t.transferCode || '---'}</td>
-            <td>${getWarehouseName(t.fromWarehouseId)}</td>
-            <td>${getWarehouseName(t.toWarehouseId)}</td>
-            <td>${t.createdBy || 'System'}</td>
+        <tr>
+            <td class="ps-4 fw-bold">#${t.id}</td>
+            <td><span class="font-monospace">${t.code || 'N/A'}</span></td>
+            <td>${t.fromWarehouseName || t.fromWarehouse?.name || '-'}</td>
+            <td>${t.toWarehouseName || t.toWarehouse?.name || '-'}</td>
+            <td>${t.createdBy || 'Admin'}</td>
             <td>${formatDate(t.createdAt)}</td>
             <td>${getStatusBadge(t.status)}</td>
             <td class="text-end pe-4">
-                <button class="btn btn-sm btn-light text-primary" onclick="event.stopPropagation(); viewTransferDetail(${t.id})">
+                <button class="btn btn-sm btn-outline-primary action-btn" onclick="openDetailModal(${t.id})" title="Xem chi tiết">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -113,30 +140,48 @@ function renderTransfersTable(transfers) {
     `).join('');
 }
 
-// ==================== ACTIONS ====================
+function getStatusBadge(status) {
+    const map = {
+        'PENDING': { class: 'status-pending', text: 'Chờ xuất' },
+        'SHIPPING': { class: 'status-shipping', text: 'Đang chuyển' },
+        'COMPLETED': { class: 'status-completed', text: 'Hoàn tất' },
+        'CANCELLED': { class: 'status-cancelled', text: 'Đã hủy' }
+    };
+    
+    const s = map[status] || { class: 'bg-secondary text-white', text: status };
+    return `<span class="transfer-status ${s.class}">${s.text}</span>`;
+}
+
+// ==================== CREATE TRANSFER LOGIC ====================
+
 function openCreateModal() {
+    // Reset form
     document.getElementById('createTransferForm').reset();
     document.getElementById('createItemsBody').innerHTML = '';
     document.getElementById('emptyItemsMsg').style.display = 'block';
+    
+    // Add one empty row by default
+    addProductRow();
+    
     createModal.show();
 }
 
 function addProductRow() {
-    document.getElementById('emptyItemsMsg').style.display = 'none';
     const tbody = document.getElementById('createItemsBody');
-    const rowId = Date.now();
+    document.getElementById('emptyItemsMsg').style.display = 'none';
     
+    const rowId = Date.now();
     const row = document.createElement('tr');
     row.id = `row-${rowId}`;
     row.innerHTML = `
         <td>
-            <input type="number" class="form-control form-control-sm sku-input" placeholder="Nhập SKU ID" required>
+            <input type="number" class="form-control form-control-sm item-sku" placeholder="Nhập SKU ID" required min="1">
         </td>
         <td>
-            <input type="number" class="form-control form-control-sm qty-input" value="1" min="1" required>
+            <input type="number" class="form-control form-control-sm item-qty" placeholder="Số lượng" required min="1" value="1">
         </td>
         <td class="text-center">
-            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeRow('${rowId}')">
+            <button type="button" class="btn-remove-row" onclick="removeProductRow('${rowId}')">
                 <i class="fas fa-times"></i>
             </button>
         </td>
@@ -144,8 +189,10 @@ function addProductRow() {
     tbody.appendChild(row);
 }
 
-function removeRow(rowId) {
-    document.getElementById(`row-${rowId}`).remove();
+function removeProductRow(rowId) {
+    const row = document.getElementById(`row-${rowId}`);
+    if (row) row.remove();
+    
     if (document.getElementById('createItemsBody').children.length === 0) {
         document.getElementById('emptyItemsMsg').style.display = 'block';
     }
@@ -160,18 +207,25 @@ async function submitCreateTransfer() {
         showToast('Vui lòng chọn kho nguồn và kho đích', 'warning');
         return;
     }
-
+    
     if (fromId === toId) {
         showToast('Kho nguồn và kho đích không được trùng nhau', 'warning');
         return;
     }
 
+    // Gather items
     const items = [];
-    document.querySelectorAll('#createItemsBody tr').forEach(row => {
-        const skuId = row.querySelector('.sku-input').value;
-        const quantity = row.querySelector('.qty-input').value;
+    const rows = document.querySelectorAll('#createItemsBody tr');
+    
+    rows.forEach(row => {
+        const skuId = row.querySelector('.item-sku').value;
+        const quantity = row.querySelector('.item-qty').value;
+        
         if (skuId && quantity) {
-            items.push({ skuId: parseInt(skuId), quantity: parseInt(quantity) });
+            items.push({
+                skuId: parseInt(skuId),
+                quantity: parseInt(quantity)
+            });
         }
     });
 
@@ -187,136 +241,190 @@ async function submitCreateTransfer() {
         items: items
     };
 
+    showLoading(true);
     try {
         const response = await fetch(TRANSFERS_API, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
             },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Failed to create transfer');
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Failed to create transfer');
+        }
 
         showToast('Tạo phiếu chuyển thành công', 'success');
         createModal.hide();
-        loadTransfers();
+        loadTransfers(); // Reload table
     } catch (error) {
-        console.error('Error creating transfer:', error);
-        showToast('Lỗi khi tạo phiếu chuyển', 'error');
+        console.error('Create transfer error:', error);
+        showToast(error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
-async function viewTransferDetail(id) {
+// ==================== DETAIL & ACTIONS ====================
+
+async function openDetailModal(id) {
+    showLoading(true);
     try {
+        // Fetch detail
         const response = await fetch(`${TRANSFERS_API}/${id}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
         });
 
-        if (!response.ok) throw new Error('Failed to load detail');
+        if (!response.ok) throw new Error('Failed to load transfer details');
 
-        const transfer = await response.json();
+        const data = await response.json();
+        const transfer = data.payload || data;
         state.currentTransfer = transfer;
 
-        // Fill Info
-        document.getElementById('detailCode').textContent = transfer.transferCode || '---';
-        document.getElementById('detailFrom').textContent = getWarehouseName(transfer.fromWarehouseId);
-        document.getElementById('detailTo').textContent = getWarehouseName(transfer.toWarehouseId);
+        // Populate Info
+        document.getElementById('detailCode').textContent = transfer.code || 'N/A';
+        document.getElementById('detailFrom').textContent = transfer.fromWarehouseName || transfer.fromWarehouse?.name;
+        document.getElementById('detailTo').textContent = transfer.toWarehouseName || transfer.toWarehouse?.name;
         document.getElementById('detailDate').textContent = formatDate(transfer.createdAt);
-        document.getElementById('detailCreator').textContent = transfer.createdBy || 'System';
+        document.getElementById('detailCreator').textContent = transfer.createdBy || 'Admin';
         document.getElementById('detailStatus').innerHTML = getStatusBadge(transfer.status);
         document.getElementById('detailNote').textContent = transfer.note || 'Không có ghi chú';
 
-        // Fill Items
+        // Populate Items
         const tbody = document.getElementById('detailItemsBody');
-        tbody.innerHTML = transfer.items.map((item, index) => `
+        tbody.innerHTML = (transfer.items || []).map((item, index) => `
             <tr>
                 <td>${index + 1}</td>
                 <td>${item.productName || 'Sản phẩm #' + item.skuId}</td>
-                <td>SKU-${item.skuId}</td>
+                <td><span class="badge bg-light text-dark border">${item.skuCode || item.skuId}</span></td>
                 <td class="text-end fw-bold">${item.quantity}</td>
             </tr>
         `).join('');
 
-        // Update Footer Buttons based on status
-        updateDetailButtons(transfer);
+        // Setup Action Buttons
+        setupActionButtons(transfer);
 
         detailModal.show();
     } catch (error) {
-        console.error('Error loading detail:', error);
-        showToast('Lỗi tải chi tiết phiếu', 'error');
+        console.error('Detail error:', error);
+        showToast('Không thể tải chi tiết phiếu', 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
-function updateDetailButtons(transfer) {
+function setupActionButtons(transfer) {
     const footer = document.getElementById('detailModalFooter');
-    let buttons = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>';
+    let buttonsHtml = '';
 
     if (transfer.status === 'PENDING') {
-        buttons = `
-            <button type="button" class="btn btn-danger" onclick="updateStatus(${transfer.id}, 'CANCELLED')">Hủy Phiếu</button>
-            <button type="button" class="btn btn-primary" onclick="updateStatus(${transfer.id}, 'IN_TRANSIT')">Chuyển Hàng</button>
-            ${buttons}
+        buttonsHtml = `
+            <button type="button" class="btn btn-warning text-dark" onclick="shipTransfer(${transfer.id})">
+                <i class="fas fa-shipping-fast me-2"></i>Xuất Kho
+            </button>
         `;
-    } else if (transfer.status === 'IN_TRANSIT') {
-        buttons = `
-            <button type="button" class="btn btn-success" onclick="updateStatus(${transfer.id}, 'COMPLETED')">Hoàn Thành</button>
-            ${buttons}
+    } else if (transfer.status === 'SHIPPING') {
+        buttonsHtml = `
+            <button type="button" class="btn btn-success" onclick="receiveTransfer(${transfer.id})">
+                <i class="fas fa-check-circle me-2"></i>Nhập Kho
+            </button>
         `;
     }
 
-    footer.innerHTML = buttons;
+    buttonsHtml += `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>`;
+    footer.innerHTML = buttonsHtml;
 }
 
-async function updateStatus(id, newStatus) {
-    if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái phiếu này?')) return;
+async function shipTransfer(id) {
+    if (!confirm('Xác nhận xuất kho cho phiếu chuyển này?')) return;
 
+    callTransferAction(`${TRANSFERS_API}/${id}/ship`, 'Xuất kho thành công');
+}
+
+async function receiveTransfer(id) {
+    if (!confirm('Xác nhận đã nhận đủ hàng và nhập kho?')) return;
+
+    callTransferAction(`${TRANSFERS_API}/${id}/receive`, 'Nhập kho thành công');
+}
+
+async function callTransferAction(url, successMsg) {
+    showLoading(true);
     try {
-        const response = await fetch(`${TRANSFERS_API}/${id}/status?status=${newStatus}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+            }
         });
 
-        if (!response.ok) throw new Error('Failed to update status');
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Action failed');
+        }
 
-        showToast('Cập nhật trạng thái thành công', 'success');
+        showToast(successMsg, 'success');
         detailModal.hide();
-        loadTransfers();
+        loadTransfers(); // Reload list
     } catch (error) {
-        console.error('Error updating status:', error);
-        showToast('Lỗi cập nhật trạng thái', 'error');
+        console.error('Action error:', error);
+        showToast(error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
 // ==================== UTILS ====================
-function getWarehouseName(id) {
-    const w = state.warehouses.find(x => x.id === id);
-    return w ? w.name : `Kho #${id}`;
-}
-
-function getStatusBadge(status) {
-    const map = {
-        'PENDING': '<span class="badge bg-warning text-dark">Chờ xử lý</span>',
-        'IN_TRANSIT': '<span class="badge bg-info text-dark">Đang vận chuyển</span>',
-        'COMPLETED': '<span class="badge bg-success">Hoàn thành</span>',
-        'CANCELLED': '<span class="badge bg-danger">Đã hủy</span>'
-    };
-    return map[status] || `<span class="badge bg-secondary">${status}</span>`;
-}
 
 function formatDate(dateString) {
-    if (!dateString) return '';
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleString('vi-VN');
 }
 
-function handleSearch(e) {
-    const term = e.target.value.toLowerCase();
-    const filtered = state.transfers.filter(t => 
-        (t.transferCode && t.transferCode.toLowerCase().includes(term)) ||
-        t.id.toString().includes(term)
-    );
-    renderTransfersTable(filtered);
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (show) overlay.classList.remove('d-none');
+    else overlay.classList.add('d-none');
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast implementation or use existing one if available in utils
+    // Assuming a simple alert for now if no toast library, 
+    // but let's try to create a bootstrap toast dynamically
+    
+    const toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        const container = document.createElement('div');
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        container.style.zIndex = '1100';
+        document.body.appendChild(container);
+    }
+
+    const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-primary';
+    
+    const toastHtml = `
+        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+
+    const container = document.querySelector('.toast-container');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = toastHtml;
+    const toastEl = tempDiv.firstElementChild;
+    container.appendChild(toastEl);
+
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
 }
 
 function debounce(func, wait) {
@@ -331,14 +439,11 @@ function debounce(func, wait) {
     };
 }
 
-function showLoading(show) {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.toggle('active', show);
-    }
-}
-
-function showToast(message, type = 'info') {
-    // Simple alert for now, can be upgraded to Bootstrap Toast
-    alert(message);
+function handleSearch() {
+    const term = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = state.transfers.filter(t => 
+        (t.code && t.code.toLowerCase().includes(term)) ||
+        (t.id && t.id.toString().includes(term))
+    );
+    renderTransferTable(filtered);
 }

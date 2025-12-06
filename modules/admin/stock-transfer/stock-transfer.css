@@ -1,15 +1,54 @@
-/* Stock Transfer Specific Styles */
+Stock Transfer Management Styles
+
+.transfer-status {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+    border-radius: 0.25rem;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-shipping {
+    background-color: #cff4fc;
+    color: #055160;
+}
+
+.status-completed {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+.action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+}
+
+/* Modal Styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
 
 .transfer-info-card {
     background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .transfer-info-row {
     display: flex;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .transfer-info-label {
@@ -20,24 +59,44 @@
 
 .transfer-info-value {
     flex: 1;
-    color: #212529;
+    font-weight: 500;
 }
 
-.table-products th {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    color: #6c757d;
-}
-
+/* Product List in Modal */
 .product-list-container {
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
+    border-radius: 0.25rem;
 }
 
-/* Status Badges Customization if needed */
-.badge {
-    font-weight: 500;
-    padding: 0.5em 0.8em;
+.table-products th {
+    background-color: #f1f3f5;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.btn-remove-row {
+    color: #dc3545;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.btn-remove-row:hover {
+    color: #bb2d3b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .transfer-info-row {
+        flex-direction: column;
+    }
+    
+    .transfer-info-label {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
 }
