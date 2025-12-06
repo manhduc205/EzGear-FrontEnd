@@ -67,9 +67,19 @@ async function loadSidebar() {
     const currentPage = pathParts.pop();
     const parentFolder = pathParts.pop();
     
-    const isInSubDir = parentFolder === 'stock-transfer';
+    const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders'].includes(parentFolder);
     const base = isInSubDir ? '../' : './';
-    const stockTransferLink = isInSubDir ? './stock-transfer.html' : './stock-transfer/stock-transfer.html';
+    const stockTransferLink = isInSubDir ? '../stock-transfer/stock-transfer.html' : './stock-transfer/stock-transfer.html';
+    const branchesLink = isInSubDir ? '../branches/branches.html' : './branches/branches.html';
+    const categoriesLink = isInSubDir ? '../categories/categories.html' : './categories/categories.html';
+    const brandsLink = isInSubDir ? '../brands/brands.html' : './brands/brands.html';
+    const productsLink = isInSubDir ? '../manage-products/products.html' : './manage-products/products.html';
+    const addProductLink = isInSubDir ? '../add-product/add-product.html' : './add-product/add-product.html';
+    const vouchersLink = isInSubDir ? '../vouchers/vouchers.html' : './vouchers/vouchers.html';
+    const warehousesLink = isInSubDir ? '../warehouses/warehouses.html' : './warehouses/warehouses.html';
+    const stocksLink = isInSubDir ? '../stocks/stocks.html' : './stocks/stocks.html';
+    const stockTransactionsLink = isInSubDir ? '../stock-transactions/stock-transactions.html' : './stock-transactions/stock-transactions.html';
+    const purchaseOrdersLink = isInSubDir ? '../purchase-orders/purchase-orders.html' : './purchase-orders/purchase-orders.html';
     
     sidebar.innerHTML = `
         <div class="sidebar-header">
@@ -88,19 +98,19 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Quản Lý Sản Phẩm</div>
-                <a href="${base}products.html" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
+                <a href="${productsLink}" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
                     <i class="fas fa-box"></i>
                     <span class="menu-item-text">Sản phẩm</span>
                 </a>
-                <a href="${base}add-product.html" class="menu-item ${currentPage === 'add-product.html' ? 'active' : ''}">
+                <a href="${addProductLink}" class="menu-item ${currentPage === 'add-product.html' ? 'active' : ''}">
                     <i class="fas fa-plus-circle"></i>
                     <span class="menu-item-text">Thêm sản phẩm</span>
                 </a>
-                <a href="${base}brands.html" class="menu-item ${currentPage === 'brands.html' ? 'active' : ''}">
+                <a href="${brandsLink}" class="menu-item ${currentPage === 'brands.html' ? 'active' : ''}">
                     <i class="fas fa-tag"></i>
                     <span class="menu-item-text">Thương hiệu</span>
                 </a>
-                <a href="${base}categories.html" class="menu-item ${currentPage === 'categories.html' ? 'active' : ''}">
+                <a href="${categoriesLink}" class="menu-item ${currentPage === 'categories.html' ? 'active' : ''}">
                     <i class="fas fa-list"></i>
                     <span class="menu-item-text">Danh mục</span>
                 </a>
@@ -108,23 +118,23 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Quản Lý Kho</div>
-                <a href="${base}branches.html" class="menu-item ${currentPage === 'branches.html' ? 'active' : ''}">
+                <a href="${branchesLink}" class="menu-item ${currentPage === 'branches.html' ? 'active' : ''}">
                     <i class="fas fa-building"></i>
                     <span class="menu-item-text">Chi nhánh</span>
                 </a>
-                <a href="${base}warehouses.html" class="menu-item ${currentPage === 'warehouses.html' ? 'active' : ''}">
+                <a href="${warehousesLink}" class="menu-item ${currentPage === 'warehouses.html' ? 'active' : ''}">
                     <i class="fas fa-warehouse"></i>
                     <span class="menu-item-text">Kho hàng</span>
                 </a>
-                <a href="${base}stock-transactions.html" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">
+                <a href="${stockTransactionsLink}" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">
                     <i class="fas fa-exchange-alt"></i>
                     <span class="menu-item-text">Lịch sử giao dịch</span>
                 </a>
-                <a href="${base}stocks.html" class="menu-item ${currentPage === 'stocks.html' ? 'active' : ''}">
+                <a href="${stocksLink}" class="menu-item ${currentPage === 'stocks.html' ? 'active' : ''}">
                     <i class="fas fa-boxes"></i>
                     <span class="menu-item-text">Tồn kho</span>
                 </a>
-                <a href="${base}purchase-orders.html" class="menu-item ${currentPage === 'purchase-orders.html' ? 'active' : ''}">
+                <a href="${purchaseOrdersLink}" class="menu-item ${currentPage === 'purchase-orders.html' ? 'active' : ''}">
                     <i class="fas fa-file-invoice"></i>
                     <span class="menu-item-text">Đơn nhập hàng</span>
                     <span class="menu-badge" id="pendingOrdersBadge">0</span>
@@ -137,7 +147,7 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Khuyến Mãi</div>
-                <a href="${base}vouchers.html" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
+                <a href="${vouchersLink}" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
                     <i class="fas fa-ticket-alt"></i>
                     <span class="menu-item-text">Voucher</span>
                 </a>
