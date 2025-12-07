@@ -3,189 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đơn Mua - EzGear</title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <title>Đơn hàng của tôi - EzGear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="../../assets/css/base.css">
-    <link rel="stylesheet" href="../../assets/css/grid.css">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="./order.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../../assets/css/base.css" rel="stylesheet">
+    <link href="./order.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Shop Header -->
-    <div class="shop-header">
+    <!-- Header -->
+    <header class="shop-header">
         <div class="shop-header-left">
-            <i class="fas fa-store shop-logo"></i>
-            <div>
-                <h1>EzGear Shop</h1>
-                <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
-                    Gear up cho mọi game thủ
-                </p>
-            </div>
+            <a href="../product/shop.html" class="shop-logo">EzGear</a>
+            <h1>Đơn Mua</h1>
         </div>
         <div class="shop-header-right">
-            <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Giỏ Hàng</span>
-                <span class="cart-badge" id="cartBadge">0</span>
-            </button>
             <div class="user-info" id="userInfo">
-                <div class="user-avatar" id="userAvatar">U</div>
-                <span class="user-name" id="userName">User</span>
-                <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #aaa;"></i>
-            </div>
-            <!-- User Dropdown -->
-            <div class="user-dropdown" id="userDropdown" style="display: none;">
-                <a href="../order/order.html" class="dropdown-item">
-                    <i class="fas fa-shopping-bag"></i>
-                    Đơn hàng của tôi
-                </a>
-                <a href="../address/index.html" class="dropdown-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    Địa chỉ của tôi
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Đăng xuất
-                </a>
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="usernameDisplay">Tài khoản</span>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Main Content -->
-    <div class="order-page">
-        <div class="container py-4">
-            <div class="row">
-                <!-- Sidebar -->
-                <div class="col-md-3 col-lg-2 d-none d-md-block">
-                    <div class="profile-sidebar">
-                        <div class="profile-card">
-                            <div class="profile-avatar">
-                                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Avatar" id="sidebarAvatarImg">
-                            </div>
-                            <div class="profile-info">
-                                <div class="profile-name" id="sidebarName">User</div>
-                                <a href="#" class="profile-edit"><i class="fas fa-pen"></i> Sửa Hồ Sơ</a>
-                            </div>
+    <!-- Main Container -->
+    <div class="container main-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar-container">
+                <div class="profile-sidebar">
+                    <div class="profile-card">
+                        <img src="../../assets/img/default-avatar.png" alt="Avatar" class="profile-avatar-img" id="sidebarAvatar">
+                        <div class="profile-info">
+                            <div class="profile-name" id="sidebarName">User Name</div>
+                            <a href="#" class="profile-edit">
+                                <i class="fas fa-pen"></i> Sửa hồ sơ
+                            </a>
                         </div>
-                        <div class="profile-menu mt-4">
+                    </div>
+                    <ul class="profile-menu">
+                        <li>
                             <a href="#" class="menu-item">
                                 <div class="menu-icon"><i class="fas fa-user"></i></div>
-                                <span>Tài Khoản Của Tôi</span>
+                                <span>Tài khoản của tôi</span>
                             </a>
+                        </li>
+                        <li>
                             <a href="#" class="menu-item active">
-                                <div class="menu-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                                <div class="menu-icon"><i class="fas fa-file-alt"></i></div>
                                 <span>Đơn Mua</span>
                             </a>
+                        </li>
+                        <li>
                             <a href="#" class="menu-item">
                                 <div class="menu-icon"><i class="fas fa-bell"></i></div>
-                                <span>Thông Báo</span>
+                                <span>Thông báo</span>
                             </a>
+                        </li>
+                        <li>
                             <a href="#" class="menu-item">
                                 <div class="menu-icon"><i class="fas fa-ticket-alt"></i></div>
                                 <span>Kho Voucher</span>
                             </a>
-                        </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <!-- Order Tabs -->
+                <div class="order-tabs-wrapper">
+                    <ul class="order-tabs nav" id="orderTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" onclick="filterOrders('ALL')">Tất cả</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('PENDING_CONFIRMATION')">Chờ xác nhận</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('PENDING_SHIPMENT')">Vận chuyển</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('PENDING_DELIVERY')">Đang giao</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('COMPLETED')">Hoàn thành</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('CANCELLED')">Đã hủy</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="filterOrders('REFUND_PENDING')">Trả hàng/Hoàn tiền</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Search Box -->
+                <div class="search-order-box">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchOrderInput" 
+                               placeholder="Tìm kiếm theo ID đơn hàng hoặc Tên sản phẩm">
                     </div>
                 </div>
 
-                <!-- Main Content Area -->
-                <div class="col-md-9 col-lg-10">
-                    <!-- Order Tabs -->
-                    <div class="order-tabs-wrapper">
-                        <ul class="order-tabs nav nav-tabs border-0" id="orderTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" 
-                                        type="button" role="tab" aria-controls="all" aria-selected="true"
-                                        onclick="filterOrders('ALL')">
-                                    Tất cả
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" 
-                                        type="button" role="tab" aria-controls="pending" aria-selected="false"
-                                        onclick="filterOrders('PENDING_CONFIRMATION')">
-                                    Chờ xác nhận
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" 
-                                        type="button" role="tab" aria-controls="shipping" aria-selected="false"
-                                        onclick="filterOrders('PENDING_SHIPMENT')">
-                                    Vận chuyển
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="delivering-tab" data-bs-toggle="tab" data-bs-target="#delivering" 
-                                        type="button" role="tab" aria-controls="delivering" aria-selected="false"
-                                        onclick="filterOrders('PENDING_DELIVERY')">
-                                    Chờ giao hàng
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" 
-                                        type="button" role="tab" aria-controls="completed" aria-selected="false"
-                                        onclick="filterOrders('COMPLETED')">
-                                    Hoàn thành
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" 
-                                        type="button" role="tab" aria-controls="cancelled" aria-selected="false"
-                                        onclick="filterOrders('CANCELLED')">
-                                    Đã hủy
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="refund-tab" data-bs-toggle="tab" data-bs-target="#refund" 
-                                        type="button" role="tab" aria-controls="refund" aria-selected="false"
-                                        onclick="filterOrders('REFUND_PENDING')">
-                                    Trả hàng/Hoàn tiền
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
+                <!-- Orders List Container -->
+                <div id="ordersList">
+                    <!-- Orders will be injected here by JS -->
+                </div>
 
-                    <!-- Search Box -->
-                    <div class="search-order-box mb-4">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="text" class="form-control border-start-0 ps-0" 
-                                   id="searchOrderInput" 
-                                   placeholder="Bạn có thể tìm kiếm theo tên Shop, ID đơn hàng hoặc Tên sản phẩm">
-                        </div>
-                    </div>
-
-                    <!-- Orders List -->
-                    <div class="orders-list" id="ordersList">
-                        <!-- Orders will be loaded here -->
-                    </div>
-
-                    <!-- Empty State -->
-                    <div class="empty-orders text-center py-5" id="emptyState" style="display: none;">
-                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
-                        <h5 class="text-muted">Chưa có đơn hàng</h5>
-                    </div>
+                <!-- Empty State -->
+                <div class="empty-orders text-center" id="emptyState" style="display: none;">
+                    <i class="fas fa-clipboard-list fa-4x mb-3"></i>
+                    <h5 class="text-muted">Chưa có đơn hàng</h5>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
     </div>
 
     <!-- Scripts -->

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - EzGear</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../../assets/css/base.css" rel="stylesheet">
+    <link href="./order.css" rel="stylesheet">
+    <link href="./order-detail.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="shop-header">
+        <div class="shop-header-left">
+            <a href="../product/shop.html" class="shop-logo">EzGear</a>
+            <h1>Chi Tiết Đơn Hàng</h1>
+        </div>
+        <div class="shop-header-right">
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="usernameDisplay">Tài khoản</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container main-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar-container">
+                <div class="profile-sidebar">
+                    <div class="profile-card">
+                        <img src="../../assets/img/default-avatar.png" alt="Avatar" class="profile-avatar-img" id="sidebarAvatar">
+                        <div class="profile-info">
+                            <div class="profile-name" id="sidebarName">User Name</div>
+                            <a href="#" class="profile-edit">
+                                <i class="fas fa-pen"></i> Sửa hồ sơ
+                            </a>
+                        </div>
+                    </div>
+                    <ul class="profile-menu">
+                        <li>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon"><i class="fas fa-user"></i></div>
+                                <span>Tài khoản của tôi</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="./order.html" class="menu-item active">
+                                <div class="menu-icon"><i class="fas fa-file-alt"></i></div>
+                                <span>Đơn Mua</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon"><i class="fas fa-bell"></i></div>
+                                <span>Thông báo</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon"><i class="fas fa-ticket-alt"></i></div>
+                                <span>Kho Voucher</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10">
+                <!-- Back Button -->
+                <a href="./order.html" class="back-btn">
+                    <i class="fas fa-chevron-left"></i> TRỞ LẠI
+                </a>
+
+                <!-- Order Status Stepper -->
+                <div class="stepper-container">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                        <div class="text-muted">ID ĐƠN HÀNG: <span class="text-dark fw-bold" id="orderIdDisplay">#...</span></div>
+                        <div class="text-uppercase fw-bold text-danger" id="orderStatusText">...</div>
+                    </div>
+                    
+                    <div class="stepper" id="orderStepper">
+                        <!-- Steps will be injected by JS -->
+                        <div class="step active">
+                            <div class="step-icon"><i class="fas fa-file-invoice"></i></div>
+                            <div class="step-label">Đơn Hàng Đã Đặt</div>
+                            <div class="step-date" id="dateCreated">...</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon"><i class="fas fa-money-bill-wave"></i></div>
+                            <div class="step-label">Đã Xác Nhận</div>
+                            <div class="step-date" id="dateConfirmed">...</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon"><i class="fas fa-truck"></i></div>
+                            <div class="step-label">Đang Giao Hàng</div>
+                            <div class="step-date" id="dateShipping">...</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon"><i class="fas fa-box-open"></i></div>
+                            <div class="step-label">Đã Nhận Được Hàng</div>
+                            <div class="step-date" id="dateCompleted">...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <div class="address-section">
+                    <div class="section-title">Địa Chỉ Nhận Hàng</div>
+                    <div class="address-content">
+                        <div class="address-name" id="receiverName">...</div>
+                        <div id="receiverPhone">...</div>
+                        <div id="receiverAddress">...</div>
+                    </div>
+                </div>
+
+                <!-- Product List -->
+                <div class="detail-product-list" id="orderItemsList">
+                    <!-- Items will be injected here -->
+                </div>
+
+                <!-- Payment Info -->
+                <div class="payment-info">
+                    <div class="payment-method-info">
+                        <div class="method-label">Phương thức thanh toán</div>
+                        <div id="paymentMethod">...</div>
+                    </div>
+                    
+                    <div class="payment-row">
+                        <div class="payment-label">Tổng tiền hàng</div>
+                        <div class="payment-value" id="subTotal">0₫</div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Phí vận chuyển</div>
+                        <div class="payment-value" id="shippingFee">0₫</div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Voucher giảm giá</div>
+                        <div class="payment-value" id="voucherDiscount">-0₫</div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Thành tiền</div>
+                        <div class="payment-value payment-total" id="finalTotal">0₫</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="../../assets/js/core/api.js"></script>
+    <!-- We might need a separate JS for detail or reuse order.js with logic check -->
+    <script src="./order.js"></script> 
+    <script>
+        // Simple inline script to detect if we are on detail page and init
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.location.pathname.includes('order-detail.html')) {
+                // Initialize detail page logic if needed, or handle in order.js
+                // For now, assuming order.js will handle it or we add a specific script later.
+                // Ideally, we should have order-detail.js
+            }
+        });
+    </script>
+</body>
+</html>
