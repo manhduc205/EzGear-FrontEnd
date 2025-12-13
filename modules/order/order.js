@@ -45,7 +45,7 @@ function initOrderListPage() {
             if (e.key === 'Enter') {
                 const term = e.target.value.toLowerCase();
                 const filtered = orderState.orders.filter(o => 
-                    o.id.toString().includes(term) || 
+                    o.orderCode.toLowerCase().includes(term) || 
                     o.items.some(i => i.productName.toLowerCase().includes(term))
                 );
                 renderOrders(filtered);
@@ -147,15 +147,14 @@ function renderOrders(orders) {
             </div>
             
             ${(order.items || []).map(item => `
-                <a href="./order-detail.html?id=${order.id}" class="order-item">
-                    <img src="${item.image || '../../assets/img/no-image.png'}" alt="${item.productName}" class="item-image">
+                <a href="./order-detail.html?code=${order.orderCode}" class="order-item">
+                    <img src="${item.imageUrl || '../../assets/img/placeholder.svg'}" alt="${item.productName}" class="item-image" onerror="this.src='../../assets/img/placeholder.svg'">
                     <div class="item-details">
                         <div class="item-name">${item.productName}</div>
-                        <div class="item-variant">Phân loại: ${item.variant || 'Tiêu chuẩn'}</div>
+                        <div class="item-variant">Phân loại: ${item.skuName || 'Tiêu chuẩn'}</div>
                         <div class="item-quantity">x${item.quantity}</div>
                     </div>
                     <div class="item-price-qty">
-                        ${item.originalPrice > item.price ? `<span class="original-price">${formatCurrency(item.originalPrice)}</span>` : ''}
                         <span class="current-price">${formatCurrency(item.price)}</span>
                     </div>
                 </a>
@@ -164,12 +163,12 @@ function renderOrders(orders) {
             <div class="order-footer">
                 <div class="total-section">
                     <span class="total-label">Thành tiền:</span>
-                    <span class="total-price">${formatCurrency(order.totalAmount)}</span>
+                    <span class="total-price">${formatCurrency(order.grandTotal)}</span>
                 </div>
                 <div class="action-buttons">
-                    <a href="./order-detail.html?id=${order.id}" class="btn-action btn-outline-gray">Xem chi tiết</a>
-                    ${order.status === 'COMPLETED' ? `<button class="btn-action btn-primary-red" onclick="reOrder(${order.id})">Mua lại</button>` : ''}
-                    ${order.status === 'PENDING_CONFIRMATION' ? `<button class="btn-action btn-outline-gray" onclick="cancelOrder(${order.id})">Hủy đơn</button>` : ''}
+                    <a href="./order-detail.html?code=${order.orderCode}" class="btn-action btn-outline-gray">Xem chi tiết</a>
+                    ${order.status === 'COMPLETED' ? `<button class="btn-action btn-primary-red" onclick="reOrder('${order.orderCode}')">Mua lại</button>` : ''}
+                    ${order.status === 'PENDING_CONFIRMATION' ? `<button class="btn-action btn-outline-gray" onclick="cancelOrder('${order.orderCode}')">Hủy đơn</button>` : ''}
                 </div>
             </div>
         </div>
@@ -310,18 +309,7 @@ function showLoading(show) {
     }
 }
 
-function formatCurrency(amount) {
-    if (amount === undefined || amount === null) return '0₫';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-}
-
-function formatDate(dateString) {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
+// formatCurrency and formatDate are now imported from utils.js
 
 function getStatusLabel(status) {
     const map = {

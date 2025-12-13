@@ -79,10 +79,22 @@ async function httpRequest(url, options = {}) {
   
   try {
     const response = await fetch(url, { ...options, headers });
-    const data = await response.json();
+    
+    // Check if response has content
+    const contentType = response.headers.get('content-type');
+    let data = null;
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text };
+    }
     
     if (!response.ok) {
-      throw new Error(data.message || data.error || `HTTP Error: ${response.status}`);
+      // Extract error message from various response formats
+      const errorMsg = data?.message || data?.error || data?.msg || `HTTP Error: ${response.status}`;
+      throw new Error(errorMsg);
     }
     
     return data;
@@ -172,10 +184,20 @@ function showToast(message, type = 'info', duration = 3000) {
  * @returns {string} - Giá đã format
  */
 function formatPrice(price) {
+  if (price === undefined || price === null) return '0₫';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND'
   }).format(price);
+}
+
+/**
+ * Alias for formatPrice (for backward compatibility)
+ * @param {number} amount - Giá tiền
+ * @returns {string} - Giá đã format
+ */
+function formatCurrency(amount) {
+  return formatPrice(amount);
 }
 
 /**
