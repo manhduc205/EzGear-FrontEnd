@@ -10,6 +10,15 @@ let orderDetailState = {
 document.addEventListener('DOMContentLoaded', () => {
     initOrderDetailPage();
     initHeaderUser();
+
+    const refreshBtn = document.getElementById('refreshShipmentBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            if (orderDetailState.order) {
+                loadShipmentHistory(orderDetailState.order);
+            }
+        });
+    }
 });
 
 function initHeaderUser() {
@@ -29,7 +38,7 @@ function initHeaderUser() {
 // ==================== DETAIL PAGE LOGIC ====================
 function initOrderDetailPage() {
     const urlParams = new URLSearchParams(window.location.search);
-    const orderCode = urlParams.get('code');
+    const orderCode = urlParams.get('orderCode');
     
     if (!orderCode) {
         alert('Không tìm thấy mã đơn hàng');
@@ -51,7 +60,6 @@ async function loadOrderDetail(orderCode) {
         // Call API to get order detail
         const url = `${window.BASE_URL}/api/orders/${orderCode}`;
         console.log('Loading order detail from:', url);
-        console.log('Token exists:', !!TokenHelper.getAccessToken());
         
         const response = await httpRequest(url, { method: 'GET' });
         console.log('Order detail response:', response);
@@ -70,6 +78,7 @@ async function loadOrderDetail(orderCode) {
         
         orderDetailState.order = order;
         renderOrderDetail(order);
+        // loadShipmentHistory(order); // Uncomment if shipment history API is available
         
     } catch (error) {
         console.error('Error loading order detail:', error);
@@ -92,11 +101,13 @@ function renderOrderDetail(order) {
     // 1. Basic Info
     document.getElementById('orderIdDisplay').textContent = '#' + order.orderCode;
     document.getElementById('orderStatusText').textContent = getStatusLabel(order.status);
+    document.getElementById('paymentStatusText').textContent = order.paymentStatus || '...';
+    document.getElementById('createdAtText').textContent = formatDate(order.createdAt);
     
     const statusTextElement = document.getElementById('orderStatusText');
-    statusTextElement.className = `text-uppercase fw-bold ${getStatusClass(order.status)}`;
+    statusTextElement.className = `badge bg-light text-dark border text-uppercase fw-bold ${getStatusClass(order.status)}`;
     
-    // 2. Update Stepper with dates and status
+    // 2. Update Stepper
     updateStepper(order);
     
     // 3. Shipping Address
@@ -110,64 +121,68 @@ function renderOrderDetail(order) {
 }
 
 function updateStepper(order) {
-    const steps = document.querySelectorAll('.step');
-    steps.forEach(s => s.classList.remove('active'));
-    
-    // Update dates if available
+    // Reset all steps
+    const steps = {
+        'placed': document.getElementById('step-placed'),
+        'confirmed': document.getElementById('step-confirmed'),
+        'shipping': document.getElementById('step-shipping'),
+        'completed': document.getElementById('step-completed'),
+        'rated': document.getElementById('step-rated')
+    };
+
+    Object.values(steps).forEach(step => {
+        if(step) {
+            step.classList.remove('active', 'completed');
+            // Reset date
+            const dateEl = step.querySelector('.step-date');
+            if(dateEl) dateEl.textContent = '...';
+        }
+    });
+
+    // Set dates if available
     if (order.createdAt) {
         document.getElementById('dateCreated').textContent = formatDate(order.createdAt);
+        steps.placed.classList.add('completed');
     }
+
+    // Determine active step based on status
+    const status = order.status;
     
-    // Map status to step activation
-    const statusMap = {
-        'PENDING_CONFIRMATION': 0,
-        'DRAFT': 0,
-        'CONFIRMED': 1,
-        'PENDING_SHIPMENT': 1,
-        'SHIPPING': 2,
-        'PENDING_DELIVERY': 2,
-        'COMPLETED': 3
-    };
-    
-    const activeStep = statusMap[order.status];
-    
-    if (activeStep !== undefined) {
-        for (let i = 0; i <= activeStep; i++) {
-            if (steps[i]) steps[i].classList.add('active');
-        }
+    // Logic flow: placed -> confirmed -> shipping -> completed -> rated
+    if (status === 'WAITING_PAYMENT' || status === 'PENDING_CONFIRMATION') {
+        steps.placed.classList.add('active');
+    } 
+    else if (status === 'PENDING_SHIPMENT' || status === 'CONFIRMED') {
+        steps.placed.classList.add('completed');
+        steps.confirmed.classList.add('active');
     }
-    
-    // Update step dates if available from order history/timeline
-    if (order.confirmedAt) {
-        const confirmedDateEl = document.getElementById('dateConfirmed');
-        if (confirmedDateEl) confirmedDateEl.textContent = formatDate(order.confirmedAt);
+    else if (status === 'SHIPPING' || status === 'PENDING_DELIVERY') {
+        steps.placed.classList.add('completed');
+        steps.confirmed.classList.add('completed');
+        steps.shipping.classList.add('active');
     }
-    
-    if (order.shippingAt) {
-        const shippingDateEl = document.getElementById('dateShipping');
-        if (shippingDateEl) shippingDateEl.textContent = formatDate(order.shippingAt);
+    else if (status === 'COMPLETED') {
+        steps.placed.classList.add('completed');
+        steps.confirmed.classList.add('completed');
+        steps.shipping.classList.add('completed');
+        steps.completed.classList.add('active');
+        // If rated, move active to rated (logic to be added if 'isRated' flag exists)
     }
-    
-    if (order.completedAt) {
-        const completedDateEl = document.getElementById('dateCompleted');
-        if (completedDateEl) completedDateEl.textContent = formatDate(order.completedAt);
+    else if (status === 'CANCELLED') {
+        // Handle cancelled state if needed
     }
 }
 
 function renderShippingAddress(order) {
-    // Use direct properties from API response
-    const name = order.receiverName || '';
-    const phone = order.receiverPhone || '';
-    const address = order.receiverAddress || '';
-    
-    document.getElementById('receiverName').textContent = name;
-    document.getElementById('receiverPhone').textContent = phone;
-    document.getElementById('receiverAddress').textContent = address;
+    document.getElementById('receiverName').textContent = order.receiverName || '';
+    document.getElementById('receiverPhone').textContent = order.receiverPhone || '';
+    document.getElementById('receiverAddress').textContent = order.receiverAddress || '';
 }
 
 function renderOrderItems(items) {
+    const container = document.getElementById('orderItemsList');
     if (!items || items.length === 0) {
-        document.getElementById('orderItemsList').innerHTML = '<p class="text-center text-muted p-4">Không có sản phẩm nào</p>';
+        container.innerHTML = '<p class="text-center text-muted p-4">Không có sản phẩm nào</p>';
         return;
     }
     
@@ -180,11 +195,11 @@ function renderOrderItems(items) {
         const imageUrl = item.imageUrl || '../../assets/img/placeholder.svg';
         
         return `
-            <div class="detail-item">
-                <img src="${imageUrl}" alt="${productName}" class="item-image" 
-                     style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #eee;"
+            <div class="d-flex align-items-center py-3 border-bottom">
+                <img src="${imageUrl}" class="rounded border me-3" alt="${productName}" 
+                     style="width: 80px; height: 80px; object-fit: cover;"
                      onerror="this.src='../../assets/img/placeholder.svg'">
-                <div class="ms-3 flex-grow-1">
+                <div class="flex-grow-1">
                     <div class="fw-bold text-dark">${productName}</div>
                     <div class="text-muted small">Phân loại: ${skuName}</div>
                     <div class="text-muted small">x${quantity}</div>
@@ -197,24 +212,69 @@ function renderOrderItems(items) {
         `;
     }).join('');
     
-    document.getElementById('orderItemsList').innerHTML = itemsHtml;
+    container.innerHTML = itemsHtml;
 }
 
 function renderPaymentSummary(order) {
-    // Payment method
-    const paymentMethod = order.paymentMethod || 'Thanh toán khi nhận hàng';
-    document.getElementById('paymentMethod').textContent = paymentMethod;
+    document.getElementById('paymentMethod').textContent = order.paymentMethod || 'Thanh toán khi nhận hàng';
     
-    // Use field names from API response
-    const merchandiseSubtotal = order.merchandiseSubtotal || 0;
-    const shippingFee = order.shippingFee || 0;
-    const voucherDiscount = order.voucherDiscount || 0;
-    const grandTotal = order.grandTotal || 0;
-    
-    document.getElementById('subTotal').textContent = formatCurrency(merchandiseSubtotal);
-    document.getElementById('shippingFee').textContent = formatCurrency(shippingFee);
-    document.getElementById('voucherDiscount').textContent = `-${formatCurrency(voucherDiscount)}`;
-    document.getElementById('finalTotal').textContent = formatCurrency(grandTotal);
+    document.getElementById('subTotal').textContent = formatCurrency(order.merchandiseSubtotal || 0);
+    document.getElementById('shippingFee').textContent = formatCurrency(order.shippingFee || 0);
+    document.getElementById('voucherDiscount').textContent = `-${formatCurrency(order.voucherDiscount || 0)}`;
+    document.getElementById('finalTotal').textContent = formatCurrency(order.grandTotal || 0);
+}
+
+// ==================== SHIPMENT HISTORY ====================
+async function loadShipmentHistory(order) {
+    try {
+        const orderId = order.id || order.orderId || order.orderCode; // fallback orderCode if API accepts
+        if (!orderId) return;
+
+        const url = `${window.BASE_URL}/api/shipment-history/tracking/${orderId}`;
+        const response = await httpRequest(url, { method: 'GET' });
+
+        const data = response.payload || response.data || response;
+        renderShipmentHistory(data);
+    } catch (err) {
+        console.error('Shipment history error:', err);
+        const timeline = document.getElementById('shipmentTimeline');
+        if (timeline) {
+            timeline.innerHTML = `<div class="timeline-empty text-muted">Không có dữ liệu vận chuyển</div>`;
+        }
+    }
+}
+
+function renderShipmentHistory(data) {
+    if (!data) return;
+    const timeline = data.timeline || [];
+
+    document.getElementById('trackingCode').textContent = data.trackingCode || '—';
+    document.getElementById('expectedDelivery').textContent = data.expectedDeliveryTime ? formatDate(data.expectedDeliveryTime) : '—';
+    document.getElementById('shipmentStatus').textContent = data.currentStatus || '—';
+
+    const container = document.getElementById('shipmentTimeline');
+    if (!container) return;
+
+    if (!timeline.length) {
+        container.innerHTML = `<div class="timeline-empty text-muted">Chưa có cập nhật giao hàng</div>`;
+        return;
+    }
+
+    const html = timeline.map(item => {
+        const completed = item.completed === true;
+        return `
+            <div class="timeline-item ${completed ? 'done' : ''}">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">${item.title || 'Cập nhật'}</div>
+                    <div class="timeline-desc">${item.description || ''}</div>
+                    <div class="timeline-time">${item.time ? formatDate(item.time) : ''}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
 }
 
 function calculateSubTotal(items) {
@@ -239,30 +299,22 @@ function showLoading(show) {
 
 function getStatusLabel(status) {
     const map = {
-        'PENDING_CONFIRMATION': 'Chờ xác nhận',
+        'WAITING_PAYMENT': 'Chờ thanh toán',
         'PENDING_SHIPMENT': 'Chờ lấy hàng',
-        'PENDING_DELIVERY': 'Đang giao',
+        'SHIPPING': 'Đang giao hàng',
         'COMPLETED': 'Hoàn thành',
-        'CANCELLED': 'Đã hủy',
-        'REFUND_PENDING': 'Trả hàng/Hoàn tiền',
-        'DRAFT': 'Đơn nháp',
-        'CONFIRMED': 'Đã xác nhận',
-        'SHIPPING': 'Đang vận chuyển'
+        'CANCELLED': 'Đã hủy'
     };
     return map[status] || status;
 }
 
 function getStatusClass(status) {
     const map = {
-        'PENDING_CONFIRMATION': 'status-pending',
-        'PENDING_SHIPMENT': 'status-shipping',
-        'PENDING_DELIVERY': 'status-shipping',
+        'WAITING_PAYMENT': 'status-pending',
+        'PENDING_SHIPMENT': 'status-pending',
+        'SHIPPING': 'status-shipping',
         'COMPLETED': 'status-completed',
-        'CANCELLED': 'status-cancelled',
-        'REFUND_PENDING': 'status-refund',
-        'DRAFT': 'status-pending',
-        'CONFIRMED': 'status-shipping',
-        'SHIPPING': 'status-shipping'
+        'CANCELLED': 'status-cancelled'
     };
     return map[status] || '';
 }

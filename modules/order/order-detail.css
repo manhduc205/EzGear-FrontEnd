@@ -1,312 +1,224 @@
-/* ==================== ORDER DETAIL CSS (Bootstrap Enhanced) ==================== */
+/* ==================== ORDER DETAIL CSS ==================== */
 
 :root {
     --primary-red: #dc3545;
-    --success-green: #28a745;
-    --info-blue: #17a2b8;
+    --success-green: #00bfa5; /* Shopee-like green */
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+    --border-color: #e9ecef;
 }
 
-/* ==================== BACK BUTTON ==================== */
-.back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #6c757d;
-    text-decoration: none;
-    font-size: 0.95rem;
-    margin-bottom: 20px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    transition: all 0.2s;
+body {
+    background-color: #f5f5f5;
 }
 
-.back-btn:hover {
-    background: #f8f9fa;
-    color: #dc3545;
-    transform: translateX(-5px);
+/* ==================== ENVELOPE BORDER ==================== */
+.envelope-border {
+    height: 3px;
+    width: 100%;
+    background-image: repeating-linear-gradient(45deg, #6fa6d6, #6fa6d6 33px, transparent 0, transparent 41px, #f18d9b 0, #f18d9b 74px, transparent 0, transparent 82px);
+    background-position-x: -30px;
+    background-size: 116px 3px;
 }
 
-/* ==================== STEPPER CONTAINER ==================== */
-.stepper-container {
-    background: white;
-    padding: 40px 30px;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
-    border: 1px solid #e9ecef;
-}
-
-.stepper {
+/* ==================== STEPPER ==================== */
+.stepper-wrapper {
     display: flex;
     justify-content: space-between;
     position: relative;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px 0;
 }
 
-.stepper::before {
+.stepper-wrapper::before {
     content: '';
     position: absolute;
-    top: 45px;
-    left: 10%;
-    right: 10%;
+    top: 30px;
+    left: 50px;
+    right: 50px;
     height: 4px;
-    background: linear-gradient(to right, #e9ecef 0%, #e9ecef 100%);
+    background: #e0e0e0;
     z-index: 0;
 }
 
-.step {
+.stepper-item {
     position: relative;
     z-index: 1;
     text-align: center;
-    flex: 1;
+    width: 140px;
 }
 
-.step-icon {
+.step-counter {
     width: 60px;
     height: 60px;
-    background: white;
-    border: 4px solid #ced4da;
+    background: #fff;
+    border: 4px solid #e0e0e0;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 12px;
-    color: #adb5bd;
-    font-size: 1.4rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 0 auto 10px;
+    color: #e0e0e0;
+    font-size: 1.5rem;
+    transition: all 0.3s;
 }
 
-.step-label {
+.step-name {
     font-size: 0.9rem;
-    color: #6c757d;
-    font-weight: 500;
+    color: var(--text-muted);
     margin-bottom: 4px;
 }
 
 .step-date {
     font-size: 0.8rem;
-    color: #adb5bd;
+    color: var(--text-muted);
+    min-height: 1.2em;
 }
 
-/* Active Step State */
-.step.active .step-icon {
-    border-color: #28a745;
-    background: linear-gradient(135deg, #28a745, #20c997);
+/* Active/Completed States */
+.stepper-item.active .step-counter,
+.stepper-item.completed .step-counter {
+    border-color: var(--success-green);
+    background: var(--success-green);
     color: white;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    animation: pulse 2s infinite;
+    box-shadow: 0 4px 10px rgba(38, 170, 153, 0.3);
 }
 
-.step.active .step-label {
-    color: #212529;
-    font-weight: 600;
-}
-
-.step.active .step-date {
-    color: #28a745;
+.stepper-item.active .step-name,
+.stepper-item.completed .step-name {
+    color: var(--text-dark);
     font-weight: 500;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+.stepper-item.active .step-date,
+.stepper-item.completed .step-date {
+    color: var(--success-green);
 }
 
-/* ==================== ADDRESS SECTION ==================== */
-.address-section {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
-    border: 1px solid #e9ecef;
+/* ==================== TIMELINE ==================== */
+.timeline-vertical {
     position: relative;
-    overflow: hidden;
+    padding-left: 20px;
 }
 
-.address-section::before {
+.timeline-event {
+    display: flex;
+    gap: 15px;
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-event:last-child {
+    padding-bottom: 0;
+}
+
+/* Vertical Line */
+.timeline-event::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #6ea8d6, #6ea8d6 33%, #f18d9b 0, #f18d9b 66%, #6ea8d6 0);
+    left: 112px; /* 90px (time) + 15px (gap) + 7px (half of 14px marker) */
+    top: 20px;
+    bottom: -20px;
+    width: 1px;
+    background: #e0e0e0;
+    z-index: 0;
 }
 
-.section-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #212529;
+.timeline-event:last-child::before {
+    display: none;
+}
+
+.event-time {
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.event-time .fw-bold {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.event-time .small {
+    font-size: 0.75rem;
+}
+
+/* Default Dot Marker */
+.event-marker {
+    width: 14px;
+    height: 14px;
+    background: #dcdcdc;
+    border-radius: 50%;
+    z-index: 1;
+    margin-top: 5px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Green Truck Marker */
+.event-marker.marker-green {
+    width: 24px;
+    height: 24px;
+    background: var(--success-green);
+    border-radius: 50%;
+    margin-left: -5px; /* Shift left to center on the line */
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    margin-top: 0;
+    box-shadow: 0 0 0 4px rgba(0, 191, 165, 0.1);
 }
 
-.section-title::before {
-    content: '📍';
-    font-size: 1.4rem;
-}
-
-.address-content {
+/* Icon Marker (File) */
+.event-marker.marker-icon {
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    margin-left: -5px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    font-size: 1rem;
-    color: #495057;
-    line-height: 1.6;
-}
-
-.address-name {
-    font-weight: 600;
-    color: #212529;
-    font-size: 1.1rem;
-}
-
-/* ==================== PRODUCT LIST ==================== */
-.detail-product-list {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
-    overflow: hidden;
-    border: 1px solid #e9ecef;
-}
-
-.detail-item {
-    display: flex;
-    padding: 24px;
-    border-bottom: 1px solid #f8f9fa;
-    transition: background 0.2s;
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-.detail-item:hover {
-    background: #f8f9fa;
-}
-
-.item-image {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* ==================== PAYMENT INFO ==================== */
-.payment-info {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    padding: 30px;
-    border: 1px solid #e9ecef;
-}
-
-.payment-method-info {
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    margin-top: 0;
+    font-size: 0.8rem;
 }
 
-.method-label {
-    font-weight: 600;
-    color: #495057;
-}
-
-.payment-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 16px 0;
-    font-size: 1rem;
-    border-bottom: 1px dashed #e9ecef;
-}
-
-.payment-row:last-child {
-    border-bottom: none;
-    padding-top: 24px;
-    margin-top: 8px;
-    border-top: 2px solid #e9ecef;
-}
-
-.payment-label {
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.payment-value {
-    font-weight: 600;
-    color: #212529;
-}
-
-.payment-total {
-    font-size: 1.6rem;
-    color: #dc3545;
-    font-weight: 700;
+.event-content {
+    flex: 1;
+    padding-top: 0;
 }
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
-    .stepper {
+    .stepper-wrapper {
         flex-wrap: wrap;
         gap: 20px;
+        justify-content: center;
     }
     
-    .step {
-        flex-basis: 45%;
-    }
-    
-    .stepper::before {
+    .stepper-wrapper::before {
         display: none;
     }
     
-    .step-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.2rem;
+    .timeline-event::before {
+        left: 26px;
     }
     
-    .address-section,
-    .payment-info {
-        padding: 20px;
+    .event-time {
+        display: none; /* Hide time on mobile or move it */
     }
     
-    .detail-item {
-        flex-direction: column;
-        gap: 16px;
-    }
-    
-    .payment-row {
-        font-size: 0.9rem;
-    }
-    
-    .payment-total {
-        font-size: 1.3rem;
+    .event-marker {
+        margin-left: 20px;
     }
 }
 
-/* ==================== ANIMATIONS ==================== */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* ==================== UTILS ==================== */
+.bg-light-subtle {
+    background-color: #fcfdfd !important;
 }
 
-.stepper-container,
-.address-section,
-.detail-product-list,
-.payment-info {
-    animation: fadeIn 0.4s ease-out;
+.text-success {
+    color: var(--success-green) !important;
 }
