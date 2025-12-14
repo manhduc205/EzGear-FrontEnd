@@ -28,41 +28,7 @@
     <!-- Main Container -->
     <div class="shop-container">
         <!-- Header -->
-        <div class="shop-header">
-            <div class="shop-header-left">
-                <i class="fas fa-store shop-logo"></i>
-                <div>
-                    <h1>EzGear Shop</h1>
-                    <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
-                        Gear up cho mọi game thủ
-                    </p>
-                </div>
-            </div>
-            <div class="shop-header-right">
-                <!-- Location Picker -->
-                <div class="header-location" id="headerLocation" onclick="openLocationModal()">
-                    <div class="location-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <div class="location-text">
-                        <span class="text-small">Xem giá tại</span>
-                        <span class="text-large">Hà Nội</span>
-                    </div>
-                    <i class="fas fa-chevron-down location-arrow"></i>
-                </div>
-
-                <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Giỏ Hàng</span>
-                    <span class="cart-badge" id="cartBadge">0</span>
-                </button>
-                <div class="user-info" id="userInfo">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <span class="user-name" id="userName">User</span>
-                    <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #aaa;"></i>
-                </div>
-            </div>
-        </div>
+        <div id="header-container"></div>
 
         <!-- Search Bar -->
         <div class="search-bar">
@@ -281,5 +247,13 @@
     <script src="../../assets/js/core/config.js?v=6"></script>
     <script src="../../assets/js/core/utils.js?v=6"></script>
     <script src="./shop.js?v=6"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ComponentLoader.load('#header-container', '../../components/header.html');
+            if (window.initShop) {
+                window.initShop();
+            }
+        });
+    </script>
 </body>
 </html>

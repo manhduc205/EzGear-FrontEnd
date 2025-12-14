@@ -820,9 +820,6 @@ async function initShop() {
     await loadProducts();
 }
 
-// Auto-initialize
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initShop);
-} else {
-    initShop();
-}
+// Auto-initialize removed to allow dynamic component loading
+// The page should call initShop() manually after components are loaded
+window.initShop = initShop;
