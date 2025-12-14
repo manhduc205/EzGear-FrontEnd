@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="./assets/img/favicon.ico">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* ==================== ORDER PAGE CSS ==================== */
+
+        /* CSS Variables */
+        :root {
+            --primary-red: #c8102e;
+            --secondary-red: #90081f;
+            --light-red: #fff5f6;
+            --bg-white: #ffffff;
+            --bg-gray: #f5f5f5;
+            --border-color: #e0e0e0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --success-green: #00b14f;
+            --warning-orange: #ff9800;
+            --sale-red: #d70018;
+            --hover-shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-gray);
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+        }
+
+        /* ==================== HEADER STYLES (Required for dynamic header) ==================== */
+        .shop-header {
+            background: var(--primary-red);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .shop-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .shop-logo {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .shop-header-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+
+        .shop-header-left p {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-size: 0.85rem !important;
+            margin: 0;
+        }
+
+        .shop-header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-location {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 5px;
+            min-width: 140px;
+        }
+
+        .header-location:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .location-icon {
+            color: white;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .location-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+            flex: 1;
+        }
+
+        .location-text .text-small {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+
+        .location-text .text-large {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .location-arrow {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.75rem;
+        }
+
+        .btn-cart {
+            position: relative;
+            background: white;
+            color: var(--primary-red);
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-cart:hover {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--sale-red);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 2px solid var(--primary-red);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            color: var(--primary-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        /* ==================== SIDEBAR ==================== */
+        .profile-sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .profile-avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .profile-edit {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-edit:hover {
+            color: var(--primary-red);
+        }
+
+        .profile-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            border-radius: 6px;
+        }
+
+        .menu-item:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-red);
+        }
+
+        .menu-item.active {
+            background-color: var(--light-red);
+            color: var(--primary-red);
+            font-weight: 500;
+        }
+
+        .menu-icon {
+            width: 24px;
+            text-align: center;
+            color: #888;
+        }
+
+        .menu-item.active .menu-icon {
+            color: var(--primary-red);
+        }
+
+        /* ==================== ORDER TABS ==================== */
+        .order-tabs {
+            background: white;
+            display: flex;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 16px 0;
+            font-size: 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .tab-item:hover {
+            color: var(--primary-red);
+        }
+
+        .tab-item.active {
+            color: var(--primary-red);
+            border-bottom-color: var(--primary-red);
+            font-weight: 500;
+        }
+
+        /* ==================== SEARCH ==================== */
+        .order-search {
+            background: #eaeaea;
+            padding: 12px 15px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .order-search i {
+            color: #888;
+        }
+
+        .order-search input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        /* ==================== ORDER LIST ==================== */
+        .order-card {
+            background: white;
+            border-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            padding: 24px;
+        }
+
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+            margin-bottom: 15px;
+        }
+
+        /* Order Meta (ID & Date) */
+        .order-meta {
+            display: flex;
+            gap: 15px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            align-items: center;
+        }
+        
+        .order-id {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .order-date {
+            border-left: 1px solid #e0e0e0;
+            padding-left: 15px;
+            font-size: 0.9rem;
+        }
+
+        .order-status {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        .status-pending {
+            background-color: var(--light-red);
+            color: var(--primary-red);
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+            color: var(--success-green);
+        }
+
+        .product-item {
+            display: flex;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .product-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 2px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .product-variant {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .product-qty {
+            font-size: 0.9rem;
+        }
+
+        .product-price {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .old-price {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .current-price {
+            color: var(--primary-red);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .order-card-footer {
+            padding-top: 20px;
+            background: #fffbfb;
+            border-top: 1px solid #eaeaea;
+            margin-top: 0;
+        }
+
+        .total-payment {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .price-large {
+            color: var(--primary-red);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-primary-solid {
+            background: var(--primary-red);
+            color: white;
+            border: 1px solid var(--primary-red);
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary-solid:hover {
+            background: var(--secondary-red);
+        }
+
+        .btn-primary-outline {
+            background: white;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary-outline:hover {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
+
+        .btn-secondary-outline {
+            background: white;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary-outline:hover {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row g-4">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2">
+                <div class="profile-sidebar">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User">
+                        </div>
+                        <div class="profile-info">
+                            <div class="profile-name">ducng2603</div>
+                            <a href="#" class="profile-edit"><i class="fas fa-pen"></i> Sửa hồ sơ</a>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-user"></i></div>
+                            <span>Tài khoản của tôi</span>
+                        </a>
+                        <a href="#" class="menu-item active">
+                            <div class="menu-icon"><i class="fas fa-file-alt"></i></div>
+                            <span>Đơn Mua</span>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-bell"></i></div>
+                            <span>Thông báo</span>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-ticket-alt"></i></div>
+                            <span>Kho Voucher</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Content -->
+            <div class="col-md-9 col-lg-10">
+                <!-- Tabs -->
+                <div class="order-tabs">
+                    <div class="tab-item active">Tất cả</div>
+                    <div class="tab-item">Chờ xác nhận</div>
+                    <div class="tab-item">Vận chuyển</div>
+                    <div class="tab-item">Đang giao</div>
+                    <div class="tab-item">Hoàn thành</div>
+                    <div class="tab-item">Đã hủy</div>
+                    <div class="tab-item">Trả hàng/Hoàn tiền</div>
+                </div>
+
+                <!-- Search -->
+                <div class="order-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm theo ID đơn hàng hoặc Tên sản phẩm">
+                </div>
+
+                <!-- Order List -->
+                <div class="order-list">
+                    <!-- Order Item 1 -->
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div class="order-meta">
+                                <span class="order-id">Mã đơn hàng: #ORD-2025-001</span>
+                                <span class="order-date">Ngày đặt: 13/12/2025</span>
+                            </div>
+                            <div class="order-status status-pending">CHỜ LẤY HÀNG</div>
+                        </div>
+                        <div class="order-card-body">
+                            <div class="product-item">
+                                <div class="product-image">
+                                    <img src="https://cdn.tgdd.vn/Products/Images/42/305658/iphone-15-pro-max-blue-thumbnew-600x600.jpg" alt="iPhone 15 Pro Max">
+                                </div>
+                                <div class="product-info">
+                                    <div class="product-name">iPhone 15 Pro Max</div>
+                                    <div class="product-variant">Phân loại: iPhone 15 Pro 512GB Black</div>
+                                    <div class="product-qty">x9</div>
+                                </div>
+                                <div class="product-price">
+                                    <span class="current-price">36.990.000 ₫</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-card-footer">
+                            <div class="total-payment">
+                                <span>Thành tiền:</span>
+                                <span class="price-large">331.957.000 ₫</span>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn-primary-outline">Liên hệ người bán</button>
+                                <button class="btn-secondary-outline">Xem chi tiết</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Item 2 -->
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div class="order-meta">
+                                <span class="order-id">Mã đơn hàng: #ORD-2024-999</span>
+                                <span class="order-date">Ngày đặt: 10/11/2024</span>
+                            </div>
+                            <div class="order-status status-completed">HOÀN THÀNH</div>
+                        </div>
+                        <div class="order-card-body">
+                            <div class="product-item">
+                                <div class="product-image">
+                                    <img src="https://product.hstatic.net/1000026716/product/logitech-g-pro-x-superlight-2-black-01_46d9c8c6c6c646c6c6c6c6c6c6c6c6c6_master.jpg" alt="Mouse">
+                                </div>
+                                <div class="product-info">
+                                    <div class="product-name">Chuột Gaming Logitech G Pro X Superlight 2</div>
+                                    <div class="product-variant">Phân loại: Black</div>
+                                    <div class="product-qty">x1</div>
+                                </div>
+                                <div class="product-price">
+                                    <span class="old-price">3.890.000 ₫</span>
+                                    <span class="current-price">3.590.000 ₫</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-card-footer">
+                            <div class="total-payment">
+                                <span>Thành tiền:</span>
+                                <span class="price-large">3.590.000 ₫</span>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn-primary-solid">Mua lại</button>
+                                <button class="btn-secondary-outline">Xem chi tiết</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./assets/js/core/utils.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            await ComponentLoader.load("#header-container", "./components/header.html");
+        });
+    </script>
+</body>
+</html>

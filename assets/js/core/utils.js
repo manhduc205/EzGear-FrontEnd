@@ -1,6 +1,39 @@
 // ==================== UTILITY FUNCTIONS ====================
 // Các hàm tiện ích dùng chung cho toàn bộ ứng dụng
 
+// ==================== COMPONENT LOADER ====================
+const ComponentLoader = {
+    /**
+     * Load HTML content from a file and inject it into a container
+     * @param {string} selector - CSS selector of the container element
+     * @param {string} path - Path to the HTML file
+     * @returns {Promise<void>}
+     */
+    load: async (selector, path) => {
+        try {
+            const response = await fetch(path);
+            if (!response.ok) throw new Error(`Failed to load component: ${path}`);
+            const html = await response.text();
+            const element = document.querySelector(selector);
+            if (element) {
+                element.innerHTML = html;
+                // Execute scripts in the loaded content if any
+                const scripts = element.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            } else {
+                console.error(`Element not found: ${selector}`);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+};
+
 // ==================== TOKEN MANAGEMENT ====================
 const TokenHelper = {
   // Lấy access token
