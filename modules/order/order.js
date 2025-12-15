@@ -143,7 +143,7 @@ function renderOrders(orders) {
                 </div>
                 <div class="order-status ${getStatusClass(order.status)}">${getStatusText(order.status)}</div>
             </div>
-            <div class="order-card-body">
+            <div class="order-card-body" onclick="window.location.href='./order-detail.html?orderCode=${order.orderCode}'">
                 ${order.items.map(item => `
                     <div class="product-item">
                         <div class="product-image">

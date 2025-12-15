@@ -2,7 +2,7 @@
 
 :root {
     --primary-red: #dc3545;
-    --success-green: #00bfa5; /* Shopee-like green */
+    --success-green: #00b14f; /* Updated to standard green */
     --text-dark: #212529;
     --text-muted: #6c757d;
     --border-color: #e9ecef;
@@ -79,7 +79,7 @@ body {
     border-color: var(--success-green);
     background: var(--success-green);
     color: white;
-    box-shadow: 0 4px 10px rgba(38, 170, 153, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 177, 79, 0.3);
 }
 
 .stepper-item.active .step-name,
@@ -103,7 +103,7 @@ body {
     display: flex;
     gap: 15px;
     position: relative;
-    padding-bottom: 20px;
+    padding-bottom: 5px;
 }
 
 .timeline-event:last-child {
@@ -165,7 +165,7 @@ body {
     align-items: center;
     justify-content: center;
     margin-top: 0;
-    box-shadow: 0 0 0 4px rgba(0, 191, 165, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 177, 79, 0.1);
 }
 
 /* Icon Marker (File) */
