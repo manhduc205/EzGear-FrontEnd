@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ của tôi - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="../order/order.css" rel="stylesheet"> <!-- Reuse sidebar styles -->
+    <link href="./profile.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row g-4">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2">
+                <div class="profile-sidebar">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" id="sidebarAvatar">
+                        </div>
+                        <div class="profile-info">
+                            <div class="profile-name" id="sidebarName">User</div>
+                            <a href="#" class="profile-edit"><i class="fas fa-pen"></i> Sửa hồ sơ</a>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <a href="./profile.html" class="menu-item active">
+                            <div class="menu-icon"><i class="fas fa-user"></i></div>
+                            <span>Tài khoản của tôi</span>
+                        </a>
+                        <a href="../order/order.html" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-file-alt"></i></div>
+                            <span>Đơn Mua</span>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-bell"></i></div>
+                            <span>Thông báo</span>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon"><i class="fas fa-ticket-alt"></i></div>
+                            <span>Kho Voucher</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="col-md-9 col-lg-10">
+                <div class="profile-card">
+                    <div class="profile-card-header">
+                        <h5 class="mb-0">Hồ Sơ Của Tôi</h5>
+                        <div class="text-muted small mt-1">Quản lý thông tin hồ sơ để bảo mật tài khoản</div>
+                    </div>
+                    
+                    <div class="profile-card-body">
+                        <div class="row">
+                            <!-- Form Column -->
+                            <div class="col-md-8 pe-md-5 border-end-md">
+                                <form id="profileForm">
+                                    <div class="mb-3 row align-items-center">
+                                        <label class="col-sm-3 col-form-label text-end-md text-muted">Email</label>
+                                        <div class="col-sm-9">
+                                            <div class="d-flex align-items-center">
+                                                <span id="emailDisplay" class="me-2">...</span>
+                                                <a href="#" class="text-decoration-none small text-primary">Thay đổi</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 row align-items-center">
+                                        <label for="fullName" class="col-sm-3 col-form-label text-end-md text-muted">Tên đầy đủ</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="fullName" value="">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 row align-items-center">
+                                        <label for="phoneNumber" class="col-sm-3 col-form-label text-end-md text-muted">Số điện thoại</label>
+                                        <div class="col-sm-9">
+                                            <div class="d-flex align-items-center">
+                                                <span id="phoneDisplay" class="me-2">...</span>
+                                                <a href="#" class="text-decoration-none small text-primary">Thay đổi</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-4">
+                                        <div class="col-sm-9 offset-sm-3">
+                                            <button type="button" class="btn btn-primary px-4" id="saveProfileBtn">Lưu</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Avatar Column -->
+                            <div class="col-md-4 d-flex flex-column align-items-center justify-content-center pt-4 pt-md-0">
+                                <div class="avatar-upload-container mb-3">
+                                    <img src="https://ui-avatars.com/api/?name=User&background=random&size=128" alt="Avatar" id="mainAvatar" class="rounded-circle shadow-sm">
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm mb-3">Chọn Ảnh</button>
+                                <div class="text-muted small text-center">
+                                    <div>Dụng lượng file tối đa 1 MB</div>
+                                    <div>Định dạng: .JPEG, .PNG</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../assets/js/core/config.js"></script>
+    <script src="../../assets/js/core/api.js"></script>
+    <script src="../../assets/js/core/utils.js"></script>
+    <script src="./profile.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            await ComponentLoader.load("#header-container", "../../components/header.html");
+        });
+    </script>
+</body>
+</html>
