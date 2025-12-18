@@ -3,22 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng ký - EzGear</title>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- Icons -->
+  <title>Đăng ký EzGear</title>
+  <link rel="stylesheet" href="../../assets/css/login.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Styles -->
-  <link rel="stylesheet" href="./auth.css">
+  <style>
+    
+    .password-strength {
+      margin-top: -12px;
+      height: 5px;
+      border-radius: 5px;
+      background: #333;
+      overflow: hidden;
+    }
+    
+    .password-strength-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    
+    .password-strength-text {
+      font-size: 12px;
+      margin-top: 4px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    
+    .terms {
+      display: flex;
+      align-items: flex-start;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #aaa;
+    }
+    
+    .terms input {
+      margin-right: 10px;
+      margin-top: 3px;
+    }
+    
+    .terms a {
+      color: #c8102e;
+      text-decoration: none;
+    }
+    
+    .terms a:hover {
+      text-decoration: underline;
+    }
+    
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    
+    .benefit-item i {
+      margin-right: 10px;
+      font-size: 1.2rem;
+      color: #c8102e;
+    }
+    
+    .input-error {
+      border-color: #ff4757 !important;
+      box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.2) !important;
+    }
+    
+    .error-message {
+      color: #ff4757;
+      font-size: 12px;
+      text-align: left;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .success-message {
+      color: #2ed573;
+      font-size: 12px;
+      text-align: left;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="auth-container">
-    <!-- Bên trái - Giới thiệu -->
+    <!-- Bên trái -->
     <div class="auth-left">
       <div class="intro-box">
         <div class="logo-large">EzGear</div>
@@ -51,76 +129,61 @@
       </div>
     </div>
 
-    <!-- Bên phải - Form đăng ký -->
+    <!-- Bên phải -->
     <div class="auth-right">
       <div class="form-card">
         <div class="logo">EzGear</div>
         <h2>Tạo tài khoản</h2>
-        <p class="subtitle">Điền thông tin để trở thành thành viên EzGear</p>
 
         <form id="register-form">
           <div class="input-group">
-            <div class="input-icon">
-              <i class="fas fa-user"></i>
-            </div>
-            <input type="text" name="fullName" placeholder="Họ và tên" required autocomplete="name">
-            <div class="success-message" id="name-success">
-              <i class="fas fa-check"></i> Hợp lệ
-            </div>
+            <div class="input-icon"><i class="fas fa-user"></i></div>
+            <input type="text" name="fullName" placeholder="Họ và tên" required>
+            <div class="success-message" id="name-success"><i class="fas fa-check"></i> Hợp lệ</div>
           </div>
           
           <div class="input-group">
-            <div class="input-icon">
-              <i class="fas fa-envelope"></i>
-            </div>
-            <input type="email" name="email" placeholder="Email" required autocomplete="email">
+            <div class="input-icon"><i class="fas fa-envelope"></i></div>
+            <input type="email" name="email" placeholder="Email" required>
             <div class="error-message" id="email-error">Email không hợp lệ</div>
-            <div class="success-message" id="email-success">
-              <i class="fas fa-check"></i> Email hợp lệ
-            </div>
+            <div class="success-message" id="email-success"><i class="fas fa-check"></i> Email hợp lệ</div>
           </div>
           
           <div class="input-group">
-            <div class="input-icon">
-              <i class="fas fa-lock"></i>
-            </div>
-            <input type="password" name="password" placeholder="Mật khẩu" required autocomplete="new-password">
-            <button type="button" class="toggle-password">
+            <div class="input-icon"><i class="fas fa-lock"></i></div>
+            <input type="password" name="password" placeholder="Mật khẩu" required>
+            <button type="button" class="toggle-password" id="togglePassword">
               <i class="fas fa-eye"></i>
             </button>
+            
           </div>
           
-          <div class="password-strength">
+            <div class="password-strength">
             <div class="password-strength-bar" id="password-strength-bar"></div>
-          </div>
-          <div class="password-strength-text" id="password-strength-text">Độ mạnh mật khẩu</div>
-          
-          <div class="input-group">
-            <div class="input-icon">
-              <i class="fas fa-lock"></i>
             </div>
-            <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" required autocomplete="new-password">
-            <button type="button" class="toggle-password">
-              <i class="fas fa-eye"></i>
-            </button>
-            <div class="error-message" id="confirm-password-error">Mật khẩu không khớp</div>
-            <div class="success-message" id="confirm-password-success">
-              <i class="fas fa-check"></i> Mật khẩu khớp
-            </div>
-          </div>
+            <div class="password-strength-text" id="password-strength-text">Độ mạnh mật khẩu</div>
           
-          <div class="terms">
-            <input type="checkbox" id="agreeTerms" required>
-            <label for="agreeTerms">
-              Tôi đồng ý với <a href="#" target="_blank">Điều khoản dịch vụ</a> và 
-              <a href="#" target="_blank">Chính sách bảo mật</a> của EzGear
-            </label>
-          </div>
+            <div class="input-group">
+                <div class="input-icon"><i class="fas fa-lock"></i></div>
+                <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                <button type="button" class="toggle-password" id="toggleConfirmPassword">
+                <i class="fas fa-eye"></i>
+                </button>
+                <div class="error-message" id="confirm-password-error">Mật khẩu không khớp</div>
+                <div class="success-message" id="confirm-password-success"><i class="fas fa-check"></i> Mật khẩu khớp</div>
+            </div>
+          
+            <div class="terms">
+                <input type="checkbox" id="agreeTerms" required>
+                <label for="agreeTerms">
+                Tôi đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách bảo mật</a> của EzGear
+                </label>
+            </div>
 
-          <button type="submit" class="login-btn">
-            <span>Đăng ký</span>
-            <i class="fas fa-user-plus"></i>
-          </button>
+            <button type="submit" class="login-btn">
+                <span>Đăng ký</span>
+                <i class="fas fa-user-plus"></i>
+            </button>
         </form>
 
         <div class="divider">
@@ -128,28 +191,197 @@
         </div>
 
         <div class="social-login">
-          <button class="social-btn google" type="button">
+          <button class="social-btn google">
             <i class="fab fa-google"></i>
             <span>Google</span>
           </button>
-          <button class="social-btn zalo" type="button">
+          <button class="social-btn zalo">
             <i class="fab fa-facebook"></i>
             <span>Facebook</span>
           </button>
         </div>
 
         <p class="register-link">
-          Đã có tài khoản? 
-          <a href="./login.html">Đăng nhập</a>
+          Đã có tài khoản? <a href="login.html">Đăng nhập</a>
         </p>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="../../assets/js/core/api.js"></script>
-  <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/utils.js"></script>
-  <script src="./auth.js"></script>
+
+  <script>
+    // Hiển thị/ẩn mật khẩu
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.querySelector('input[name="password"]');
+      const icon = this.querySelector('i');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+    
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+      const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+      const icon = this.querySelector('i');
+      
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        confirmPasswordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    });
+    
+    // Kiểm tra độ mạnh mật khẩu
+    document.querySelector('input[name="password"]').addEventListener('input', function() {
+      const password = this.value;
+      const strengthBar = document.getElementById('password-strength-bar');
+      const strengthText = document.getElementById('password-strength-text');
+      
+      let strength = 0;
+      let text = 'Rất yếu';
+      let color = '#ff4757';
+      
+      if (password.length >= 6) strength += 25;
+      if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 25;
+      if (password.match(/\d/)) strength += 25;
+      if (password.match(/[^a-zA-Z\d]/)) strength += 25;
+      
+      if (strength >= 75) {
+        text = 'Mạnh';
+        color = '#2ed573';
+      } else if (strength >= 50) {
+        text = 'Trung bình';
+        color = '#ffa502';
+      } else if (strength >= 25) {
+        text = 'Yếu';
+        color = '#ff7f50';
+      }
+      
+      strengthBar.style.width = `${strength}%`;
+      strengthBar.style.background = color;
+      strengthText.textContent = `Độ mạnh mật khẩu: ${text}`;
+      strengthText.style.color = color;
+    });
+    
+    // Kiểm tra mật khẩu khớp
+    document.querySelector('input[name="confirmPassword"]').addEventListener('input', function() {
+      const password = document.querySelector('input[name="password"]').value;
+      const confirmPassword = this.value;
+      const errorMsg = document.getElementById('confirm-password-error');
+      const successMsg = document.getElementById('confirm-password-success');
+      
+      if (confirmPassword && password !== confirmPassword) {
+        this.classList.add('input-error');
+        errorMsg.style.display = 'block';
+        successMsg.style.display = 'none';
+      } else if (confirmPassword && password === confirmPassword) {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'block';
+      } else {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Kiểm tra email hợp lệ
+    document.querySelector('input[name="email"]').addEventListener('input', function() {
+      const email = this.value;
+      const errorMsg = document.getElementById('email-error');
+      const successMsg = document.getElementById('email-success');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (email && !emailRegex.test(email)) {
+        this.classList.add('input-error');
+        errorMsg.style.display = 'block';
+        successMsg.style.display = 'none';
+      } else if (email && emailRegex.test(email)) {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'block';
+      } else {
+        this.classList.remove('input-error');
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Kiểm tra tên hợp lệ
+    document.querySelector('input[name="fullName"]').addEventListener('input', function() {
+      const name = this.value;
+      const successMsg = document.getElementById('name-success');
+      
+      if (name && name.length >= 2) {
+        successMsg.style.display = 'block';
+      } else {
+        successMsg.style.display = 'none';
+      }
+    });
+    
+    // Xử lý đăng ký
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const fullName = this.fullName.value.trim();
+      const email = this.email.value.trim();
+      const password = this.password.value.trim();
+      const confirmPassword = this.confirmPassword.value.trim();
+      const agreeTerms = document.getElementById('agreeTerms').checked;
+
+      // Kiểm tra điều khoản
+      if (!agreeTerms) {
+        alert('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('Mật khẩu nhập lại không khớp!');
+        return;
+      }
+
+      // Kiểm tra độ mạnh mật khẩu
+      if (password.length < 6) {
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+      }
+
+      const submitBtn = this.querySelector('.login-btn');
+      const originalText = submitBtn.innerHTML;
+      
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+      submitBtn.disabled = true;
+      
+      try {
+        const res = await AuthAPI.register(fullName, email, password, confirmPassword);
+
+        if (res.success) {
+          alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
+          window.location.href = 'login.html';
+        } else {
+          // Hiển thị lỗi từ backend
+          const errorMsg = res.errors ? res.errors.join('\n') : res.error || res.message;
+          alert('Đăng ký thất bại:\n' + errorMsg);
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        alert('Đăng ký thất bại: ' + err.message);
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

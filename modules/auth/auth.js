@@ -81,6 +81,54 @@ async function logoutAPI(userId, accessToken, refreshToken) {
   return response.json();
 }
 
+/**
+ * API: Đăng nhập bằng Google
+ * @param {string} token - Google Access Token
+ * @returns {Promise} - Response data
+ */
+async function loginGoogleAPI(token) {
+  const url = `${window.BASE_URL}/api/auth/social/google`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ token })
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'Đăng nhập Google thất bại');
+  }
+  
+  return data;
+}
+
+/**
+ * API: Đăng nhập bằng Facebook
+ * @param {string} token - Facebook Access Token
+ * @returns {Promise} - Response data
+ */
+async function loginFacebookAPI(token) {
+  const url = `${window.BASE_URL}/api/auth/social/facebook`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ token })
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.message || data.error || 'Đăng nhập Facebook thất bại');
+  }
+  
+  return data;
+}
+
 // ==================== HELPER FUNCTIONS ====================
 
 /**
@@ -399,6 +447,128 @@ async function handleRegister(e) {
 }
 
 /**
+ * Xử lý thành công sau khi login social
+ * @param {Object} res - Response từ API
+ */
+async function handleSocialLoginSuccess(res) {
+  console.log('✅ Social Login response:', res);
+  
+  // Backend trả về ApiResponse với payload chứa token info
+  const tokenData = res.payload || res;
+  console.log('🔑 Token data:', tokenData);
+  
+  if (!tokenData.accessToken) {
+    throw new Error('Không nhận được token từ server');
+  }
+  
+  // Lưu thông tin đăng nhập
+  TokenHelper.saveTokens(tokenData.accessToken, tokenData.refreshToken, tokenData.userId);
+  
+  // Kiểm tra role để redirect phù hợp
+  const isAdmin = checkAdminRole(tokenData.accessToken);
+  
+  if (isAdmin) {
+    showToast('Đăng nhập thành công! Đang chuyển đến trang quản trị...', 'success');
+    setTimeout(() => {
+      window.location.href = '../admin/dashboard.html';
+    }, 1000);
+  } else {
+    showToast('Đăng nhập thành công! Đang chuyển đến cửa hàng...', 'success');
+    setTimeout(() => {
+      window.location.href = '../product/shop.html';
+    }, 1000);
+  }
+}
+
+/**
+ * Khởi tạo Social Login (Google, Facebook)
+ */
+function initSocialLogin() {
+  // 1. Cấu hình hàm init cho Facebook SDK
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '1382594643258140',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v18.0'
+    });
+    console.log('✅ Facebook SDK đã được khởi tạo');
+  };
+
+  // 2. Xử lý trường hợp SDK đã tải xong trước khi gán window.fbAsyncInit
+  if (typeof FB !== 'undefined') {
+    window.fbAsyncInit();
+  }
+
+  // Google Login
+  const googleBtn = document.getElementById('google-login-btn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+      if (typeof google === 'undefined') {
+        showToast('Google Sign-In chưa sẵn sàng. Vui lòng thử lại sau.', 'error');
+        return;
+      }
+      
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: 'YOUR_GOOGLE_CLIENT_ID', // Cần thay thế bằng Client ID thật
+        scope: 'email profile openid',
+        callback: async (response) => {
+          if (response.access_token) {
+            try {
+              showToast('Đang đăng nhập bằng Google...', 'info');
+              const res = await loginGoogleAPI(response.access_token);
+              handleSocialLoginSuccess(res);
+            } catch (err) {
+              console.error('Google login error:', err);
+              showToast('Đăng nhập Google thất bại: ' + err.message, 'error');
+            }
+          }
+        },
+      });
+      client.requestAccessToken();
+    });
+  }
+
+  // Facebook Login
+  const facebookBtn = document.getElementById('facebook-login-btn');
+  if (facebookBtn) {
+    facebookBtn.addEventListener('click', () => {
+      // Kiểm tra HTTPS
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        alert('Lỗi: Facebook Login yêu cầu chạy trên HTTPS hoặc http://localhost.\nHãy đổi URL trên trình duyệt từ 127.0.0.1 thành localhost.');
+        return;
+      }
+
+      if (typeof FB === 'undefined') {
+        showToast('Facebook Login chưa sẵn sàng. Vui lòng thử lại sau.', 'error');
+        return;
+      }
+      
+      // Hàm xử lý logic async tách biệt
+      const handleFacebookResponse = async (response) => {
+        if (response.authResponse) {
+          try {
+            showToast('Đang đăng nhập bằng Facebook...', 'info');
+            const res = await loginFacebookAPI(response.authResponse.accessToken);
+            handleSocialLoginSuccess(res);
+          } catch (err) {
+            console.error('Facebook login error:', err);
+            showToast('Đăng nhập Facebook thất bại: ' + err.message, 'error');
+          }
+        } else {
+          console.log('User cancelled login or did not fully authorize.');
+        }
+      };
+
+      // Gọi FB.login với callback thường (không async)
+      FB.login((response) => {
+        handleFacebookResponse(response);
+      }, {scope: 'public_profile,email'});
+    });
+  }
+}
+
+/**
  * Xử lý đăng xuất
  */
 async function handleLogout() {
@@ -502,6 +672,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', handleLogout);
   }
+  
+  // Init Social Login
+  initSocialLogin();
   
   // Redirect nếu đã login và đang ở trang login/register
   if (TokenHelper.isLoggedIn()) {
