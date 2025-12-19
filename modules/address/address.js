@@ -19,6 +19,8 @@ const confirmBtn = document.getElementById("confirmBtn");
 const locationText = document.getElementById("locationText");
 const selectedAddress = document.getElementById("selectedAddress");
 const addressForm = document.getElementById("addressForm");
+const addressLineInput = document.getElementById("addressLine");
+const fullAddressInput = document.getElementById("fullAddress");
 const cancelBtn = document.getElementById("cancelBtn");
 const submitBtn = document.getElementById("submitBtn");
 const backBtn = document.getElementById("backBtn");
@@ -57,10 +59,34 @@ function confirmSelection() {
         locationText.textContent = `${selectedProvince.name}, ${selectedDistrict.name}, ${selectedWard.name}`;
         locationText.classList.remove('placeholder');
         selectedAddress.textContent = `${selectedWard.name}, ${selectedDistrict.name}, ${selectedProvince.name}`;
+        updateFullAddress();
         confirmBtn.disabled = false;
         closeModalHandler();
     } else {
         showToast('Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã', 'warning');
+    }
+}
+
+/**
+ * Cập nhật địa chỉ đầy đủ
+ */
+function updateFullAddress() {
+    const addressLine = addressLineInput.value.trim();
+    let fullAddress = '';
+    
+    if (selectedProvince.name && selectedDistrict.name && selectedWard.name) {
+        const locationStr = `${selectedWard.name}, ${selectedDistrict.name}, ${selectedProvince.name}`;
+        if (addressLine) {
+            fullAddress = `${addressLine}, ${locationStr}`;
+        } else {
+            fullAddress = locationStr;
+        }
+    } else {
+        fullAddress = addressLine;
+    }
+    
+    if (fullAddressInput) {
+        fullAddressInput.value = fullAddress;
     }
 }
 
@@ -464,6 +490,7 @@ function resetForm() {
     locationText.textContent = 'Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã';
     locationText.classList.add('placeholder');
     selectedAddress.textContent = '';
+    if (fullAddressInput) fullAddressInput.value = '';
     
     // Reset address type
     typeButtons.forEach(b => b.classList.remove("active"));
@@ -502,6 +529,11 @@ function handleBack() {
 openPicker.addEventListener('click', openModal);
 closeModal.addEventListener('click', closeModalHandler);
 confirmBtn.addEventListener('click', confirmSelection);
+
+// Address Line Input
+if (addressLineInput) {
+    addressLineInput.addEventListener('input', updateFullAddress);
+}
 
 // Tabs
 tabButtons.forEach(btn => {

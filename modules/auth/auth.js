@@ -487,7 +487,7 @@ function initSocialLogin() {
   // 1. Cấu hình hàm init cho Facebook SDK
   window.fbAsyncInit = function() {
     FB.init({
-      appId      : '1382594643258140',
+      appId      : CONFIG.SOCIAL_KEYS.FACEBOOK_APP_ID,
       cookie     : true,
       xfbml      : true,
       version    : 'v18.0'
@@ -510,7 +510,7 @@ function initSocialLogin() {
       }
       
       const client = google.accounts.oauth2.initTokenClient({
-        client_id: 'YOUR_GOOGLE_CLIENT_ID', // Cần thay thế bằng Client ID thật
+        client_id: CONFIG.SOCIAL_KEYS.GOOGLE_CLIENT_ID, // Cần thay thế bằng Client ID thật
         scope: 'email profile openid',
         callback: async (response) => {
           if (response.access_token) {

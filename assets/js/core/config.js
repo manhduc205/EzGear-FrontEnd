@@ -10,6 +10,12 @@ const CONFIG = {
     USERS: '/api/users',
     ADDRESSES: '/api/addresses'
   },
+
+  // Social Keys
+  SOCIAL_KEYS: {
+    FACEBOOK_APP_ID: '1382594643258140',
+    GOOGLE_CLIENT_ID: '853056724838-4o1t1r44msbjifccc7qro38drbrp6h1b.apps.googleusercontent.com'
+  },
   
   // Frontend Routes
   ROUTES: {
