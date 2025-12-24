@@ -1,13 +1,22 @@
 <div class="shop-header">
+    <div class="shop-header-inner">
     <div class="shop-header-left">
-        <i class="fas fa-store shop-logo"></i>
-        <div>
-            <h1>EzGear Shop</h1>
-            <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
-                Gear up cho mọi game thủ
-            </p>
-        </div>
+       <div class="shop-brand flex items-center gap-2">
+    <i class="fas fa-store shop-logo text-xl"></i> <h1 class="text-2xl font-bold m-0">EzGear</h1> </div>
     </div>
+
+    <div class="shop-header-center">
+        <form class="header-search-form" onsubmit="handleSearch(event)">
+            <input 
+                type="text" 
+                class="header-search-input" 
+                id="searchInput"
+                placeholder="Tìm kiếm sản phẩm (VD: chuột, bàn phím...)"
+                autocomplete="off"
+            >
+        </form>
+    </div>
+
     <div class="shop-header-right">
         <!-- Location Picker -->
         <div class="header-location" id="headerLocation" onclick="openLocationModal()">
@@ -44,6 +53,7 @@
                     <i class="fas fa-sign-out-alt"></i> Đăng xuất
                 </a>
             </div>
+        </div>
         </div>
     </div>
 </div>
