@@ -39,9 +39,26 @@
                     <a href="../add-product/add-product.html" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Thêm Sản Phẩm
                     </a>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="handleSearch()">
+                    
+                    <div class="filter-group">
+                        <select id="filterCategory" class="form-select" onchange="handleSearch()">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                        
+                        <select id="filterBrand" class="form-select" onchange="handleSearch()">
+                            <option value="">Tất cả thương hiệu</option>
+                        </select>
+                        
+                        <select id="filterStatus" class="form-select" onchange="handleSearch()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="handleSearch()">
+                        </div>
                     </div>
                 </div>
 

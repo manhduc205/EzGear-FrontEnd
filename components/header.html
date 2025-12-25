@@ -1,69 +1,302 @@
 <div class="shop-header">
     <div class="shop-header-inner">
-    <div class="shop-header-left">
-       <div class="shop-brand flex items-center gap-2">
-    <i class="fas fa-store shop-logo text-xl"></i> <h1 class="text-2xl font-bold m-0">EzGear</h1> </div>
-    </div>
-
-    <div class="shop-header-center">
-        <form class="header-search-form" onsubmit="handleSearch(event)">
-            <input 
-                type="text" 
-                class="header-search-input" 
-                id="searchInput"
-                placeholder="Tìm kiếm sản phẩm (VD: chuột, bàn phím...)"
-                autocomplete="off"
-            >
-        </form>
-    </div>
-
-    <div class="shop-header-right">
-        <!-- Location Picker -->
-        <div class="header-location" id="headerLocation" onclick="openLocationModal()">
-            <div class="location-icon">
-                <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div class="location-text">
-                <span class="text-small">Xem giá tại</span>
-                <span class="text-large">Hà Nội</span>
-            </div>
-            <i class="fas fa-chevron-down location-arrow"></i>
+        <div class="shop-header-left">
+            <i class="fas fa-store shop-logo"></i>
+            <h1>EzGear</h1>
         </div>
 
-        <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
-            <i class="fas fa-shopping-cart"></i>
-            <span>Giỏ Hàng</span>
-            <span class="cart-badge" id="cartBadge">0</span>
-        </button>
-        <div class="user-info" id="userInfo">
-            <div class="user-avatar" id="userAvatar">U</div>
-            <span class="user-name" id="userName">User</span>
-            <i class="fas fa-chevron-down" style="font-size: 0.8rem; color: #aaa;"></i>
+        <div class="shop-header-center">
+            <form class="header-search-form" onsubmit="handleSearch(event)">
+                <input 
+                    type="text" 
+                    class="header-search-input" 
+                    id="searchInput"
+                    placeholder="Tìm kiếm sản phẩm (VD: chuột, bàn phím...)"
+                    autocomplete="off"
+                >
+            </form>
+        </div>
+
+        <div class="shop-header-right">
+            <!-- Location Picker -->
+            <div class="header-location" id="headerLocation" onclick="openLocationModal()">
+                <div class="location-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="location-text">
+                    <span class="text-small">Xem giá tại</span>
+                    <span class="text-large">Hà Nội</span>
+                </div>
+                <i class="fas fa-chevron-down location-arrow"></i>
+            </div>
+
+            <button class="btn-cart" onclick="window.location.href='../cart/cart.html'">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Giỏ Hàng</span>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </button>
             
-            <!-- User Dropdown Menu -->
-            <div class="user-dropdown" id="userDropdown">
-                <a href="#" class="dropdown-item">
-                    <i class="fas fa-user"></i> Thông tin cá nhân
-                </a>
-                <a href="/modules/order/order.html" class="dropdown-item">
-                    <i class="fas fa-file-alt"></i> Đơn hàng của tôi
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item text-danger" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                </a>
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar" id="userAvatar" style="display: none;">U</div>
+                <span class="user-name" id="userName">Đăng nhập</span>
+                <i class="fas fa-chevron-down" id="userDropdownIcon" style="font-size: 0.8rem; color: rgba(255,255,255,0.8); display: none;"></i>
+                
+                <!-- User Dropdown Menu -->
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="/modules/profile/profile.html" class="dropdown-item">
+                        <i class="fas fa-user"></i> Thông tin cá nhân
+                    </a>
+                    <a href="/modules/order/order.html" class="dropdown-item">
+                        <i class="fas fa-file-alt"></i> Đơn hàng của tôi
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item text-danger" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div class="modal" id="locationModal">
+    <div class="modal-content location-modal">
+        <div class="modal-header location-header">
+            <div class="location-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="locationSearchInput" placeholder="Nhập tên tỉnh thành" oninput="handleLocationSearch()">
+            </div>
+            <button class="btn-close-location" onclick="closeLocationModal()">
+                Đóng <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body location-body">
+            <p class="location-instruction">Vui lòng chọn tỉnh, thành phố để biết chính xác giá, khuyến mãi và tồn kho</p>
+            <div class="location-list" id="locationList">
+                <!-- Locations will be rendered here -->
+                <div class="loading-spinner" style="margin: 20px auto;"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Dropdown Styles */
+    /* CSS Variables */
+    :root {
+        --primary-red: #c8102e;
+        --secondary-red: #90081f;
+        --light-red: #fff5f6;
+        --bg-white: #ffffff;
+        --bg-gray: #f5f5f5;
+        --border-color: #e0e0e0;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --text-muted: #999999;
+        --success-green: #00b14f;
+        --warning-orange: #ff9800;
+        --sale-red: #d70018;
+        --hover-shadow: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header Styles */
+    .shop-header {
+        background: var(--primary-red);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 9999;
+        width: 100%;
+    }
+
+    .shop-header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .shop-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .shop-logo {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .shop-header-left h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+
+    .shop-header-center {
+        flex: 1;
+        margin: 0 2rem;
+        max-width: 600px;
+    }
+
+    .header-search-form {
+        width: 100%;
+    }
+
+    .header-search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: none !important;
+        border-radius: 4px;
+        font-size: 14px;
+        outline: none;
+        color: #333;
+        background-color: #fff !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header-search-input::placeholder {
+        color: #999;
+    }
+
+    .shop-header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* Header Location Picker */
+    .header-location {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-right: 5px;
+        min-width: 140px;
+    }
+
+    .header-location:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .location-icon {
+        color: white;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .location-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+        flex: 1;
+    }
+
+    .location-text .text-small {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 400;
+    }
+
+    .location-text .text-large {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .location-arrow {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.75rem;
+    }
+
+    /* Cart Button */
+    .btn-cart {
+        position: relative;
+        background: white;
+        color: var(--primary-red);
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-cart:hover {
+        background: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .cart-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: var(--sale-red);
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border: 2px solid var(--primary-red);
+    }
+
+    /* User Info */
     .user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
         position: relative;
     }
 
+    .user-info:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: white;
+        color: var(--primary-red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .user-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: white;
+    }
+
+    /* User Dropdown */
     .user-dropdown {
         position: absolute;
         top: 120%;
@@ -114,26 +347,405 @@
         margin: 5px 0;
     }
 
+    /* Navigation Bar */
+    .nav-bar {
+        background: white;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        margin-top: 2px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .nav-item {
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .nav-item:hover {
+        background: var(--bg-gray);
+        border-bottom-color: var(--primary-red);
+        color: var(--primary-red);
+    }
+
+    .nav-item i {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+    }
+
+    .nav-item:hover i {
+        color: var(--primary-red);
+    }
+
+    /* Modal Base Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .modal.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        max-width: 90%;
+        max-height: 90vh;
+        overflow: hidden;
+    }
+
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Location Modal */
+    .location-modal {
+        max-width: 600px;
+        padding: 0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .location-header {
+        background: var(--primary-red);
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-bottom: none;
+    }
+
+    .location-search-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .location-search-wrapper i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+    }
+
+    .location-search-wrapper input {
+        width: 100%;
+        padding: 10px 12px 10px 35px;
+        border-radius: 4px;
+        border: none;
+        outline: none;
+        font-size: 0.95rem;
+    }
+
+    .btn-close-location {
+        background: transparent;
+        border: none;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.95rem;
+    }
+
+    .location-body {
+        padding: 15px;
+        max-height: 70vh;
+        overflow-y: auto;
+        background: white;
+    }
+
+    .location-instruction {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .location-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 30px;
+    }
+
+    .location-item {
+        padding: 12px 5px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.95rem;
+        color: #333;
+    }
+
+    .location-item:hover {
+        color: var(--primary-red);
+    }
+
+    .location-item.selected {
+        color: var(--primary-red);
+        font-weight: 500;
+    }
+
+    .location-item i {
+        color: var(--primary-red);
+        display: none;
+    }
+
+    .location-item.selected i {
+        display: block;
+    }
+
+    /* Custom Scrollbar for location list */
+    .location-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .location-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .location-body::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+    .location-body::-webkit-scrollbar-thumb:hover {
+        background: #aaa;
+    }
+
+    /* Media Queries */
+    @media (max-width: 768px) {
+        .shop-header {
+            padding: 12px 20px;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .shop-header-left {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .shop-header-right {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .header-location {
+            width: 100%;
+            justify-content: space-between;
+            margin-right: 0;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .shop-header-left h1 {
+            font-size: 1.2rem;
+        }
+        
+        .location-list {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
     }
 </style>
 
 <script>
+    // ==================== LOCATION LOGIC ====================
+    
+    // State for location management
+    const LocationState = {
+        locations: [],
+        selectedLocation: null // { id, name }
+    };
+
+    // Make functions global
+    window.openLocationModal = function() {
+        const modal = document.getElementById('locationModal');
+        if (modal) {
+            modal.classList.add('show');
+            // Fetch locations if not loaded
+            if (LocationState.locations.length === 0) {
+                fetchLocations().then(() => {
+                    renderLocationList(LocationState.locations);
+                });
+            } else {
+                renderLocationList(LocationState.locations);
+            }
+            document.getElementById('locationSearchInput').value = '';
+            document.getElementById('locationSearchInput').focus();
+        }
+    };
+
+    window.closeLocationModal = function() {
+        const modal = document.getElementById('locationModal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    };
+
+    window.handleLocationSearch = function() {
+        const input = document.getElementById('locationSearchInput');
+        const filter = input.value.toLowerCase();
+        const filtered = LocationState.locations.filter(loc => 
+            loc.name.toLowerCase().includes(filter)
+        );
+        renderLocationList(filtered);
+    };
+
+    window.selectLocation = function(id, name) {
+        const locationObj = { id, name };
+        localStorage.setItem('selectedLocation', JSON.stringify(locationObj));
+        LocationState.selectedLocation = locationObj;
+        
+        updateHeaderLocation(name);
+        closeLocationModal();
+        
+        // Dispatch event for other components to listen
+        window.dispatchEvent(new CustomEvent('locationChanged', { detail: locationObj }));
+        
+        // Optional: Reload if needed, but event dispatch is better
+        // window.location.reload(); 
+    };
+
+    async function fetchLocations() {
+        const list = document.getElementById('locationList');
+        if (list) list.innerHTML = '<div class="loading-spinner" style="margin: 20px auto;"></div>';
+
+        try {
+            const token = typeof TokenHelper !== 'undefined' ? TokenHelper.getAccessToken() : null;
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            // Use window.BASE_URL from config.js, fallback if not available
+            const baseUrl = window.BASE_URL || 'http://localhost:8080';
+            const response = await fetch(`${baseUrl}/api/locations`, {
+                headers: headers
+            });
+            
+            if (!response.ok) throw new Error('Failed to fetch locations');
+            
+            const data = await response.json();
+            const locations = Array.isArray(data) ? data : (data.payload || []);
+            
+            if (locations.length > 0) {
+                LocationState.locations = locations;
+            } else {
+                throw new Error('No data');
+            }
+        } catch (error) {
+            console.warn('Failed to fetch locations, using fallback:', error);
+            // Fallback data matching cart.js
+            LocationState.locations = [
+                { id: 1, name: 'Hà Nội' },
+                { id: 2, name: 'Hồ Chí Minh' }
+            ];
+        }
+    }
+
+    function renderLocationList(locations) {
+        const list = document.getElementById('locationList');
+        if (!list) return;
+
+        const currentId = LocationState.selectedLocation?.id;
+        
+        if (locations.length === 0) {
+            list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy kết quả</div>';
+            return;
+        }
+
+        list.innerHTML = locations.map(loc => `
+            <div class="location-item ${loc.id === currentId ? 'selected' : ''}" onclick="selectLocation(${loc.id}, '${loc.name}')">
+                <span>${loc.name}</span>
+                <i class="fas fa-check"></i>
+            </div>
+        `).join('');
+    }
+
+    function updateHeaderLocation(locationName) {
+        const locationText = document.querySelector('#headerLocation .location-text .text-large');
+        if (locationText) {
+            locationText.textContent = locationName;
+        }
+    }
+
+    // Initialize Location
+    (function initLocation() {
+        const savedLoc = localStorage.getItem('selectedLocation');
+        let locationName = 'Hà Nội';
+        let locationId = null;
+
+        if (savedLoc) {
+            try {
+                // Try to parse as JSON object {id, name}
+                const parsed = JSON.parse(savedLoc);
+                if (parsed && parsed.name) {
+                    locationName = parsed.name;
+                    locationId = parsed.id;
+                    LocationState.selectedLocation = parsed;
+                } else {
+                    // Handle legacy string format
+                    locationName = savedLoc;
+                }
+            } catch (e) {
+                // Not JSON, assume string
+                locationName = savedLoc;
+            }
+        } else {
+            // Default
+            const defaultLoc = { id: 201, name: 'Hà Nội' }; // Mock ID for default
+            localStorage.setItem('selectedLocation', JSON.stringify(defaultLoc));
+            LocationState.selectedLocation = defaultLoc;
+        }
+
+        updateHeaderLocation(locationName);
+    })();
+
+    // ==================== USER INFO LOGIC ====================
     (function() {
         const userInfo = document.getElementById('userInfo');
         const userDropdown = document.getElementById('userDropdown');
         const logoutBtn = document.getElementById('logoutBtn');
 
         // Toggle Dropdown
-        if (userInfo && userDropdown) {
-            userInfo.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.classList.toggle('show');
-            });
-
-            // Close dropdown when clicking outside
+        // Logic moved to userInfo.onclick below to handle login check
+        if (userDropdown) {
+             // Close dropdown when clicking outside
             document.addEventListener('click', () => {
                 userDropdown.classList.remove('show');
             });
@@ -156,13 +768,52 @@
         // Update User Info from LocalStorage
         const userNameEl = document.getElementById('userName');
         const userAvatarEl = document.getElementById('userAvatar');
+        const userDropdownIcon = document.getElementById('userDropdownIcon');
         
+        let isLoggedIn = false;
+
         if (typeof TokenHelper !== 'undefined') {
             const user = TokenHelper.getUserInfo();
             if (user && userNameEl) {
-                userNameEl.textContent = user.username;
-                if (userAvatarEl) userAvatarEl.textContent = user.username.charAt(0).toUpperCase();
+                isLoggedIn = true;
+                
+                // Logic to display only the first name (last word)
+                let displayName = user.username;
+                if (displayName) {
+                    const parts = displayName.trim().split(/\s+/);
+                    if (parts.length > 0) {
+                        displayName = parts[parts.length - 1];
+                    }
+                } else {
+                    displayName = "User";
+                }
+
+                userNameEl.textContent = displayName;
+                if (userAvatarEl) {
+                    userAvatarEl.textContent = displayName.charAt(0).toUpperCase();
+                    userAvatarEl.style.display = 'flex';
+                }
+                if (userDropdownIcon) {
+                    userDropdownIcon.style.display = 'block';
+                }
             }
+        }
+
+        // Handle User Info Click
+        if (userInfo) {
+            // Remove previous event listener if any (though this is IIFE)
+            // We need to handle click differently based on login status
+            userInfo.onclick = (e) => {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    window.location.href = '/modules/auth/login.html';
+                } else {
+                    e.stopPropagation();
+                    if (userDropdown) {
+                        userDropdown.classList.toggle('show');
+                    }
+                }
+            };
         }
     })();
 </script>

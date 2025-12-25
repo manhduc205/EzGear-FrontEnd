@@ -245,6 +245,7 @@ function previewProduct() {
         name: formData.get('name'),
         categoryId: formData.get('categoryId'),
         brandId: formData.get('brandId'),
+        seriesCode: document.getElementById('seriesCode').value,
         shortDesc: formData.get('shortDesc'),
         warrantyMonths: formData.get('warrantyMonths'),
         images: selectedImages.length
@@ -266,6 +267,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
         const productData = {
             name: document.getElementById('name').value,
             slug: document.getElementById('slug').value,
+            seriesCode: document.getElementById('seriesCode').value,
             categoryId: parseInt(document.getElementById('categoryId').value),
             brandId: parseInt(document.getElementById('brandId').value),
             shortDesc: document.getElementById('shortDesc').value,
