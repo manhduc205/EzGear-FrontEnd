@@ -41,7 +41,7 @@ const CONFIG = {
     
     // Admin
     ADMIN_DASHBOARD: '/modules/admin/dashboard.html',
-    ADMIN_PRODUCTS: '/modules/admin/products.html',
+    ADMIN_PRODUCTS: '/modules/admin/manage-products/product-sku.html',
     ADMIN_ORDERS: '/modules/admin/orders.html',
     ADMIN_USERS: '/modules/admin/users.html',
     ADMIN_STOCK: '/modules/admin/stock-transactions.html'

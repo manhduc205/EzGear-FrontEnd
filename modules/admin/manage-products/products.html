@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Sản Phẩm - EzGear Admin</title>
+    <title>Quản Lý Dòng Sản Phẩm - EzGear Admin</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -21,9 +21,9 @@
         <main class="main-content">
             <div class="topbar">
                 <div class="topbar-left">
-                    <h1>Quản Lý Sản Phẩm</h1>
+                    <h1>Quản Lý Dòng Sản Phẩm</h1>
                     <div class="breadcrumb">
-                        <a href="../dashboard.html">Dashboard</a> / Sản phẩm
+                        <a href="../dashboard.html">Dashboard</a> / Dòng sản phẩm
                     </div>
                 </div>
                 <div class="topbar-right">
@@ -41,23 +41,9 @@
                     </a>
                     
                     <div class="filter-group">
-                        <select id="filterCategory" class="form-select" onchange="handleSearch()">
-                            <option value="">Tất cả danh mục</option>
-                        </select>
-                        
-                        <select id="filterBrand" class="form-select" onchange="handleSearch()">
-                            <option value="">Tất cả thương hiệu</option>
-                        </select>
-                        
-                        <select id="filterStatus" class="form-select" onchange="handleSearch()">
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="true">Hoạt động</option>
-                            <option value="false">Không hoạt động</option>
-                        </select>
-
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm..." onkeyup="handleSearch()">
+                            <input type="text" id="searchInput" placeholder="Tìm theo tên hoặc mã series..." onkeyup="handleSearch()">
                         </div>
                     </div>
                 </div>
@@ -68,16 +54,17 @@
                             <tr>
                                 <th>Hình Ảnh</th>
                                 <th>Tên Sản Phẩm</th>
+                                <th>Mã Series</th>
                                 <th>Danh Mục</th>
                                 <th>Thương Hiệu</th>
-                                <th>Bảo Hành</th>
+                                <th>Ngày Tạo</th>
                                 <th>Trạng Thái</th>
                                 <th>Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                <td colspan="8" style="text-align: center; padding: 40px;">
                                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
                                     <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
                                 </td>
@@ -100,98 +87,35 @@
         </main>
     </div>
 
-    <!-- View Product Detail Modal -->
-    <div class="modal" id="productDetailModal">
-        <div class="modal-content" style="max-width: 900px;">
+    <!-- Gallery Manager Modal -->
+    <div class="modal" id="galleryModal">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h2>Chi Tiết Sản Phẩm</h2>
-                <button class="btn-close" onclick="closeDetailModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="productDetailContent">
-                <!-- Content will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">
-                    <i class="fas fa-times"></i> Đóng
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit SKU Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Chỉnh sửa SKU</h3>
-                <button class="close-btn" onclick="closeEditModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <h2>Quản Lý Thư Viện Ảnh</h2>
+                <button class="btn-close" onclick="closeGalleryModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="editSkuForm" onsubmit="event.preventDefault(); saveEditedSku();">
-                    <input type="hidden" id="editSkuId">
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editSkuName">Tên SKU <span class="required">*</span></label>
-                            <input type="text" id="editSkuName" class="form-control" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editSkuCode">Mã SKU <span class="required">*</span></label>
-                            <input type="text" id="editSkuCode" class="form-control" required>
-                        </div>
+                <div class="gallery-upload-section">
+                    <h3>Tải ảnh lên</h3>
+                    <div class="upload-controls">
+                        <input type="file" id="galleryInput" multiple accept="image/*" class="form-control">
+                        <button class="btn btn-primary" onclick="uploadGalleryImages()">
+                            <i class="fas fa-cloud-upload-alt"></i> Tải lên
+                        </button>
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editSkuPrice">Giá (VNĐ) <span class="required">*</span></label>
-                            <input type="number" id="editSkuPrice" class="form-control" min="0" step="1000" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editSkuBarcode">Barcode</label>
-                            <input type="text" id="editSkuBarcode" class="form-control">
-                        </div>
+                </div>
+
+                <div class="gallery-display-section">
+                    <h3>Danh sách ảnh</h3>
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- Images will be loaded here -->
                     </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editSkuWeight">Trọng lượng (gram)</label>
-                            <input type="number" id="editSkuWeight" class="form-control" min="0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editSkuActive">Trạng thái <span class="required">*</span></label>
-                            <select id="editSkuActive" class="form-control" required>
-                                <option value="true">Hoạt động</option>
-                                <option value="false">Không hoạt động</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editSkuLength">Chiều dài (cm)</label>
-                            <input type="number" id="editSkuLength" class="form-control" min="0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editSkuWidth">Chiều rộng (cm)</label>
-                            <input type="number" id="editSkuWidth" class="form-control" min="0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editSkuHeight">Chiều cao (cm)</label>
-                            <input type="number" id="editSkuHeight" class="form-control" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                    </div>
-                </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeGalleryModal()">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
             </div>
         </div>
     </div>

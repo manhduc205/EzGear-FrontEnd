@@ -3,59 +3,12 @@ let products = [];
 let currentPage = 0;
 let totalPages = 0;
 const pageSize = 10;
-let currentEditingSku = null;
+let currentProductId = null;
 
 // ================== INIT ==================
 document.addEventListener('DOMContentLoaded', async () => {
-    await Promise.all([
-        loadCategories(),
-        loadBrands(),
-        loadProducts(true)
-    ]);
+    await loadProducts(true);
 });
-
-// ================== LOAD FILTERS ==================
-async function loadCategories() {
-    try {
-        const response = await fetch(`${BASE_URL}/categories`, {
-            headers: getAuthHeaders()
-        });
-        if (response.ok) {
-            const data = await response.json();
-            const list = data.payload || [];
-            const select = document.getElementById('filterCategory');
-            list.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.id;
-                option.textContent = cat.name;
-                select.appendChild(option);
-            });
-        }
-    } catch (e) {
-        console.error('Error loading categories:', e);
-    }
-}
-
-async function loadBrands() {
-    try {
-        const response = await fetch(`${BASE_URL}/brands`, {
-            headers: getAuthHeaders()
-        });
-        if (response.ok) {
-            const data = await response.json();
-            const list = data.payload || [];
-            const select = document.getElementById('filterBrand');
-            list.forEach(brand => {
-                const option = document.createElement('option');
-                option.value = brand.id;
-                option.textContent = brand.name;
-                select.appendChild(option);
-            });
-        }
-    } catch (e) {
-        console.error('Error loading brands:', e);
-    }
-}
 
 // ================== LOAD DATA ==================
 async function loadProducts(showSpinner = true) {
@@ -63,22 +16,16 @@ async function loadProducts(showSpinner = true) {
     
     try {
         const keyword = document.getElementById('searchInput').value.trim();
-        const categoryId = document.getElementById('filterCategory').value;
-        const brandId = document.getElementById('filterBrand').value;
-        const statusVal = document.getElementById('filterStatus').value;
 
         const searchRequest = {
             keyword: keyword || null,
-            categoryId: categoryId ? parseInt(categoryId) : null,
-            brandId: brandId ? parseInt(brandId) : null,
-            isActive: statusVal === "" ? null : (statusVal === "true"),
             page: currentPage,
             size: pageSize,
-            sortBy: "createdAt",
+            sortBy: "id",
             sortDir: "desc"
         };
         
-        const response = await fetch(`${BASE_URL}/product-skus/admin/search`, {
+        const response = await fetch(`${BASE_URL}/products/admin/search`, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(searchRequest)
@@ -117,11 +64,11 @@ function renderProducts(list) {
     
     tbody.innerHTML = list.map(item => {
         const imageUrl = item.imageUrl || 'https://via.placeholder.com/50';
-        const productName = item.productName || 'N/A';
-        const skuCode = item.skuCode || 'N/A';
+        const productName = item.name || 'N/A';
+        const seriesCode = item.seriesCode ? `<span class="series-badge">${item.seriesCode}</span>` : '<span class="text-muted small">--</span>';
         const categoryName = item.categoryName || 'N/A';
         const brandName = item.brandName || 'N/A';
-        const warranty = item.warrantyMonths || 0;
+        const createdAt = item.createdAt ? formatDateTime(item.createdAt) : 'N/A';
         
         const statusClass = item.isActive ? 'active' : 'inactive';
         const statusText = item.isActive ? 'Hoạt động' : 'Không hoạt động';
@@ -133,21 +80,25 @@ function renderProducts(list) {
             </td>
             <td>
                 <div class="fw-bold">${productName}</div>
-                <small class="text-muted"><i class="fas fa-barcode"></i> ${skuCode}</small>
             </td>
+            <td>${seriesCode}</td>
             <td>${categoryName}</td>
             <td>${brandName}</td>
-            <td>${warranty} tháng</td>
+            <td>${createdAt}</td>
             <td>
                 <span class="status-badge ${statusClass}">${statusText}</span>
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-sm btn-warning" onclick="openEditModal(${item.id})" title="Sửa nhanh SKU">
+                    <button class="btn btn-sm btn-info" onclick="openGalleryModal(${item.id})" title="Album Ảnh">
+                        <i class="fas fa-images"></i>
+                    </button>
+                    
+                    <button class="btn btn-sm btn-warning" onclick="editProduct(${item.id})" title="Sửa">
                         <i class="fas fa-edit"></i>
                     </button>
                     
-                    <button class="btn btn-sm btn-danger" onclick="deleteSku(${item.id}, '${skuCode}')" title="Xóa Biến thể">
+                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${item.id}, '${productName}')" title="Xóa">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -161,149 +112,6 @@ function renderProducts(list) {
 function handleSearch() {
     currentPage = 0;
     loadProducts(false);
-}
-
-async function deleteSku(id, code) {
-    if (!confirm(`Bạn có chắc muốn xóa biến thể SKU: ${code}?`)) return;
-    
-    showLoading(true);
-    try {
-        const response = await fetch(`${BASE_URL}/product-skus/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        });
-        
-        if (response.ok) {
-            showToast('Xóa biến thể thành công', 'success');
-            loadProducts();
-        } else {
-            throw new Error('Không thể xóa');
-        }
-    } catch (e) {
-        showToast(e.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-// ================== EDIT MODAL ==================
-
-async function openEditModal(id) {
-    showLoading(true);
-    let skuId = id;
-    let item = products.find(p => p.id === id);
-    
-    try {
-        // Try to fetch full details
-        const response = await fetch(`${BASE_URL}/product-skus/${id}`, {
-            headers: getAuthHeaders()
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.payload) {
-                item = data.payload;
-                item.id = skuId; // Ensure ID is preserved
-            }
-        } else {
-            console.warn('Failed to fetch SKU details, using list data');
-        }
-    } catch (error) {
-        console.error('Error fetching SKU details:', error);
-        // Fallback to list data is already set
-    } finally {
-        showLoading(false);
-    }
-
-    if (!item) {
-        showToast('Không tìm thấy thông tin sản phẩm', 'error');
-        return;
-    }
-    
-    currentEditingSku = item;
-    
-    // Populate form fields
-    document.getElementById('editSkuId').value = item.id;
-    document.getElementById('editSkuName').value = item.name || item.productName || '';
-    document.getElementById('editSkuCode').value = item.sku || item.skuCode || '';
-    document.getElementById('editSkuPrice').value = item.price || 0;
-    document.getElementById('editSkuBarcode').value = item.barcode || '';
-    document.getElementById('editSkuWeight').value = item.weightGram || '';
-    document.getElementById('editSkuLength').value = item.lengthCm || '';
-    document.getElementById('editSkuWidth').value = item.widthCm || '';
-    document.getElementById('editSkuHeight').value = item.heightCm || '';
-    
-    const isActive = item.isActive === true || item.isActive === 'true';
-    document.getElementById('editSkuActive').value = isActive ? 'true' : 'false';
-    
-    document.getElementById('editModal').classList.add('active');
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').classList.remove('active');
-    currentEditingSku = null;
-}
-
-async function saveEditedSku() {
-    if (!currentEditingSku) return;
-    
-    const id = currentEditingSku.id;
-    
-    // Construct DTO
-    const productSkuDTO = {
-        id: id,
-        productId: currentEditingSku.productId || currentEditingSku.product?.id,
-        sku: document.getElementById('editSkuCode').value.trim(),
-        name: document.getElementById('editSkuName').value.trim(),
-        price: parseFloat(document.getElementById('editSkuPrice').value),
-        barcode: document.getElementById('editSkuBarcode').value.trim() || null,
-        weightGram: parseInt(document.getElementById('editSkuWeight').value) || null,
-        lengthCm: parseInt(document.getElementById('editSkuLength').value) || null,
-        widthCm: parseInt(document.getElementById('editSkuWidth').value) || null,
-        heightCm: parseInt(document.getElementById('editSkuHeight').value) || null,
-        isActive: document.getElementById('editSkuActive').value === 'true',
-        // Preserve fields if they exist in currentEditingSku
-        optionName: currentEditingSku.optionName || null,
-        skuImage: currentEditingSku.skuImage || currentEditingSku.imageUrl || null
-    };
-    
-    if (!productSkuDTO.sku || !productSkuDTO.name || !productSkuDTO.price) {
-        showToast('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
-        return;
-    }
-
-    showLoading(true);
-    try {
-        // Use POST for update as per API doc
-        const response = await fetch(`${BASE_URL}/product-skus/${id}`, {
-            method: 'POST', 
-            headers: getAuthHeaders(),
-            body: JSON.stringify(productSkuDTO)
-        });
-        
-        if (response.ok) {
-            showToast('Cập nhật thành công', 'success');
-            closeEditModal();
-            loadProducts();
-        } else {
-            const err = await response.json();
-            throw new Error(err.message || 'Lỗi cập nhật');
-        }
-    } catch (e) {
-        showToast(e.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-// ================== HELPERS ==================
-
-function showLoading(isLoading) {
-    const overlay = document.getElementById('loadingOverlay');
-    if(overlay) {
-        if(isLoading) overlay.classList.add('active');
-        else overlay.classList.remove('active');
-    }
 }
 
 function previousPage() {
@@ -321,15 +129,185 @@ function nextPage() {
 }
 
 function updatePagination() {
-    const info = document.getElementById('pageInfo');
-    const pagination = document.getElementById('pagination');
-    
-    if(info) info.textContent = `Trang ${currentPage + 1} / ${totalPages}`;
-    if(pagination) pagination.style.display = totalPages > 1 ? 'block' : 'none';
-    
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const pageInfo = document.getElementById('pageInfo');
+    const pagination = document.getElementById('pagination');
+
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+
+    pagination.style.display = 'block';
+    prevBtn.disabled = currentPage === 0;
+    nextBtn.disabled = currentPage === totalPages - 1;
+    pageInfo.textContent = `Trang ${currentPage + 1} / ${totalPages}`;
+}
+
+function editProduct(id) {
+    // Placeholder for edit functionality
+    alert(`Chức năng sửa sản phẩm ID: ${id} đang được phát triển`);
+    // window.location.href = `../add-product/add-product.html?id=${id}`;
+}
+
+async function deleteProduct(id, name) {
+    if (!confirm(`Bạn có chắc muốn xóa sản phẩm: ${name}?`)) return;
     
-    if(prevBtn) prevBtn.disabled = currentPage === 0;
-    if(nextBtn) nextBtn.disabled = currentPage === totalPages - 1;
+    showLoading(true);
+    try {
+        const response = await fetch(`${BASE_URL}/products/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            showToast('Xóa sản phẩm thành công', 'success');
+            loadProducts();
+        } else {
+            throw new Error('Không thể xóa sản phẩm');
+        }
+    } catch (e) {
+        showToast(e.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ================== GALLERY MODAL ==================
+
+async function openGalleryModal(id) {
+    currentProductId = id;
+    const product = products.find(p => p.id === id);
+    
+    if (!product) return;
+    
+    document.getElementById('galleryModal').classList.add('active');
+    document.getElementById('galleryInput').value = ''; // Reset file input
+    
+    await loadGalleryImages(id, product.imageUrl);
+}
+
+function closeGalleryModal() {
+    document.getElementById('galleryModal').classList.remove('active');
+    currentProductId = null;
+}
+
+async function loadGalleryImages(productId, mainImageUrl) {
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '<div class="text-center w-100"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+    
+    try {
+        const response = await fetch(`${BASE_URL}/products/${productId}/images`, {
+            headers: getAuthHeaders()
+        });
+        
+        let galleryImages = [];
+        if (response.ok) {
+            const data = await response.json();
+            galleryImages = data.payload || [];
+        }
+        
+        let html = '';
+        
+        // Add Main Image (Thumbnail)
+        if (mainImageUrl) {
+            html += `
+                <div class="gallery-item is-main">
+                    <img src="${mainImageUrl}" alt="Ảnh chính">
+                    <div class="main-badge">Ảnh chính</div>
+                </div>
+            `;
+        }
+        
+        // Add Gallery Images
+        galleryImages.forEach(img => {
+            html += `
+                <div class="gallery-item">
+                    <img src="${img.imageUrl}" alt="Ảnh phụ">
+                    <button class="delete-btn" onclick="deleteGalleryImage(${img.id})" title="Xóa ảnh">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        });
+        
+        if (!mainImageUrl && galleryImages.length === 0) {
+            html = '<div class="text-center w-100 text-muted p-3">Chưa có ảnh nào</div>';
+        }
+        
+        grid.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading gallery:', error);
+        grid.innerHTML = '<div class="text-danger p-3">Lỗi tải ảnh</div>';
+    }
+}
+
+async function uploadGalleryImages() {
+    if (!currentProductId) return;
+    
+    const fileInput = document.getElementById('galleryInput');
+    const files = fileInput.files;
+    
+    if (files.length === 0) {
+        showToast('Vui lòng chọn ít nhất một ảnh', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    showLoading(true);
+    try {
+        const response = await fetch(`${BASE_URL}/products/uploads/${currentProductId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                // Content-Type is automatically set for FormData
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            showToast('Tải ảnh lên thành công', 'success');
+            fileInput.value = ''; // Reset input
+            // Reload gallery
+            const product = products.find(p => p.id === currentProductId);
+            await loadGalleryImages(currentProductId, product ? product.imageUrl : null);
+        } else {
+            throw new Error('Lỗi tải ảnh lên');
+        }
+    } catch (e) {
+        showToast(e.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function deleteGalleryImage(imageId) {
+    if (!confirm('Bạn có chắc muốn xóa ảnh này?')) return;
+    
+    showLoading(true);
+    try {
+        const response = await fetch(`${BASE_URL}/products/images/${imageId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            showToast('Xóa ảnh thành công', 'success');
+            // Reload gallery
+            const product = products.find(p => p.id === currentProductId);
+            await loadGalleryImages(currentProductId, product ? product.imageUrl : null);
+        } else {
+            throw new Error('Không thể xóa ảnh');
+        }
+    } catch (e) {
+        showToast(e.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }

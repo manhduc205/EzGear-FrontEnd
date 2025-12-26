@@ -73,7 +73,8 @@ async function loadSidebar() {
     const branchesLink = isInSubDir ? '../branches/branches.html' : './branches/branches.html';
     const categoriesLink = isInSubDir ? '../categories/categories.html' : './categories/categories.html';
     const brandsLink = isInSubDir ? '../brands/brands.html' : './brands/brands.html';
-    const productsLink = isInSubDir ? '../manage-products/products.html' : './manage-products/products.html';
+    const productsLink = isInSubDir ? '../manage-products/product-sku.html' : './manage-products/product-sku.html';
+    const productParentsLink = isInSubDir ? '../manage-products/products.html' : './manage-products/products.html';
     const addProductLink = isInSubDir ? '../add-product/add-product.html' : './add-product/add-product.html';
     const vouchersLink = isInSubDir ? '../vouchers/vouchers.html' : './vouchers/vouchers.html';
     const warehousesLink = isInSubDir ? '../warehouses/warehouses.html' : './warehouses/warehouses.html';
@@ -98,9 +99,13 @@ async function loadSidebar() {
 
             <div class="menu-section">
                 <div class="menu-section-title">Quản Lý Sản Phẩm</div>
-                <a href="${productsLink}" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
+                <a href="${productParentsLink}" class="menu-item ${currentPage === 'products.html' ? 'active' : ''}">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="menu-item-text">Dòng sản phẩm</span>
+                </a>
+                <a href="${productsLink}" class="menu-item ${currentPage === 'product-sku.html' ? 'active' : ''}">
                     <i class="fas fa-box"></i>
-                    <span class="menu-item-text">Sản phẩm</span>
+                    <span class="menu-item-text">Biến thể</span>
                 </a>
                 <a href="${addProductLink}" class="menu-item ${currentPage === 'add-product.html' ? 'active' : ''}">
                     <i class="fas fa-plus-circle"></i>

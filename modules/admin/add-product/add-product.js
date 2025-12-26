@@ -342,7 +342,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
         showToast('Thêm sản phẩm thành công!', 'success');
         
         setTimeout(() => {
-            window.location.href = './products.html';
+            window.location.href = '../manage-products/product-sku.html';
         }, 1500);
         
     } catch (error) {
