@@ -71,7 +71,7 @@ async function loadOrders(status) {
              
              if (!token) {
                  console.warn("No access token found. Redirecting to login...");
-                 // Optional: window.location.href = '/modules/auth/login.html';
+                 // Optional: window.location.href = '/modules/auth/auth.html';
                  return;
              }
 

@@ -14,7 +14,7 @@ async function initProfilePage() {
     try {
         if (!TokenHelper.isLoggedIn()) {
             console.log('User not logged in, redirecting...');
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
             return;
         }
 

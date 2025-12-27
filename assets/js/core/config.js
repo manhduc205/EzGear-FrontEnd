@@ -22,7 +22,7 @@ const CONFIG = {
     HOME: '/index.html',
     
     // Auth
-    LOGIN: '/modules/auth/login.html',
+    LOGIN: '/modules/auth/auth.html',
     REGISTER: '/modules/auth/register.html',
     FORGOT_PASSWORD: '/modules/auth/forgot-password.html',
     

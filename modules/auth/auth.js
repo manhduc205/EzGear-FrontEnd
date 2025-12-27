@@ -679,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Redirect nếu đã login và đang ở trang login/register
   if (TokenHelper.isLoggedIn()) {
     const currentPath = window.location.pathname;
-    if (currentPath.includes('login.html') || currentPath.includes('register.html')) {
+    if (currentPath.includes('auth.html') || currentPath.includes('register.html')) {
       // Uncomment nếu muốn auto redirect
       // window.location.href = CONFIG.ROUTES.HOME;
     }

@@ -13,7 +13,7 @@ async function checkAdminAuth() {
     const token = localStorage.getItem('accessToken');
     if (!token) {
         alert('Vui lòng đăng nhập để tiếp tục!');
-        window.location.href = '../../modules/auth/login.html';
+        window.location.href = '../../modules/auth/auth.html';
         return;
     }
     
@@ -27,7 +27,7 @@ async function checkAdminAuth() {
     } catch (error) {
         console.error('Error checking role:', error);
         alert('Lỗi xác thực. Vui lòng đăng nhập lại!');
-        window.location.href = '../../modules/auth/login.html';
+        window.location.href = '../../modules/auth/auth.html';
         return;
     }
 }
@@ -267,7 +267,7 @@ async function handleLogout() {
         console.error('Logout error:', error);
     } finally {
         localStorage.clear();
-        window.location.href = '../auth/login.html';
+        window.location.href = '../auth/auth.html';
     }
 }
 

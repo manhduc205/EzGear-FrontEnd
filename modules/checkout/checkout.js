@@ -34,7 +34,7 @@ async function initCheckout() {
     if (!TokenHelper.isLoggedIn()) {
         showToast('Vui lòng đăng nhập để thanh toán', 'warning');
         setTimeout(() => {
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
         }, 1500);
         return;
     }

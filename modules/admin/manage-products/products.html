@@ -39,12 +39,32 @@
                     <a href="../add-product/add-product.html" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Thêm Sản Phẩm
                     </a>
-                    
-                    <div class="filter-group">
-                        <div class="search-box">
+                </div>
+
+                <div class="filter-section" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div class="row" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <div class="search-box" style="flex: 2; min-width: 250px;">
                             <i class="fas fa-search"></i>
                             <input type="text" id="searchInput" placeholder="Tìm theo tên hoặc mã series..." onkeyup="handleSearch()">
                         </div>
+                        
+                        <select id="filterCategory" class="form-control" style="flex: 1; min-width: 150px;" onchange="handleSearch()">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                        
+                        <select id="filterBrand" class="form-control" style="flex: 1; min-width: 150px;" onchange="handleSearch()">
+                            <option value="">Tất cả thương hiệu</option>
+                        </select>
+                        
+                        <select id="filterStatus" class="form-control" style="flex: 1; min-width: 150px;" onchange="handleSearch()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Hoạt động</option>
+                            <option value="false">Ngừng hoạt động</option>
+                        </select>
+
+                        <button class="btn btn-secondary" onclick="resetFilters()" style="height: 42px;">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -116,6 +136,82 @@
                 <button type="button" class="btn btn-secondary" onclick="closeGalleryModal()">
                     <i class="fas fa-times"></i> Đóng
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal" id="editProductModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Cập Nhật Sản Phẩm</h2>
+                <button class="btn-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="editName">Tên sản phẩm <span class="required">*</span></label>
+                            <input type="text" id="editName" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="editSeriesCode">Mã Series <span class="required">*</span></label>
+                            <input type="text" id="editSeriesCode" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="editSlug">Slug <span class="required">*</span></label>
+                            <input type="text" id="editSlug" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="editWarranty">Bảo hành (tháng)</label>
+                            <input type="number" id="editWarranty" class="form-control" min="0" value="12">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="editCategory">Danh mục <span class="required">*</span></label>
+                            <select id="editCategory" class="form-control" required>
+                                <option value="">-- Chọn danh mục --</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="editBrand">Thương hiệu <span class="required">*</span></label>
+                            <select id="editBrand" class="form-control" required>
+                                <option value="">-- Chọn thương hiệu --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editShortDesc">Mô tả ngắn</label>
+                        <textarea id="editShortDesc" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editImage">Hình ảnh chính (Để trống nếu không đổi)</label>
+                        <input type="file" id="editImage" class="form-control" accept="image/*">
+                        <div id="currentImagePreview" style="margin-top: 10px;">
+                            <!-- Preview here -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="editIsActive">
+                            <span class="checkmark"></span>
+                            Kích hoạt sản phẩm
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="updateProduct()">Lưu thay đổi</button>
             </div>
         </div>
     </div>

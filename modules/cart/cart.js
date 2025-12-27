@@ -23,7 +23,7 @@ async function getCartAPI(provinceId = null) {
         
         if (!token) {
             console.log('❌ No token, redirecting to login');
-            window.location.href = '/modules/auth/login.html';
+            window.location.href = '/modules/auth/auth.html';
             return null;
         }
         
@@ -47,7 +47,7 @@ async function getCartAPI(provinceId = null) {
             if (response.status === 401) {
                 console.log('🔒 Unauthorized, clearing tokens');
                 TokenHelper.clearTokens();
-                window.location.href = '/modules/auth/login.html';
+                window.location.href = '/modules/auth/auth.html';
                 return null;
             }
             throw new Error('Không thể tải giỏ hàng');
@@ -708,7 +708,7 @@ function initUserInfo() {
     } else {
         document.getElementById('userInfo').innerHTML = `
             <button class="btn-cart" style="background: transparent; border: 1px solid white; padding: 8px 20px;" 
-                    onclick="window.location.href='../auth/login.html'">
+                    onclick="window.location.href='../auth/auth.html'">
                 <i class="fas fa-sign-in-alt"></i>
                 Đăng nhập
             </button>
@@ -898,7 +898,7 @@ function initCart() {
     if (!TokenHelper.isLoggedIn()) {
         showToast('Vui lòng đăng nhập để xem giỏ hàng', 'warning');
         setTimeout(() => {
-            window.location.href = '/modules/auth/login.html';
+            window.location.href = '/modules/auth/auth.html';
         }, 1500);
         return;
     }

@@ -393,7 +393,7 @@ async function addToCart(skuId, productName, event) {
     if (!TokenHelper.isLoggedIn()) {
         showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'warning');
         setTimeout(() => {
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
         }, 1500);
         return;
     }
@@ -796,7 +796,7 @@ function initUserInfo() {
     } else {
         document.getElementById('userInfo').innerHTML = `
             <button class="btn-cart" style="background: transparent; border: 1px solid #c8102e; padding: 8px 20px;" 
-                    onclick="window.location.href='../auth/login.html'">
+                    onclick="window.location.href='../auth/auth.html'">
                 <i class="fas fa-sign-in-alt"></i>
                 Đăng nhập
             </button>

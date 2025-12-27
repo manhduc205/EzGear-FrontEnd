@@ -31,7 +31,7 @@ function initHeaderUser() {
         if (sidebarName) sidebarName.textContent = userInfo.username;
     } else {
         // Redirect if not logged in
-        window.location.href = '../auth/login.html';
+        window.location.href = '../auth/auth.html';
     }
 }
 
@@ -53,7 +53,7 @@ async function loadOrderDetail(orderCode) {
     showLoading(true);
     try {
         if (!TokenHelper.isLoggedIn()) {
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
             return;
         }
 

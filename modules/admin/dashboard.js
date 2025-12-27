@@ -212,6 +212,6 @@ async function handleLogout() {
         console.error('Logout error:', error);
     } finally {
         localStorage.clear();
-        window.location.href = '../auth/login.html';
+        window.location.href = '../auth/auth.html';
     }
 }

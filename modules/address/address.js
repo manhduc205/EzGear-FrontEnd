@@ -418,7 +418,7 @@ async function handleSubmit(e) {
     if (!token) {
         showToast('Vui lòng đăng nhập để thêm địa chỉ', 'warning');
         setTimeout(() => {
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
         }, 1500);
         return;
     }
@@ -577,7 +577,7 @@ function init() {
     if (!TokenHelper.isLoggedIn()) {
         showToast('Vui lòng đăng nhập để thêm địa chỉ', 'warning');
         setTimeout(() => {
-            window.location.href = '../auth/login.html';
+            window.location.href = '../auth/auth.html';
         }, 1500);
         return;
     }

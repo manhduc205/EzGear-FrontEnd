@@ -92,6 +92,20 @@ const TokenHelper = {
 };
 
 // ==================== HTTP REQUEST HELPER ====================
+
+// Variables for token refresh logic
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function onRefreshed(token) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
 /**
  * Hàm request HTTP chung
  * @param {string} url - URL đầy đủ
@@ -103,6 +117,11 @@ async function httpRequest(url, options = {}) {
     'Content-Type': 'application/json',
     ...(options.headers || {})
   };
+
+  // If body is FormData, remove Content-Type to let browser set it with boundary
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
   
   // Tự động thêm token nếu có
   const token = TokenHelper.getAccessToken();
@@ -125,6 +144,12 @@ async function httpRequest(url, options = {}) {
     }
     
     if (!response.ok) {
+      // Handle 401 Unauthorized (Token expired)
+      if (response.status === 401) {
+        console.log('🔒 Token expired, attempting to refresh...');
+        return handleRefreshToken(url, options);
+      }
+
       // Extract error message from various response formats
       const errorMsg = data?.message || data?.error || data?.msg || `HTTP Error: ${response.status}`;
       throw new Error(errorMsg);
@@ -134,6 +159,74 @@ async function httpRequest(url, options = {}) {
   } catch (error) {
     console.error(`Request failed [${url}]:`, error);
     throw error;
+  }
+}
+
+/**
+ * Handle Token Refresh
+ */
+async function handleRefreshToken(url, options) {
+  const refreshToken = TokenHelper.getRefreshToken();
+  
+  if (!refreshToken) {
+    console.log('❌ No refresh token found, logging out...');
+    TokenHelper.clearTokens();
+    window.location.href = '/modules/auth/auth.html';
+    throw new Error('Session expired');
+  }
+
+  if (isRefreshing) {
+    return new Promise((resolve) => {
+      subscribeTokenRefresh((token) => {
+        // Retry original request with new token
+        const headers = { 
+            ...options.headers, 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+        resolve(httpRequest(url, { ...options, headers }));
+      });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    console.log('🔄 Refreshing token...');
+    const refreshResponse = await fetch(`${window.BASE_URL}/api/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    });
+
+    const data = await refreshResponse.json();
+
+    if (refreshResponse.ok && data.success) {
+      console.log('✅ Token refreshed successfully');
+      const { accessToken, refreshToken: newRefreshToken } = data.payload;
+      
+      // Save new tokens (keep userId)
+      TokenHelper.saveTokens(accessToken, newRefreshToken, TokenHelper.getUserId());
+      
+      onRefreshed(accessToken);
+      
+      // Retry original request
+      const headers = { 
+          ...options.headers, 
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+      };
+      return httpRequest(url, { ...options, headers });
+    } else {
+      throw new Error('Refresh failed');
+    }
+  } catch (error) {
+    console.error('❌ Token refresh failed:', error);
+    TokenHelper.clearTokens();
+    window.location.href = '/modules/auth/auth.html';
+    throw error;
+  } finally {
+    isRefreshing = false;
   }
 }
 

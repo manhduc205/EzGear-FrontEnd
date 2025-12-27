@@ -761,7 +761,7 @@
                 } else {
                     localStorage.clear();
                 }
-                window.location.href = '/modules/auth/login.html';
+                window.location.href = '/modules/auth/auth.html';
             });
         }
         
@@ -806,7 +806,7 @@
             userInfo.onclick = (e) => {
                 if (!isLoggedIn) {
                     e.preventDefault();
-                    window.location.href = '/modules/auth/login.html';
+                    window.location.href = '/modules/auth/auth.html';
                 } else {
                     e.stopPropagation();
                     if (userDropdown) {
