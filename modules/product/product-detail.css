@@ -11,3 +11,86 @@
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
     background-color: #4b5563;
 }
+
+/* Reviews Section Styles */
+#reviews-section {
+    scroll-margin-top: 80px;
+}
+
+#reviews-section .text-sm {
+    font-size: 0.875rem;
+    line-height: normal;
+}
+
+#reviews-section .w-8 {
+    width: 3rem;
+}
+
+.review-filter-btn {
+    cursor: pointer;
+}
+
+.review-filter-btn.active {
+    background-color: var(--primary, #dc2626);
+    border-color: var(--primary, #dc2626);
+    color: white;
+}
+
+.review-filter-btn:not(.active):hover {
+    border-color: var(--primary, #dc2626);
+    color: var(--primary, #dc2626);
+}
+
+/* Rating stars animation */
+#reviews-section .material-icons.text-yellow-500 {
+    transition: transform 0.2s ease;
+}
+
+#reviews-section .flex:hover .material-icons.text-yellow-500 {
+    transform: scale(1.1);
+}
+
+/* Review item hover effect */
+#reviews-list > div {
+    transition: background-color 0.2s ease;
+}
+
+#reviews-list > div:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dark #reviews-list > div:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Rating bar animation */
+#reviews-section .h-3.bg-gray-200 .h-full {
+    transition: width 0.5s ease-out;
+}
+
+/* Avatar colors */
+.review-avatar-blue { background-color: #3b82f6; }
+.review-avatar-green { background-color: #22c55e; }
+.review-avatar-purple { background-color: #a855f7; }
+.review-avatar-orange { background-color: #f97316; }
+.review-avatar-pink { background-color: #ec4899; }
+
+/* Review image lightbox */
+#reviews-list img {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#reviews-list img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Tag hover effect */
+#reviews-list .rounded-full {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#reviews-list .rounded-full:hover {
+    background-color: rgba(220, 38, 38, 0.1);
+    transform: translateY(-1px);
+}

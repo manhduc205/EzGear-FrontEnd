@@ -350,6 +350,245 @@
 </div>
 </div>
 </div>
+
+<!-- Section Đánh giá sản phẩm -->
+<div class="mt-12 bg-surface-light dark:bg-surface-dark rounded-xl p-6 shadow-soft" id="reviews-section">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+        Đánh giá sản phẩm
+    </h2>
+    
+    <!-- Tổng quan đánh giá -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Điểm trung bình -->
+        <div class="flex flex-col items-center justify-center">
+            <div class="text-5xl font-bold text-gray-900 dark:text-white mb-2">5.0<span class="text-2xl text-gray-500">/5</span></div>
+            <div class="flex text-yellow-500 mb-2">
+                <span class="material-icons">star</span>
+                <span class="material-icons">star</span>
+                <span class="material-icons">star</span>
+                <span class="material-icons">star</span>
+                <span class="material-icons">star</span>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">6 lượt đánh giá</p>
+            <button class="bg-primary hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition">
+                Viết đánh giá
+            </button>
+        </div>
+        
+        <!-- Thống kê theo số sao -->
+        <div class="flex flex-col justify-center space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="text-sm w-8">5 <span class="material-icons text-yellow-500 text-sm align-middle">star</span></span>
+                <div class="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 100%"></div>
+                </div>
+                <span class="text-sm text-gray-500 w-20">6 đánh giá</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm w-8">4 <span class="material-icons text-yellow-500 text-sm align-middle">star</span></span>
+                <div class="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-sm text-gray-500 w-20">0 đánh giá</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm w-8">3 <span class="material-icons text-yellow-500 text-sm align-middle">star</span></span>
+                <div class="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-sm text-gray-500 w-20">0 đánh giá</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm w-8">2 <span class="material-icons text-yellow-500 text-sm align-middle">star</span></span>
+                <div class="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-sm text-gray-500 w-20">0 đánh giá</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm w-8">1 <span class="material-icons text-yellow-500 text-sm align-middle">star</span></span>
+                <div class="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                </div>
+                <span class="text-sm text-gray-500 w-20">0 đánh giá</span>
+            </div>
+        </div>
+        
+    
+    </div>
+    
+    <!-- Bộ lọc đánh giá -->
+    <div class="mb-6">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Lọc đánh giá theo</p>
+        <div class="flex flex-wrap gap-2">
+            <button class="review-filter-btn active px-4 py-2 rounded-full text-sm font-medium border border-primary bg-primary text-white transition">
+                Tất cả
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                Có hình ảnh
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                Đã mua hàng
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                5 sao
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                4 sao
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                3 sao
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                2 sao
+            </button>
+            <button class="review-filter-btn px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition">
+                1 sao
+            </button>
+        </div>
+    </div>
+    
+    <!-- Danh sách đánh giá -->
+    <div class="space-y-6" id="reviews-list">
+        <!-- Review item 1 -->
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    Q
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-medium text-gray-900 dark:text-white">Quý Trần Văn</span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex text-yellow-500">
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                        </div>
+                        <span class="text-sm text-green-600 font-medium">Tuyệt vời</span>
+                    </div>
+                    <!-- Tags đánh giá -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Hiệu năng Siêu mạnh mẽ
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Thời lượng pin Cực khủng
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Chất lượng camera Chụp đẹp, chuyên nghiệp
+                        </span>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">
+                        Mình có con find x8 16 512 gh mua ở cesphones h lên đời 17pro dcko a cần bù thêm bh a
+                    </p>
+                    <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <span class="material-icons-outlined text-sm mr-1">schedule</span>
+                        Đánh giá đã đăng vào 1 tuần trước
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review item 2 -->
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    N
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-medium text-gray-900 dark:text-white">Nguyễn Văn An</span>
+                        <span class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Đã mua hàng</span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex text-yellow-500">
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                        </div>
+                        <span class="text-sm text-green-600 font-medium">Tuyệt vời</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Thiết kế Sang trọng
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Hiệu năng Mạnh mẽ
+                        </span>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">
+                        Máy đẹp, chạy mượt, camera chụp ảnh rất đẹp. Rất hài lòng với sản phẩm này.
+                    </p>
+                    <!-- Hình ảnh đánh giá -->
+                    <div class="flex gap-2 mb-3">
+                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh7-89NOEEU1qenUMuIsXh6Q63J3AlI7YQHSxKx4_EAjhwcBBBqc1bD3Ls6__zbXZUGZs-_LmSISR6ak7qWiQAL5jWtzUuXby_FuzHf7BtjvLrFABdbSC4CxmIrQAdNMq0Cq4nUtpsobBGRbEavlBKr9Va6qgFfQuMUGfOgOr-MKZw-1NyFh9mPBRyiaE5I6p6ydEloKhGLVuj2GFwa_PrlyWALzwq-gwlKGHSkmdG7pneETejrbKwtQnEJCGwdUvbVculZxquiwEs" alt="Review image" class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition">
+                    </div>
+                    <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <span class="material-icons-outlined text-sm mr-1">schedule</span>
+                        Đánh giá đã đăng vào 2 tuần trước
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review item 3 -->
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    T
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-medium text-gray-900 dark:text-white">Trần Minh Tuấn</span>
+                        <span class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Đã mua hàng</span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex text-yellow-500">
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                            <span class="material-icons text-sm">star</span>
+                        </div>
+                        <span class="text-sm text-green-600 font-medium">Tuyệt vời</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Pin trâu
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Màn hình đẹp
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                            Giao hàng nhanh
+                        </span>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">
+                        Sản phẩm chất lượng, đóng gói cẩn thận. Nhân viên tư vấn nhiệt tình. Sẽ ủng hộ shop dài dài.
+                    </p>
+                    <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <span class="material-icons-outlined text-sm mr-1">schedule</span>
+                        Đánh giá đã đăng vào 3 tuần trước
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Xem thêm đánh giá -->
+    <div class="mt-6 text-center">
+        <button class="px-6 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg font-medium transition">
+            Xem thêm đánh giá
+        </button>
+    </div>
+</div>
+
 <div class="mt-12">
 <div class="inline-block relative mb-6">
 <div class="bg-primary text-white font-bold text-lg px-6 py-2 uppercase rounded-md relative z-10">
