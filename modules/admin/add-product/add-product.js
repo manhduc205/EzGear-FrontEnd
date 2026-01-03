@@ -29,6 +29,12 @@ async function loadCategories() {
             }
         });
         
+        if (!response.ok) {
+            console.error('Categories API error:', response.status);
+            // Form vẫn hoạt động ngay cả khi API lỗi
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.success && data.payload) {
@@ -40,13 +46,10 @@ async function loadCategories() {
                 select.appendChild(option);
             });
             console.log('Loaded categories:', data.payload.length);
-        } else {
-            console.error('Failed to load categories:', data);
-            showToast('Không thể tải danh mục', 'error');
         }
     } catch (error) {
         console.error('Error loading categories:', error);
-        showToast('Lỗi khi tải danh mục', 'error');
+        // Không hiện toast để không làm phiền user
     }
 }
 
@@ -61,6 +64,12 @@ async function loadBrands() {
             }
         });
         
+        if (!response.ok) {
+            console.error('Brands API error:', response.status);
+            // Form vẫn hoạt động ngay cả khi API lỗi
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.success && data.payload) {
@@ -72,13 +81,10 @@ async function loadBrands() {
                 select.appendChild(option);
             });
             console.log('Loaded brands:', data.payload.length);
-        } else {
-            console.error('Failed to load brands:', data);
-            showToast('Không thể tải thương hiệu', 'error');
         }
     } catch (error) {
         console.error('Error loading brands:', error);
-        showToast('Lỗi khi tải thương hiệu', 'error');
+        // Không hiện toast để không làm phiền user
     }
 }
 
@@ -116,11 +122,23 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
         }
         
         selectedImages.push(file);
-        previewImage(file, selectedImages.length - 1);
     });
+    
+    // Rebuild entire preview grid to ensure first image is always main
+    rebuildImagePreview();
     
     e.target.value = ''; // Reset input
 });
+
+// Rebuild image preview grid
+function rebuildImagePreview() {
+    const grid = document.getElementById('imagePreviewGrid');
+    grid.innerHTML = '';
+    
+    selectedImages.forEach((file, index) => {
+        previewImage(file, index);
+    });
+}
 
 // Preview image
 function previewImage(file, index) {
@@ -137,7 +155,10 @@ function previewImage(file, index) {
             <button type="button" class="remove-image" onclick="removeImage(${index})">
                 <i class="fas fa-times"></i>
             </button>
-            ${index === 0 ? '<span class="main-badge">Ảnh chính</span>' : ''}
+            ${index === 0 ? '<span class="main-badge"><i class="fas fa-star"></i> Ảnh chính</span>' : ''}
+            ${index > 0 ? `<button type="button" class="set-main-image" onclick="setMainImage(${index})" title="Đặt làm ảnh chính">
+                <i class="fas fa-star"></i>
+            </button>` : ''}
         `;
         
         grid.appendChild(div);
@@ -146,17 +167,29 @@ function previewImage(file, index) {
     reader.readAsDataURL(file);
 }
 
-// Remove image
+// Remove image and rebuild preview
 function removeImage(index) {
     selectedImages.splice(index, 1);
+    rebuildImagePreview();
     
-    // Rebuild preview grid
-    const grid = document.getElementById('imagePreviewGrid');
-    grid.innerHTML = '';
+    if (selectedImages.length === 0) {
+        showToast('Đã xóa tất cả ảnh', 'info');
+    } else if (index === 0) {
+        showToast('Ảnh đầu tiên hiện tại là ảnh chính', 'info');
+    }
+}
+
+// Set image as main (move to first position)
+function setMainImage(index) {
+    if (index === 0) return;
     
-    selectedImages.forEach((file, i) => {
-        previewImage(file, i);
-    });
+    // Move selected image to first position
+    const [selectedImage] = selectedImages.splice(index, 1);
+    selectedImages.unshift(selectedImage);
+    
+    // Rebuild preview
+    rebuildImagePreview();
+    showToast('Đã đặt làm ảnh chính', 'success');
 }
 
 // Add SKU
@@ -259,52 +292,172 @@ function previewProduct() {
 document.getElementById('productForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Validation
+    const nameValue = document.getElementById('name').value.trim();
+    const categoryValue = document.getElementById('categoryId').value;
+    const brandValue = document.getElementById('brandId').value;
+    
+    if (!nameValue) {
+        showToast('Vui lòng nhập tên sản phẩm', 'error');
+        return;
+    }
+    
+    if (!categoryValue || categoryValue === '' || isNaN(parseInt(categoryValue))) {
+        showToast('Vui lòng chọn danh mục hợp lệ', 'error');
+        return;
+    }
+    
+    if (!brandValue || brandValue === '' || isNaN(parseInt(brandValue))) {
+        showToast('Vui lòng chọn thương hiệu hợp lệ', 'error');
+        return;
+    }
+    
+    if (selectedImages.length === 0) {
+        showToast('Vui lòng chọn ít nhất 1 hình ảnh', 'error');
+        return;
+    }
+    
+    // Validate SKU fields
+    const skuItems = document.querySelectorAll('.sku-item');
+    if (skuItems.length === 0) {
+        showToast('Vui lòng thêm ít nhất 1 biến thể sản phẩm', 'error');
+        return;
+    }
+    
+    for (let item of skuItems) {
+        const skuId = item.dataset.skuId;
+        const skuCode = document.querySelector(`[name="sku_${skuId}_sku"]`).value.trim();
+        const skuName = document.querySelector(`[name="sku_${skuId}_name"]`).value.trim();
+        const skuPrice = document.querySelector(`[name="sku_${skuId}_price"]`).value;
+        
+        if (!skuCode) {
+            showToast(`Vui lòng nhập mã SKU cho biến thể #${skuId}`, 'error');
+            return;
+        }
+        if (!skuName) {
+            showToast(`Vui lòng nhập tên cho biến thể #${skuId}`, 'error');
+            return;
+        }
+        if (!skuPrice || isNaN(parseFloat(skuPrice)) || parseFloat(skuPrice) <= 0) {
+            showToast(`Vui lòng nhập giá hợp lệ cho biến thể #${skuId}`, 'error');
+            return;
+        }
+    }
+    
     const loadingOverlay = document.getElementById('loadingOverlay');
     loadingOverlay.classList.add('active');
     
     try {
-        // Step 1: Create Product
-        const productData = {
-            name: document.getElementById('name').value,
-            slug: document.getElementById('slug').value,
-            seriesCode: document.getElementById('seriesCode').value,
-            categoryId: parseInt(document.getElementById('categoryId').value),
-            brandId: parseInt(document.getElementById('brandId').value),
-            shortDesc: document.getElementById('shortDesc').value,
-            warrantyMonths: parseInt(document.getElementById('warrantyMonths').value),
-            isActive: document.getElementById('isActive').value === 'true',
-            imageUrl: '' // Will be set after upload
-        };
+        // Get and validate values
+        const nameVal = document.getElementById('name').value.trim();
+        const slugVal = document.getElementById('slug').value.trim();
+        const seriesCodeVal = document.getElementById('seriesCode').value.trim();
+        const categoryIdVal = parseInt(document.getElementById('categoryId').value);
+        const brandIdVal = parseInt(document.getElementById('brandId').value);
+        const shortDescVal = document.getElementById('shortDesc').value.trim();
+        const warrantyVal = parseInt(document.getElementById('warrantyMonths').value) || 12;
+        const isActiveVal = document.getElementById('isActive').value === 'true';
+        
+        // Double check IDs are valid
+        if (!categoryIdVal || isNaN(categoryIdVal)) {
+            throw new Error('ID danh mục không hợp lệ');
+        }
+        if (!brandIdVal || isNaN(brandIdVal)) {
+            throw new Error('ID thương hiệu không hợp lệ');
+        }
+        
+        console.log('📦 Product data to send:', {
+            name: nameVal,
+            slug: slugVal || 'auto',
+            seriesCode: seriesCodeVal || 'none',
+            categoryId: categoryIdVal,
+            brandId: brandIdVal,
+            shortDesc: shortDescVal || 'none',
+            warrantyMonths: warrantyVal,
+            isActive: isActiveVal
+        });
         
         // Create FormData for product with images
         const formData = new FormData();
         
-        // Add product data as JSON part
-        formData.append('productDTO', new Blob([JSON.stringify(productData)], {
-            type: 'application/json'
-        }));
+        // Add each field separately (matching ProductDTO exactly)
+        formData.append('name', nameVal);
+        formData.append('categoryId', categoryIdVal.toString());
+        formData.append('brandId', brandIdVal.toString());
+        formData.append('isActive', isActiveVal.toString());
+        formData.append('warrantyMonths', warrantyVal.toString());
         
-        // Add images
-        selectedImages.forEach((file) => {
+        // Optional fields
+        if (slugVal) {
+            formData.append('slug', slugVal);
+        }
+        if (seriesCodeVal) {
+            formData.append('seriesCode', seriesCodeVal);
+        }
+        if (shortDescVal) {
+            formData.append('shortDesc', shortDescVal);
+        }
+        
+        // Add images (first image is main image)
+        selectedImages.forEach((file, index) => {
             formData.append('files', file);
+            console.log(`📷 Image ${index + 1}:`, file.name);
         });
         
         const token = localStorage.getItem('accessToken');
+        
+        console.log('🚀 Sending request to:', `${BASE_URL}/products`);
+        
         const productResponse = await fetch(`${BASE_URL}/products`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
+                // Don't set Content-Type for FormData, browser will set it automatically
             },
             body: formData
         });
         
+        console.log('📡 Response status:', productResponse.status);
+        
+        if (!productResponse.ok) {
+            let errorMessage = 'Không thể tạo sản phẩm';
+            try {
+                const errorData = await productResponse.json();
+                console.error('❌ Error response:', errorData);
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                const errorText = await productResponse.text();
+                console.error('❌ Error text:', errorText);
+                errorMessage = errorText || errorMessage;
+            }
+            
+            // User-friendly error messages
+            if (productResponse.status === 400) {
+                if (errorMessage.includes('id must not be null')) {
+                    errorMessage = '⚠️ Thiếu thông tin danh mục hoặc thương hiệu. Vui lòng kiểm tra lại!';
+                } else if (errorMessage.includes('duplicate') || errorMessage.includes('exists')) {
+                    errorMessage = '⚠️ Mã SKU hoặc slug đã tồn tại. Vui lòng đổi tên khác!';
+                }
+            } else if (productResponse.status === 401) {
+                errorMessage = '🔒 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!';
+            } else if (productResponse.status === 403) {
+                errorMessage = '🚫 Bạn không có quyền thêm sản phẩm!';
+            } else if (productResponse.status === 500) {
+                errorMessage = '💥 Lỗi server. Vui lòng thử lại sau!';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
         const productResult = await productResponse.json();
+        console.log('✅ Product created:', productResult);
         
         if (!productResult.success) {
             throw new Error(productResult.message || 'Tạo sản phẩm thất bại');
         }
         
         const productId = productResult.payload.id;
+        console.log('Product created with ID:', productId);
         
         // Step 2: Create SKUs
         const skuItems = document.querySelectorAll('.sku-item');
@@ -332,6 +485,11 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(skuData)
+            }).then(res => {
+                if (!res.ok) {
+                    console.error(`SKU creation failed for ${skuData.sku}:`, res.status);
+                }
+                return res;
             });
             
             skuPromises.push(promise);
@@ -356,11 +514,21 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
 // Show Toast
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
+    if (!toast) {
+        console.error('Toast element not found');
+        alert(message);
+        return;
+    }
     
-    toast.className = `toast ${type}`;
-    toastMessage.textContent = message;
-    toast.classList.add('show');
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'error' ? 'fa-exclamation-circle' : 
+                 'fa-info-circle';
+    
+    toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+    `;
+    toast.className = `toast ${type} show`;
     
     setTimeout(() => {
         toast.classList.remove('show');
