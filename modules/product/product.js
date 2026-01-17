@@ -88,7 +88,7 @@ function renderProductList(products, container) {
   }
   
   container.innerHTML = products.map(product => `
-    <div class="product-card" data-id="${product.id}">
+    <div class="product-card" data-id="${product.id}" data-slug="${product.slug || ''}" onclick="viewProductDetail('${product.slug || ''}')" style="cursor: pointer;">
       <div class="product-image">
         <img src="${product.image || '/assets/img/no-image.png'}" alt="${product.name}">
         ${product.discount ? `<span class="badge-discount">-${product.discount}%</span>` : ''}
@@ -101,10 +101,10 @@ function renderProductList(products, container) {
           <span class="price-current">${formatPrice(product.salePrice || product.price)}</span>
         </div>
         <div class="product-actions">
-          <button class="btn-view" onclick="viewProductDetail(${product.id})">
+          <button class="btn-view" onclick="event.stopPropagation(); viewProductDetail('${product.slug || ''}')">
             <i class="fas fa-eye"></i> Xem
           </button>
-          <button class="btn-add-cart" onclick="addToCart(${product.id})">
+          <button class="btn-add-cart" onclick="event.stopPropagation(); addToCart(${product.id})">
             <i class="fas fa-cart-plus"></i> Thêm vào giỏ
           </button>
         </div>
@@ -230,10 +230,14 @@ async function loadProductDetail(productId) {
 
 /**
  * Xem chi tiết sản phẩm
- * @param {number} productId - Product ID
+ * @param {string} productSlug - Product slug
  */
-function viewProductDetail(productId) {
-  redirectWithParams(CONFIG.ROUTES.PRODUCT_DETAIL, { id: productId });
+function viewProductDetail(productSlug) {
+  if (productSlug) {
+    window.location.href = `/modules/product/product-detail.html?slug=${encodeURIComponent(productSlug)}`;
+  } else {
+    showToast('Không tìm thấy thông tin sản phẩm', 'error');
+  }
 }
 
 /**

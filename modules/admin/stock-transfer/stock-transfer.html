@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Chuyển Kho - EzGear Admin</title>
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="../../../assets/img/favicon.ico">
-    
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -40,7 +34,7 @@
                 <div class="topbar-left">
                     <h1>Quản Lý Chuyển Kho</h1>
                     <div class="breadcrumb">
-                        <a href="../dashboard.html">Trang chủ</a> / Quản lý kho / Chuyển kho
+                        <a href="../dashboard.html">Dashboard</a> / Chuyển kho
                     </div>
                 </div>
                 <div class="topbar-right">
@@ -53,178 +47,224 @@
 
             <!-- Content Body -->
             <div class="content">
-                <!-- Actions Bar -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="search-box" style="width: 300px;">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="searchInput" placeholder="Tìm kiếm mã phiếu...">
+                <!-- Stats Cards -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalTransfers">0</div>
+                            <div class="stat-label">Tổng Phiếu</div>
                         </div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="pendingTransfers">0</div>
+                            <div class="stat-label">Chờ Xử Lý</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="shippingTransfers">0</div>
+                            <div class="stat-label">Đang Chuyển</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="completedTransfers">0</div>
+                            <div class="stat-label">Hoàn Thành</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Bar -->
+                <div class="action-bar">
                     <button class="btn btn-primary" onclick="openCreateModal()">
-                        <i class="fas fa-plus me-2"></i>Tạo Phiếu Chuyển
+                        <i class="fas fa-plus"></i> Tạo Phiếu Chuyển
                     </button>
+                    
+                    <div class="filter-group">
+                        <select id="filterStatus" class="form-select" onchange="handleSearch()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="PENDING">Chờ Xử Lý</option>
+                            <option value="SHIPPING">Đang Chuyển</option>
+                            <option value="COMPLETED">Hoàn Thành</option>
+                            <option value="CANCELLED">Đã Hủy</option>
+                        </select>
+                        
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm mã phiếu..." onkeyup="handleSearch()">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Transfers Table -->
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0" id="transfersTable">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="ps-4">ID</th>
-                                        <th>Mã Phiếu</th>
-                                        <th>Kho Nguồn</th>
-                                        <th>Kho Đích</th>
-                                        <th>Người Tạo</th>
-                                        <th>Ngày Tạo</th>
-                                        <th>Trạng Thái</th>
-                                        <th class="text-end pe-4">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="transfersTableBody">
-                                    <!-- Data will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <!-- Pagination (Optional) -->
-                    <div class="card-footer bg-white border-top-0 py-3">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end mb-0" id="pagination">
-                                <!-- Pagination items -->
-                            </ul>
-                        </nav>
-                    </div>
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="8%">ID</th>
+                                <th width="12%">Mã Phiếu</th>
+                                <th width="18%">Kho Nguồn</th>
+                                <th width="18%">Kho Đích</th>
+                                <th width="12%">Ngày Tạo</th>
+                                <th width="10%">Trạng Thái</th>
+                                <th width="10%">Số Lượng SP</th>
+                                <th width="12%" class="text-center">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfersTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
+                                    <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- Create Transfer Modal -->
-    <div class="modal fade" id="createTransferModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Tạo Phiếu Chuyển Kho</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createTransferForm">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="fromWarehouse" class="form-label">Kho Nguồn <span class="text-danger">*</span></label>
-                                <select class="form-select" id="fromWarehouse" required>
-                                    <option value="">Chọn kho nguồn...</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="toWarehouse" class="form-label">Kho Đích <span class="text-danger">*</span></label>
-                                <select class="form-select" id="toWarehouse" required>
-                                    <option value="">Chọn kho đích...</option>
-                                </select>
-                            </div>
+    <div id="createTransferModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Tạo Phiếu Chuyển Kho</h3>
+                <button class="close-btn" onclick="closeCreateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createTransferForm" onsubmit="event.preventDefault(); submitCreateTransfer();">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fromWarehouse">Kho Nguồn <span class="required">*</span></label>
+                            <select id="fromWarehouse" class="form-control" required>
+                                <option value="">Chọn kho nguồn...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="toWarehouse">Kho Đích <span class="required">*</span></label>
+                            <select id="toWarehouse" class="form-control" required>
+                                <option value="">Chọn kho đích...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transferNote">Ghi Chú</label>
+                        <textarea id="transferNote" class="form-control" rows="2" placeholder="Nhập ghi chú cho phiếu chuyển (không bắt buộc)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="margin: 0; font-weight: 600;">Danh Sách Sản Phẩm <span class="required">*</span></label>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addProductRow()" style="padding: 5px 12px;">
+                                <i class="fas fa-plus"></i> Thêm sản phẩm
+                            </button>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="transferNote" class="form-label">Ghi Chú</label>
-                            <textarea class="form-control" id="transferNote" rows="2" placeholder="Nhập ghi chú cho phiếu chuyển..."></textarea>
+                        <div class="product-list-container">
+                            <table class="product-table">
+                                <thead>
+                                    <tr>
+                                        <th width="50%">SKU ID</th>
+                                        <th width="40%">Số Lượng</th>
+                                        <th width="10%" class="text-center">Xóa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="createItemsBody">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
                         </div>
-
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label fw-bold mb-0">Danh Sách Sản Phẩm</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProductRow()">
-                                    <i class="fas fa-plus me-1"></i>Thêm sản phẩm
-                                </button>
-                            </div>
-                            
-                            <div class="product-list-container">
-                                <table class="table table-sm table-products mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 50%">SKU ID</th>
-                                            <th style="width: 40%">Số Lượng</th>
-                                            <th style="width: 10%" class="text-center">Xóa</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="createItemsBody">
-                                        <!-- Dynamic rows -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div id="emptyItemsMsg" class="text-center text-muted py-3 small">
-                                Chưa có sản phẩm nào. Nhấn "Thêm sản phẩm" để bắt đầu.
-                            </div>
+                        <div id="emptyItemsMsg" class="empty-msg">
+                            <i class="fas fa-box-open"></i>
+                            <p>Chưa có sản phẩm nào. Nhấn "Thêm sản phẩm" để bắt đầu.</p>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="submitCreateTransfer()">Lưu Phiếu</button>
-                </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <button type="submit" form="createTransferForm" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Lưu Phiếu
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Detail Transfer Modal -->
-    <div class="modal fade" id="detailTransferModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Chi Tiết Phiếu Chuyển</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Info Card -->
-                    <div class="transfer-info-card">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Mã phiếu:</span>
-                                    <span class="transfer-info-value" id="detailCode">...</span>
-                                </div>
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Kho nguồn:</span>
-                                    <span class="transfer-info-value" id="detailFrom">...</span>
-                                </div>
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Kho đích:</span>
-                                    <span class="transfer-info-value" id="detailTo">...</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Ngày tạo:</span>
-                                    <span class="transfer-info-value" id="detailDate">...</span>
-                                </div>
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Người tạo:</span>
-                                    <span class="transfer-info-value" id="detailCreator">...</span>
-                                </div>
-                                <div class="transfer-info-row">
-                                    <span class="transfer-info-label">Trạng thái:</span>
-                                    <span class="transfer-info-value" id="detailStatus">...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="transfer-info-row mt-2">
-                            <span class="transfer-info-label">Ghi chú:</span>
-                            <span class="transfer-info-value" id="detailNote">...</span>
-                        </div>
+    <div id="detailTransferModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Chi Tiết Phiếu Chuyển</h3>
+                <button class="close-btn" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Info Grid -->
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-barcode"></i> Mã Phiếu</div>
+                        <div class="detail-value" id="detailCode">...</div>
                     </div>
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-warehouse"></i> Kho Nguồn</div>
+                        <div class="detail-value" id="detailFrom">...</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-warehouse"></i> Kho Đích</div>
+                        <div class="detail-value" id="detailTo">...</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-calendar"></i> Ngày Tạo</div>
+                        <div class="detail-value" id="detailDate">...</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-user"></i> Người Tạo</div>
+                        <div class="detail-value" id="detailCreator">...</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label"><i class="fas fa-info-circle"></i> Trạng Thái</div>
+                        <div class="detail-value" id="detailStatus">...</div>
+                    </div>
+                </div>
 
-                    <!-- Items Table -->
-                    <h6 class="fw-bold mb-3">Danh Sách Sản Phẩm</h6>
-                    <div class="table-responsive border rounded">
-                        <table class="table table-striped mb-0">
+                <div class="detail-note" id="detailNoteContainer" style="display: none;">
+                    <div class="detail-label"><i class="fas fa-sticky-note"></i> Ghi Chú</div>
+                    <div class="detail-value" id="detailNote">...</div>
+                </div>
+
+                <!-- Items Table -->
+                <div style="margin-top: 25px;">
+                    <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: #333;">
+                        <i class="fas fa-list"></i> Danh Sách Sản Phẩm
+                    </h4>
+                    <div class="table-card" style="margin: 0;">
+                        <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>#</th>
-                                    <th>Tên Sản Phẩm</th>
-                                    <th>Mã SKU</th>
-                                    <th class="text-end">Số Lượng</th>
+                                    <th width="10%">#</th>
+                                    <th width="50%">Tên Sản Phẩm</th>
+                                    <th width="25%">Mã SKU</th>
+                                    <th width="15%" class="text-end">Số Lượng</th>
                                 </tr>
                             </thead>
                             <tbody id="detailItemsBody">
@@ -233,19 +273,16 @@
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer" id="detailModalFooter">
-                    <!-- Dynamic buttons will be injected here -->
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
+            </div>
+            <div class="modal-footer" id="detailModalFooter">
+                <!-- Dynamic buttons will be injected here -->
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../../assets/js/core/config.js"></script>
     <script src="../../../assets/js/core/utils.js"></script>
-    <script src="../../../assets/js/core/api.js"></script>
     
     <!-- Admin Common JS (Loads Sidebar) -->
     <script src="../admin-common.js"></script>

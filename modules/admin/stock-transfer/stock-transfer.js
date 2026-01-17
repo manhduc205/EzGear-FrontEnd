@@ -1,96 +1,74 @@
 /* ==================== STOCK TRANSFER MANAGEMENT JS ==================== */
 
 // ==================== CONSTANTS & STATE ====================
-const API_BASE = window.BASE_URL + '/api';
-const TRANSFERS_API = API_BASE + '/stock-transfers';
-const WAREHOUSES_API = API_BASE + '/warehouses';
+const BASE_URL = 'http://127.0.0.1:8080/api';
+const TRANSFERS_API = BASE_URL + '/stock-transfers';
+const WAREHOUSES_API = BASE_URL + '/warehouses';
 
 let state = {
     transfers: [],
     warehouses: [],
-    currentTransfer: null
+    currentTransfer: null,
+    filteredTransfers: []
 };
-
-// Bootstrap Modals
-let createModal;
-let detailModal;
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize Modals
-    createModal = new bootstrap.Modal(document.getElementById('createTransferModal'));
-    detailModal = new bootstrap.Modal(document.getElementById('detailTransferModal'));
-
-    // Load Sidebar (Assuming common admin structure)
-    loadSidebar();
-
     // Initial Data Load
+    showLoading(true);
     await Promise.all([
         loadWarehouses(),
         loadTransfers()
     ]);
-
-    // Event Listeners
-    document.getElementById('searchInput').addEventListener('input', debounce(handleSearch, 500));
+    showLoading(false);
 });
-
-function loadSidebar() {
-    const sidebarContainer = document.getElementById('sidebar-container');
-    if (sidebarContainer) {
-        fetch('../../../components/sidebar-admin.html')
-            .then(response => response.text())
-            .then(html => {
-                sidebarContainer.innerHTML = html;
-                // Highlight current menu item
-                const currentPath = window.location.pathname;
-                // Add active class logic here if needed
-            });
-    }
-}
 
 // ==================== DATA LOADING ====================
 
 async function loadWarehouses() {
     try {
-        const response = await fetch(WAREHOUSES_API, {
-            headers: {
-                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
-            }
+        const data = await httpRequest(WAREHOUSES_API, {
+            method: 'GET'
         });
 
-        if (!response.ok) throw new Error('Failed to load warehouses');
-
-        const data = await response.json();
-        state.warehouses = data.payload || data; // Handle ApiResponse wrapper
-
+        state.warehouses = data.payload || data || [];
         populateWarehouseSelects();
     } catch (error) {
         console.error('Error loading warehouses:', error);
-        showToast('Không thể tải danh sách kho', 'error');
+        showToast('Không thể tải danh sách kho: ' + error.message, 'error');
     }
 }
 
 async function loadTransfers() {
-    showLoading(true);
     try {
-        const response = await fetch(TRANSFERS_API, {
-            headers: {
-                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
-            }
+        const data = await httpRequest(TRANSFERS_API, {
+            method: 'GET'
         });
 
-        if (!response.ok) throw new Error('Failed to load transfers');
-
-        const data = await response.json();
-        state.transfers = data.payload || data; // Handle ApiResponse wrapper
-
-        renderTransferTable(state.transfers);
+        state.transfers = data.payload || data || [];
+        state.filteredTransfers = state.transfers;
+        
+        updateStats();
+        renderTransferTable(state.filteredTransfers);
     } catch (error) {
         console.error('Error loading transfers:', error);
-        showToast('Không thể tải danh sách phiếu chuyển', 'error');
-    } finally {
-        showLoading(false);
+        showToast('Không thể tải danh sách phiếu chuyển: ' + error.message, 'error');
+        renderTransferTable([]);
     }
+}
+
+// ==================== STATS UPDATE ====================
+
+function updateStats() {
+    const total = state.transfers.length;
+    const pending = state.transfers.filter(t => t.status === 'PENDING').length;
+    const shipping = state.transfers.filter(t => t.status === 'SHIPPING').length;
+    const completed = state.transfers.filter(t => t.status === 'COMPLETED').length;
+
+    document.getElementById('totalTransfers').textContent = total;
+    document.getElementById('pendingTransfers').textContent = pending;
+    document.getElementById('shippingTransfers').textContent = shipping;
+    document.getElementById('completedTransfers').textContent = completed;
 }
 
 // ==================== RENDERING ====================
@@ -100,7 +78,7 @@ function populateWarehouseSelects() {
     const toSelect = document.getElementById('toWarehouse');
     
     const options = state.warehouses.map(w => 
-        `<option value="${w.id}">${w.name} - ${w.address || ''}</option>`
+        `<option value="${w.id}">${w.name}${w.address ? ' - ' + w.address : ''}</option>`
     ).join('');
 
     fromSelect.innerHTML = '<option value="">Chọn kho nguồn...</option>' + options;
@@ -113,9 +91,9 @@ function renderTransferTable(transfers) {
     if (!transfers || transfers.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4 text-muted">
-                    <i class="fas fa-box-open fa-2x mb-2"></i><br>
-                    Không có phiếu chuyển nào
+                <td colspan="8" style="text-align: center; padding: 60px 20px;">
+                    <i class="fas fa-box-open" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px; display: block;"></i>
+                    <p style="color: #999; font-size: 1rem; margin: 0;">Không có phiếu chuyển nào</p>
                 </td>
             </tr>
         `;
@@ -124,15 +102,15 @@ function renderTransferTable(transfers) {
 
     tbody.innerHTML = transfers.map(t => `
         <tr>
-            <td class="ps-4 fw-bold">#${t.id}</td>
-            <td><span class="font-monospace">${t.code || 'N/A'}</span></td>
+            <td style="font-weight: 600; color: #c8102e;">#${t.id}</td>
+            <td><span style="font-family: monospace; font-weight: 500;">${t.code || 'N/A'}</span></td>
             <td>${t.fromWarehouseName || t.fromWarehouse?.name || '-'}</td>
             <td>${t.toWarehouseName || t.toWarehouse?.name || '-'}</td>
-            <td>${t.createdBy || 'Admin'}</td>
             <td>${formatDate(t.createdAt)}</td>
             <td>${getStatusBadge(t.status)}</td>
-            <td class="text-end pe-4">
-                <button class="btn btn-sm btn-outline-primary action-btn" onclick="openDetailModal(${t.id})" title="Xem chi tiết">
+            <td class="text-center" style="font-weight: 600;">${t.items?.length || 0}</td>
+            <td class="text-center">
+                <button class="btn-icon" onclick="openDetailModal(${t.id})" title="Xem chi tiết">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>
@@ -142,14 +120,41 @@ function renderTransferTable(transfers) {
 
 function getStatusBadge(status) {
     const map = {
-        'PENDING': { class: 'status-pending', text: 'Chờ xuất' },
-        'SHIPPING': { class: 'status-shipping', text: 'Đang chuyển' },
-        'COMPLETED': { class: 'status-completed', text: 'Hoàn tất' },
-        'CANCELLED': { class: 'status-cancelled', text: 'Đã hủy' }
+        'PENDING': { class: 'status-pending', text: 'Chờ Xử Lý' },
+        'SHIPPING': { class: 'status-shipping', text: 'Đang Chuyển' },
+        'COMPLETED': { class: 'status-completed', text: 'Hoàn Thành' },
+        'CANCELLED': { class: 'status-cancelled', text: 'Đã Hủy' }
     };
     
-    const s = map[status] || { class: 'bg-secondary text-white', text: status };
-    return `<span class="transfer-status ${s.class}">${s.text}</span>`;
+    const s = map[status] || { class: 'status-badge', text: status };
+    return `<span class="status-badge ${s.class}">${s.text}</span>`;
+}
+
+// ==================== SEARCH & FILTER ====================
+
+function handleSearch() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    let filtered = state.transfers;
+
+    // Filter by search term
+    if (searchTerm) {
+        filtered = filtered.filter(t => 
+            (t.code && t.code.toLowerCase().includes(searchTerm)) ||
+            (t.id && t.id.toString().includes(searchTerm)) ||
+            (t.fromWarehouseName && t.fromWarehouseName.toLowerCase().includes(searchTerm)) ||
+            (t.toWarehouseName && t.toWarehouseName.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    // Filter by status
+    if (statusFilter) {
+        filtered = filtered.filter(t => t.status === statusFilter);
+    }
+
+    state.filteredTransfers = filtered;
+    renderTransferTable(filtered);
 }
 
 // ==================== CREATE TRANSFER LOGIC ====================
@@ -163,25 +168,30 @@ function openCreateModal() {
     // Add one empty row by default
     addProductRow();
     
-    createModal.show();
+    // Show modal
+    document.getElementById('createTransferModal').classList.add('show');
+}
+
+function closeCreateModal() {
+    document.getElementById('createTransferModal').classList.remove('show');
 }
 
 function addProductRow() {
     const tbody = document.getElementById('createItemsBody');
     document.getElementById('emptyItemsMsg').style.display = 'none';
     
-    const rowId = Date.now();
+    const rowId = Date.now() + Math.random();
     const row = document.createElement('tr');
     row.id = `row-${rowId}`;
     row.innerHTML = `
         <td>
-            <input type="number" class="form-control form-control-sm item-sku" placeholder="Nhập SKU ID" required min="1">
+            <input type="number" class="item-sku" placeholder="Nhập SKU ID" required min="1" step="1">
         </td>
         <td>
-            <input type="number" class="form-control form-control-sm item-qty" placeholder="Số lượng" required min="1" value="1">
+            <input type="number" class="item-qty" placeholder="Số lượng" required min="1" value="1" step="1">
         </td>
         <td class="text-center">
-            <button type="button" class="btn-remove-row" onclick="removeProductRow('${rowId}')">
+            <button type="button" class="btn-remove-row" onclick="removeProductRow('${rowId}')" title="Xóa">
                 <i class="fas fa-times"></i>
             </button>
         </td>
@@ -201,8 +211,9 @@ function removeProductRow(rowId) {
 async function submitCreateTransfer() {
     const fromId = document.getElementById('fromWarehouse').value;
     const toId = document.getElementById('toWarehouse').value;
-    const note = document.getElementById('transferNote').value;
+    const note = document.getElementById('transferNote').value.trim();
     
+    // Validation
     if (!fromId || !toId) {
         showToast('Vui lòng chọn kho nguồn và kho đích', 'warning');
         return;
@@ -217,7 +228,7 @@ async function submitCreateTransfer() {
     const items = [];
     const rows = document.querySelectorAll('#createItemsBody tr');
     
-    rows.forEach(row => {
+    for (let row of rows) {
         const skuId = row.querySelector('.item-sku').value;
         const quantity = row.querySelector('.item-qty').value;
         
@@ -227,7 +238,7 @@ async function submitCreateTransfer() {
                 quantity: parseInt(quantity)
             });
         }
-    });
+    }
 
     if (items.length === 0) {
         showToast('Vui lòng thêm ít nhất một sản phẩm', 'warning');
@@ -237,32 +248,23 @@ async function submitCreateTransfer() {
     const payload = {
         fromWarehouseId: parseInt(fromId),
         toWarehouseId: parseInt(toId),
-        note: note,
+        note: note || undefined,
         items: items
     };
 
     showLoading(true);
     try {
-        const response = await fetch(TRANSFERS_API, {
+        const response = await httpRequest(TRANSFERS_API, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
-            },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.message || 'Failed to create transfer');
-        }
-
-        showToast('Tạo phiếu chuyển thành công', 'success');
-        createModal.hide();
-        loadTransfers(); // Reload table
+        showToast('Tạo phiếu chuyển thành công!', 'success');
+        closeCreateModal();
+        await loadTransfers(); // Reload table
     } catch (error) {
         console.error('Create transfer error:', error);
-        showToast(error.message, 'error');
+        showToast('Lỗi tạo phiếu: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -273,49 +275,61 @@ async function submitCreateTransfer() {
 async function openDetailModal(id) {
     showLoading(true);
     try {
-        // Fetch detail
-        const response = await fetch(`${TRANSFERS_API}/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
-            }
+        const data = await httpRequest(`${TRANSFERS_API}/${id}`, {
+            method: 'GET'
         });
 
-        if (!response.ok) throw new Error('Failed to load transfer details');
-
-        const data = await response.json();
         const transfer = data.payload || data;
         state.currentTransfer = transfer;
 
         // Populate Info
         document.getElementById('detailCode').textContent = transfer.code || 'N/A';
-        document.getElementById('detailFrom').textContent = transfer.fromWarehouseName || transfer.fromWarehouse?.name;
-        document.getElementById('detailTo').textContent = transfer.toWarehouseName || transfer.toWarehouse?.name;
+        document.getElementById('detailFrom').textContent = transfer.fromWarehouseName || transfer.fromWarehouse?.name || '-';
+        document.getElementById('detailTo').textContent = transfer.toWarehouseName || transfer.toWarehouse?.name || '-';
         document.getElementById('detailDate').textContent = formatDate(transfer.createdAt);
-        document.getElementById('detailCreator').textContent = transfer.createdBy || 'Admin';
+        document.getElementById('detailCreator').textContent = transfer.createdBy || transfer.createdByName || 'Admin';
         document.getElementById('detailStatus').innerHTML = getStatusBadge(transfer.status);
-        document.getElementById('detailNote').textContent = transfer.note || 'Không có ghi chú';
+        
+        // Note
+        const noteContainer = document.getElementById('detailNoteContainer');
+        const noteValue = document.getElementById('detailNote');
+        if (transfer.note && transfer.note.trim()) {
+            noteValue.textContent = transfer.note;
+            noteContainer.style.display = 'block';
+        } else {
+            noteContainer.style.display = 'none';
+        }
 
         // Populate Items
         const tbody = document.getElementById('detailItemsBody');
-        tbody.innerHTML = (transfer.items || []).map((item, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.productName || 'Sản phẩm #' + item.skuId}</td>
-                <td><span class="badge bg-light text-dark border">${item.skuCode || item.skuId}</span></td>
-                <td class="text-end fw-bold">${item.quantity}</td>
-            </tr>
-        `).join('');
+        if (transfer.items && transfer.items.length > 0) {
+            tbody.innerHTML = transfer.items.map((item, index) => `
+                <tr>
+                    <td style="font-weight: 600;">${index + 1}</td>
+                    <td>${item.productName || item.skuName || 'Sản phẩm #' + item.skuId}</td>
+                    <td><span class="status-badge" style="background: #e9ecef; color: #495057;">${item.skuCode || 'SKU-' + item.skuId}</span></td>
+                    <td class="text-end" style="font-weight: 600;">${item.quantity}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding: 30px; color: #999;">Không có sản phẩm</td></tr>';
+        }
 
         // Setup Action Buttons
         setupActionButtons(transfer);
 
-        detailModal.show();
+        document.getElementById('detailTransferModal').classList.add('show');
     } catch (error) {
         console.error('Detail error:', error);
-        showToast('Không thể tải chi tiết phiếu', 'error');
+        showToast('Không thể tải chi tiết phiếu: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
+}
+
+function closeDetailModal() {
+    document.getElementById('detailTransferModal').classList.remove('show');
+    state.currentTransfer = null;
 }
 
 function setupActionButtons(transfer) {
@@ -324,126 +338,176 @@ function setupActionButtons(transfer) {
 
     if (transfer.status === 'PENDING') {
         buttonsHtml = `
-            <button type="button" class="btn btn-warning text-dark" onclick="shipTransfer(${transfer.id})">
-                <i class="fas fa-shipping-fast me-2"></i>Xuất Kho
+            <button type="button" class="btn btn-success" onclick="approveTransfer(${transfer.id})">
+                <i class="fas fa-check-circle"></i> Duyệt & Xuất Kho
             </button>
         `;
-    } else if (transfer.status === 'SHIPPING') {
+    } else if (transfer.status === 'SHIPPING' || transfer.status === 'APPROVED') {
         buttonsHtml = `
-            <button type="button" class="btn btn-success" onclick="receiveTransfer(${transfer.id})">
-                <i class="fas fa-check-circle me-2"></i>Nhập Kho
+            <button type="button" class="btn btn-success" onclick="completeTransfer(${transfer.id})">
+                <i class="fas fa-check-double"></i> Hoàn Thành
             </button>
         `;
     }
 
-    buttonsHtml += `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>`;
+    buttonsHtml += `
+        <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">
+            <i class="fas fa-times"></i> Đóng
+        </button>
+    `;
+    
     footer.innerHTML = buttonsHtml;
 }
 
-async function shipTransfer(id) {
-    if (!confirm('Xác nhận xuất kho cho phiếu chuyển này?')) return;
+async function approveTransfer(id) {
+    if (!confirm('Xác nhận duyệt và xuất kho cho phiếu chuyển này?\n\nHành động này sẽ:\n- Trừ số lượng sản phẩm khỏi kho nguồn\n- Chuyển trạng thái sang "Đang chuyển"')) {
+        return;
+    }
 
-    callTransferAction(`${TRANSFERS_API}/${id}/ship`, 'Xuất kho thành công');
+    await callTransferAction(`${TRANSFERS_API}/${id}/approve`, 'Duyệt phiếu thành công!');
 }
 
-async function receiveTransfer(id) {
-    if (!confirm('Xác nhận đã nhận đủ hàng và nhập kho?')) return;
+async function completeTransfer(id) {
+    if (!confirm('Xác nhận đã nhận đủ hàng và nhập kho?\n\nHành động này sẽ:\n- Cộng số lượng sản phẩm vào kho đích\n- Hoàn thành phiếu chuyển')) {
+        return;
+    }
 
-    callTransferAction(`${TRANSFERS_API}/${id}/receive`, 'Nhập kho thành công');
+    await callTransferAction(`${TRANSFERS_API}/${id}/complete`, 'Hoàn thành phiếu thành công!');
 }
 
 async function callTransferAction(url, successMsg) {
     showLoading(true);
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
-            }
+        await httpRequest(url, {
+            method: 'POST'
         });
 
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.message || 'Action failed');
-        }
-
         showToast(successMsg, 'success');
-        detailModal.hide();
-        loadTransfers(); // Reload list
+        closeDetailModal();
+        await loadTransfers(); // Reload list
     } catch (error) {
         console.error('Action error:', error);
-        showToast(error.message, 'error');
+        showToast('Lỗi: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
 }
 
-// ==================== UTILS ====================
+// ==================== UTILITY FUNCTIONS ====================
 
 function formatDate(dateString) {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('vi-VN');
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
-    if (show) overlay.classList.remove('d-none');
-    else overlay.classList.add('d-none');
+    if (show) {
+        overlay.classList.add('show');
+    } else {
+        overlay.classList.remove('show');
+    }
 }
 
 function showToast(message, type = 'info') {
-    // Simple toast implementation or use existing one if available in utils
-    // Assuming a simple alert for now if no toast library, 
-    // but let's try to create a bootstrap toast dynamically
-    
-    const toastContainer = document.querySelector('.toast-container');
+    // Create toast container if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
     if (!toastContainer) {
-        const container = document.createElement('div');
-        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        container.style.zIndex = '1100';
-        document.body.appendChild(container);
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999;';
+        document.body.appendChild(toastContainer);
     }
 
-    const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-primary';
-    
-    const toastHtml = `
-        <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
+    // Toast colors
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+
+    const bgColor = colors[type] || colors.info;
+    const textColor = type === 'warning' ? '#212529' : '#fff';
+
+    // Create toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 300px;
+        max-width: 400px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideInRight 0.3s ease;
+        font-weight: 500;
     `;
 
-    const container = document.querySelector('.toast-container');
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = toastHtml;
-    const toastEl = tempDiv.firstElementChild;
-    container.appendChild(toastEl);
-
-    const toast = new bootstrap.Toast(toastEl);
-    toast.show();
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+    // Icon
+    const iconMap = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
     };
+
+    toast.innerHTML = `
+        <i class="fas ${iconMap[type] || iconMap.info}" style="font-size: 1.2rem;"></i>
+        <span style="flex: 1;">${message}</span>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }
 
-function handleSearch() {
-    const term = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = state.transfers.filter(t => 
-        (t.code && t.code.toLowerCase().includes(term)) ||
-        (t.id && t.id.toString().includes(term))
-    );
-    renderTransferTable(filtered);
+// Add animation styles
+if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('show');
+    }
+});
