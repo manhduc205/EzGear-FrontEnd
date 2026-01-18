@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách sản phẩm - EzGear</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../../assets/img/favicon.ico">
+    
+    <!-- Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts - Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./shop.css?v=9">
+    <link rel="stylesheet" href="./shop-list.css?v=9">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div id="header-container"></div>
+
+    <!-- Main Content -->
+    <main class="main-container">
+
+        <!-- Filters & Products Section -->
+        <div class="list-container">
+            <!-- Filters Sidebar -->
+            <aside class="filters-sidebar" id="filtersSidebar">
+                <!-- Brand Filter -->
+                <div class="filter-group">
+                    <h3 class="filter-title">
+                        <span class="material-symbols-outlined">category</span>
+                        Thương hiệu
+                    </h3>
+                    <div class="brand-filters" id="brandFilters">
+                        <button class="brand-filter-btn active" data-brand-id="">
+                            Tất cả
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Price Range Filter -->
+                <div class="filter-group">
+                    <h3 class="filter-title">
+                        <span class="material-symbols-outlined">payments</span>
+                        Khoảng giá
+                    </h3>
+                    <div class="price-range-options">
+                        <button class="price-range-btn active" data-range="all">Tất cả</button>
+                        <button class="price-range-btn" data-range="0-10">Dưới 10 triệu</button>
+                        <button class="price-range-btn" data-range="10-20">10 - 20 triệu</button>
+                        <button class="price-range-btn" data-range="20-30">20 - 30 triệu</button>
+                        <button class="price-range-btn" data-range="30-50">30 - 50 triệu</button>
+                        <button class="price-range-btn" data-range="50-100">Trên 50 triệu</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Products Area -->
+            <div class="products-area">
+                <!-- Page Header & Sort -->
+                <div class="list-header">
+                    <div class="header-left">
+                        <h1 id="pageTitle">Tất cả sản phẩm</h1>
+                        <p class="product-count">Đang tải...</p>
+                    </div>
+                    <div class="sort-options">
+                        <select class="sort-select" id="sortSelect">
+                            <option value="">Mặc định</option>
+                            <option value="price-asc">Giá: Thấp đến Cao</option>
+                            <option value="price-desc">Giá: Cao đến Thấp</option>
+                            <option value="name-asc">Tên: A-Z</option>
+                            <option value="name-desc">Tên: Z-A</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Products Grid -->
+                <div class="products-grid" id="productsGrid">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button class="pagination-btn" id="prevBtn" disabled>
+                        <span class="material-symbols-outlined">chevron_left</span>
+                        Trước
+                    </button>
+                    <div class="pagination-numbers" id="paginationNumbers"></div>
+                    <button class="pagination-btn" id="nextBtn">
+                        Sau
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-container"></div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/core/api.js?v=9"></script>
+    <script src="../../assets/js/core/config.js?v=9"></script>
+    <script src="../../assets/js/core/utils.js?v=9"></script>
+    <script src="./shop.js?v=9"></script>
+    <script src="./shop-list.js?v=9"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ComponentLoader.load('#header-container', '../../components/header.html');
+            // await ComponentLoader.load('#footer-container', '../../components/footer.html');
+            if (window.initShopList) {
+                window.initShopList();
+            }
+        });
+    </script>
+</body>
+</html>
