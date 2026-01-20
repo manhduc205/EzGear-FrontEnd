@@ -179,13 +179,18 @@ async function loadBrands() {
 }
 
 /**
- * Load products by category slug
+ * Load products by category slug - load ALL products with optional sort from backend
  */
-async function loadProducts(categorySlug, brand = null) {
+async function loadProducts(categorySlug, brand = null, sort = '') {
     try {
-        const limit = listState.pagination.itemsPerPage || 12;
-        const page = 0;
-        let url = `${API_BASE_URL}/api/products/public/category/${categorySlug}?page=${page}&limit=${limit}`;
+        // Load all products with sort parameter if provided
+        let url = `${API_BASE_URL}/api/products/public/category/${categorySlug}?page=0&limit=1000`;
+        
+        // Add backend sort if specified (for top-rated, most-reviewed, best-selling)
+        if (sort && ['top-rated', 'most-reviewed', 'best-selling'].includes(sort)) {
+            url += `&sort=${sort}`;
+        }
+        
         if (brand) url += `&brand=${encodeURIComponent(brand)}`;
 
         const response = await httpRequest(url, { method: 'GET' });
@@ -210,6 +215,16 @@ async function loadProducts(categorySlug, brand = null) {
                 products = products.filter(p => (p.brandName || '').toLowerCase() === bKey || (p.slug || '').toLowerCase().includes(bKey));
             }
         }
+        
+        // Apply mock sorting
+        if (sort === 'top-rated') {
+            products = [...products].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        } else if (sort === 'most-reviewed') {
+            products = [...products].sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+        } else if (sort === 'best-selling') {
+            products = [...products].sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
+        }
+        
         return products;
     }
 }
@@ -217,23 +232,38 @@ async function loadProducts(categorySlug, brand = null) {
 // ==================== FILTER & SORT ====================
 
 /**
- * Apply all filters to products
+ * Apply all filters and sorting to products (frontend-only)
+ * IMPORTANT: Sắp xếp toàn bộ sản phẩm TRƯỚC KHI phân trang
  */
-function applyFilters() {
+async function applyFilters() {
+    // Check if we need to reload from server (for backend sorts)
+    const needsServerReload = ['top-rated', 'most-reviewed', 'best-selling'].includes(listState.filters.sort);
+    
+    if (needsServerReload) {
+        console.log(`🔄 Reloading từ server với sort: ${listState.filters.sort}`);
+        // Reload from server with sort parameter
+        const products = await loadProducts(listState.categorySlug, listState.filters.brand, listState.filters.sort);
+        listState.allProducts = products;
+    }
+    
+    // Bắt đầu với TẤT CẢ sản phẩm
     let filtered = [...listState.allProducts];
     
-    // Brand filter (string key)
-    if (listState.filters.brand) {
+    console.log(`🔍 Bắt đầu filter/sort từ ${filtered.length} sản phẩm`);
+    
+    // 1. Brand filter (string key) - chỉ filter nếu không reload từ server
+    if (listState.filters.brand && !needsServerReload) {
         const bKey = ('' + listState.filters.brand).toLowerCase();
-        const matched = LIST_MOCK_BRANDS.find(b => (b.slug && b.slug.toLowerCase() === bKey) || (b.name && b.name.toLowerCase() === bKey));
+        const matched = listState.brands.find(b => (b.slug && b.slug.toLowerCase() === bKey) || (b.name && b.name.toLowerCase() === bKey));
         if (matched) {
             filtered = filtered.filter(p => p.brandId === matched.id);
         } else {
             filtered = filtered.filter(p => (p.brandName || '').toLowerCase() === bKey || (p.slug || '').toLowerCase().includes(bKey));
         }
+        console.log(`  - Lọc brand: còn ${filtered.length} sản phẩm`);
     }
     
-    // Price range filter
+    // 2. Price range filter
     if (listState.filters.priceRange !== 'all') {
         const [min, max] = listState.filters.priceRange.split('-').map(v => parseInt(v) * 1000000);
         if (max) {
@@ -241,40 +271,57 @@ function applyFilters() {
         } else {
             filtered = filtered.filter(p => p.price >= min);
         }
+        console.log(`  - Lọc giá: còn ${filtered.length} sản phẩm`);
     }
     
-    // Sort
-    switch (listState.filters.sort) {
-        case 'price-asc':
-            filtered.sort((a, b) => a.price - b.price);
-            break;
-        case 'price-desc':
-            filtered.sort((a, b) => b.price - a.price);
-            break;
-        case 'name-asc':
-            filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-            break;
-        case 'name-desc':
-            filtered.sort((a, b) => b.name.localeCompare(a.name, 'vi'));
-            break;
+    // 3. Sort - Chỉ sort frontend cho price sorts (backend sorts đã được xử lý khi load)
+    if (listState.filters.sort && !needsServerReload) {
+        console.log(`  - Sắp xếp: ${listState.filters.sort} cho ${filtered.length} sản phẩm`);
+        switch (listState.filters.sort) {
+            case 'price-asc':
+                filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+                console.log(`    ✓ Giá thấp nhất: ${formatCurrency(filtered[0]?.price || 0)}, cao nhất: ${formatCurrency(filtered[filtered.length - 1]?.price || 0)}`);
+                break;
+            case 'price-desc':
+                filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+                console.log(`    ✓ Giá cao nhất: ${formatCurrency(filtered[0]?.price || 0)}, thấp nhất: ${formatCurrency(filtered[filtered.length - 1]?.price || 0)}`);
+                break;
+            default:
+                console.log(`    - Không sắp xếp (giữ nguyên thứ tự)`);
+                break;
+        }
+    } else if (needsServerReload) {
+        console.log(`  ✓ Đã sort từ server: ${listState.filters.sort}`);
     }
     
+    // 4. Lưu kết quả và reset về trang 1
     listState.displayedProducts = filtered;
     listState.pagination.currentPage = 1;
     listState.pagination.totalPages = Math.ceil(filtered.length / listState.pagination.itemsPerPage);
     
+    console.log(`✅ Kết quả: ${filtered.length} sản phẩm, ${listState.pagination.totalPages} trang`);
+    
+    // 5. Render (sẽ lấy 12 sản phẩm đầu tiên từ kết quả đã sắp xếp)
     renderProducts();
     renderPagination();
     updateProductCount();
 }
 
 /**
- * Get paginated products
+ * Get paginated products (slice từ displayedProducts đã được sắp xếp)
  */
 function getPaginatedProducts() {
     const start = (listState.pagination.currentPage - 1) * listState.pagination.itemsPerPage;
     const end = start + listState.pagination.itemsPerPage;
-    return listState.displayedProducts.slice(start, end);
+    const paginated = listState.displayedProducts.slice(start, end);
+    
+    console.log(`📄 Trang ${listState.pagination.currentPage}/${listState.pagination.totalPages}: Hiển thị ${paginated.length} sản phẩm (${start + 1}-${start + paginated.length})`);
+    if (paginated.length > 0) {
+        console.log(`   Sản phẩm đầu: ${paginated[0]?.name} - ${formatCurrency(paginated[0]?.price || 0)}`);
+        console.log(`   Sản phẩm cuối: ${paginated[paginated.length - 1]?.name} - ${formatCurrency(paginated[paginated.length - 1]?.price || 0)}`);
+    }
+    
+    return paginated;
 }
 
 // ==================== RENDER FUNCTIONS ====================
@@ -427,14 +474,22 @@ function renderPagination() {
 function updateProductCount() {
     const countEl = document.querySelector('.product-count');
     if (countEl) {
-        countEl.textContent = `Hiển thị ${listState.displayedProducts.length} sản phẩm`;
+        const start = (listState.pagination.currentPage - 1) * listState.pagination.itemsPerPage + 1;
+        const end = Math.min(start + listState.pagination.itemsPerPage - 1, listState.displayedProducts.length);
+        const total = listState.displayedProducts.length;
+        
+        if (total === 0) {
+            countEl.textContent = 'Không có sản phẩm';
+        } else {
+            countEl.textContent = `Hiển thị ${start}-${end} trong ${total} sản phẩm`;
+        }
     }
 }
 
 // ==================== EVENT HANDLERS ====================
 
 /**
- * Handle brand filter click
+ * Handle brand filter click - DON'T reload from server, filter locally
  */
 function handleBrandFilter(brandId, buttonEl) {
     // Accept brand string (or empty)
@@ -452,12 +507,8 @@ function handleBrandFilter(brandId, buttonEl) {
         });
     }
 
-    // Reload products from server with brand filter where possible
-    (async () => {
-        const products = await loadProducts(listState.categorySlug, brand);
-        listState.allProducts = products;
-        applyFilters();
-    })();
+    // Apply filters locally (no server reload)
+    applyFilters();
 }
 
 /**
@@ -477,9 +528,9 @@ function handlePriceRange(range) {
 /**
  * Handle sort change
  */
-function handleSort(sortValue) {
+async function handleSort(sortValue) {
     listState.filters.sort = sortValue;
-    applyFilters();
+    await applyFilters();
 }
 
 /**
@@ -489,6 +540,7 @@ function handlePageChange(page) {
     listState.pagination.currentPage = page;
     renderProducts();
     renderPagination();
+    updateProductCount();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

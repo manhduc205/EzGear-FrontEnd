@@ -19,6 +19,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="./shop.css?v=9">
     <link rel="stylesheet" href="./shop-list.css?v=9">
+    <link rel="stylesheet" href="../../assets/css/footer.css">
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -79,8 +80,9 @@
                             <option value="">Mặc định</option>
                             <option value="price-asc">Giá: Thấp đến Cao</option>
                             <option value="price-desc">Giá: Cao đến Thấp</option>
-                            <option value="name-asc">Tên: A-Z</option>
-                            <option value="name-desc">Tên: Z-A</option>
+                            <option value="top-rated">Đánh giá cao nhất</option>
+                            <option value="most-reviewed">Nhiều đánh giá nhất</option>
+                            <option value="best-selling">Bán chạy nhất</option>
                         </select>
                     </div>
                 </div>
@@ -133,7 +135,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await ComponentLoader.load('#header-container', '../../components/header.html');
-            // await ComponentLoader.load('#footer-container', '../../components/footer.html');
+            await ComponentLoader.load('#footer-container', '../../components/footer.html');
             if (window.initShopList) {
                 window.initShopList();
             }

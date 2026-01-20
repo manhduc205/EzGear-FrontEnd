@@ -18,6 +18,7 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="./shop.css">
+    <link rel="stylesheet" href="../../assets/css/footer.css">
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -43,7 +44,7 @@
             <div class="banner-section">
                 <div class="banner-slider" id="bannerSlider">
                     <div class="banner-slide active">
-                        <img src="https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1400&q=80" alt="Banner">
+                        <img src="https://cdn.hstatic.net/files/200000722513/file/gearvn-thu-cu-doi-moi-t10-slider.jpeg" alt="Banner">
                     </div>
                 </div>
                 <div class="banner-controls">
@@ -75,9 +76,9 @@
 
             <!-- Right Small Banners -->
             <div class="right-banners">
-                <div class="small-banner" style="background-image: url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=500&q=80')"></div>
-                <div class="small-banner" style="background-image: url('https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=500&q=80')"></div>
-                <div class="small-banner" style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80')"></div>
+                <div class="small-banner" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-build-pc-sub-banner-t1-26.png')"></div>
+                <div class="small-banner" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-laptop-gaming-sub-banner-t1-26.png')"></div>
+                <div class="small-banner" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-build-pc-sub-banner-t1-26.png')"></div>
             </div>
         </div>
 
@@ -88,7 +89,7 @@
 
         <!-- Promo Banner -->
         <div class="promo-banner">
-            <img src="https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1400&q=80" alt="Promo">
+            <img src="https://cdn.hstatic.net/files/200000722513/file/gearvn-thu-cu-doi-moi-t10-slider.jpeg" alt="Promo">
         </div>
 
         <!-- Brands Section -->
@@ -169,19 +170,19 @@
             </div>
             <div class="news-grid">
                 <article class="news-card">
-                    <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=900&q=80')"></div>
+                    <div class="news-image" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-laptop-gaming-sub-banner-t1-26.png')"></div>
                     <h3>Đánh giá chi tiết iPhone 16 Pro Max sau 3 tháng sử dụng</h3>
                 </article>
                 <article class="news-card">
-                    <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80')"></div>
+                    <div class="news-image" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-build-pc-sub-banner-t1-26.png')"></div>
                     <h3>Samsung Galaxy S25 Series - Những thông tin mới nhất</h3>
                 </article>
                 <article class="news-card">
-                    <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80')"></div>
+                    <div class="news-image" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-laptop-gaming-sub-banner-t1-26.png')"></div>
                     <h3>Top 5 mẫu laptop gaming đáng mua nhất 2026</h3>
                 </article>
                 <article class="news-card">
-                    <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=900&q=80')"></div>
+                    <div class="news-image" style="background-image: url('https://cdn.hstatic.net/files/200000722513/file/gearvn-build-pc-sub-banner-t1-26.png')"></div>
                     <h3>Xiaomi ra mắt hệ sinh thái nhà thông minh mới</h3>
                 </article>
             </div>
@@ -202,7 +203,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await ComponentLoader.load('#header-container', '../../components/header.html');
-            // await ComponentLoader.load('#footer-container', '../../components/footer.html');
+            await ComponentLoader.load('#footer-container', '../../components/footer.html');
             if (window.initShop) {
                 window.initShop();
             }

@@ -66,60 +66,8 @@ function getSlugFromURL() {
  * Format price to VND
  */
 function formatPrice(price) {
-    // Treat undefined/null/0 as 'Liên hệ' to indicate no public price
-    if (price === 0 || price === null || price === undefined) return 'Liên hệ';
+    if (!price && price !== 0) return '0₫';
     return new Intl.NumberFormat('vi-VN').format(price) + '₫';
-}
-
-/**
- * Get a sensible display price for a product object
- * - prefer top-level product.price
- * - else derive from SKUs: available SKUs -> min price, else first SKU price
- * - returns numeric price or null when not available
- */
-function getProductDisplayPrice(product) {
-    if (!product) return null;
-
-    if (typeof product.price === 'number' && product.price > 0) {
-        return product.price;
-    }
-
-    if (product.skus && Array.isArray(product.skus) && product.skus.length > 0) {
-        const available = product.skus.filter(s => s.isStockAvailable && typeof s.price === 'number');
-        if (available.length > 0) {
-            return Math.min(...available.map(s => s.price));
-        }
-        // fallback to first sku's price if present
-        const firstWithPrice = product.skus.find(s => typeof s.price === 'number');
-        if (firstWithPrice) return firstWithPrice.price;
-    }
-
-    return null;
-}
-
-/**
- * Sort products by price (ascending). Keeps current product (isCurrent) first.
- * Returns a new sorted array and does not mutate the original.
- */
-function sortProductsByPrice(products, ascending = true) {
-    if (!products || !Array.isArray(products)) return [];
-    const copy = [...products];
-    copy.sort((a, b) => {
-        // current product always first
-        const aCurrent = !!a.isCurrent;
-        const bCurrent = !!b.isCurrent;
-        if (aCurrent && !bCurrent) return -1;
-        if (bCurrent && !aCurrent) return 1;
-
-        const pa = getProductDisplayPrice(a);
-        const pb = getProductDisplayPrice(b);
-
-        const na = (pa === null || pa === undefined) ? Number.POSITIVE_INFINITY : pa;
-        const nb = (pb === null || pb === undefined) ? Number.POSITIVE_INFINITY : pb;
-
-        return ascending ? na - nb : nb - na;
-    });
-    return copy;
 }
 
 /**
@@ -240,7 +188,7 @@ async function fetchProductDetail(slug) {
 }
 
 /**
- * Fetch related products (including current product)
+ * Fetch related products
  */
 async function fetchRelatedProducts(slug) {
     try {
@@ -254,30 +202,10 @@ async function fetchRelatedProducts(slug) {
         const data = await response.json();
         console.log('✅ Related products response:', data);
         
-        let products = [];
         if (data.success && data.payload) {
-            products = data.payload;
+            return data.payload;
         }
-        
-        // Add current product to the list if not already present
-        if (productState.product) {
-            const currentProductExists = products.some(p => p.slug === productState.product.slug);
-            if (!currentProductExists) {
-                products = [
-                    { ...productState.product, isCurrent: true },
-                    ...products
-                ];
-            } else {
-                // Mark current product
-                products = products.map(p => 
-                    p.slug === productState.product.slug 
-                        ? { ...p, isCurrent: true } 
-                        : p
-                );
-            }
-        }
-        
-        return products;
+        return [];
     } catch (error) {
         console.error('❌ Error fetching related products:', error);
         return [];
@@ -559,28 +487,20 @@ function setupGalleryEvents() {
  * Render price section
  */
 function renderPriceSection(product) {
-    const priceEl = document.querySelector('.text-3xl.font-bold');
-    if (!priceEl) {
-        console.warn('⚠️ Price element not found');
-        return;
-    }
-    
-    // Get the lowest price from SKUs
-    let displayPrice = 0;
-    if (product.skus && product.skus.length > 0) {
-        const availableSkus = product.skus.filter(sku => sku.isStockAvailable);
-        if (availableSkus.length > 0) {
-            displayPrice = Math.min(...availableSkus.map(sku => sku.price));
-        } else {
-            displayPrice = product.skus[0].price;
+    const priceEl = document.querySelector('.text-3xl.font-bold.text-gray-900');
+    if (priceEl) {
+        // Get the lowest price from SKUs
+        let displayPrice = 0;
+        if (product.skus && product.skus.length > 0) {
+            const availableSkus = product.skus.filter(sku => sku.isStockAvailable);
+            if (availableSkus.length > 0) {
+                displayPrice = Math.min(...availableSkus.map(sku => sku.price));
+            } else {
+                displayPrice = product.skus[0].price;
+            }
         }
-    } else if (product.price) {
-        // Fallback to product price if no SKUs
-        displayPrice = product.price;
+        priceEl.textContent = formatPrice(displayPrice);
     }
-    
-    console.log('💰 Setting price:', displayPrice, 'formatted:', formatPrice(displayPrice));
-    priceEl.textContent = formatPrice(displayPrice);
 }
 
 /**
@@ -632,7 +552,7 @@ function renderSkuOptions(product) {
  */
 function setupSkuSelectionEvents() {
     const skuButtons = document.querySelectorAll('.sku-option');
-    const priceEl = document.querySelector('.text-3xl.font-bold');
+    const priceEl = document.querySelector('.text-3xl.font-bold.text-gray-900');
     
     skuButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -641,8 +561,6 @@ function setupSkuSelectionEvents() {
             const skuId = parseInt(btn.dataset.skuId);
             const price = parseInt(btn.dataset.price);
             const skuImage = btn.dataset.skuImage;
-            
-            console.log('🔄 SKU selected:', { skuId, price, skuImage });
             
             // Find and select the SKU
             const sku = productState.product.skus.find(s => s.id === skuId);
@@ -656,10 +574,7 @@ function setupSkuSelectionEvents() {
                 setTimeout(() => {
                     priceEl.textContent = formatPrice(price);
                     priceEl.style.opacity = '1';
-                    console.log('💰 Price updated to:', formatPrice(price));
                 }, 200);
-            } else {
-                console.warn('⚠️ Price element not found for update');
             }
             
             // Update main image if SKU has specific image
@@ -848,11 +763,8 @@ function renderRelatedProducts(products) {
     const relatedGrid = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4.gap-4');
     if (!relatedGrid) return;
     
-    // Sort related products by price (ascending) while keeping current product first
-    const sorted = sortProductsByPrice(products, true);
-
     let productsHTML = '';
-    sorted.forEach(product => {
+    products.forEach(product => {
         productsHTML += `
             <a href="product-detail.html?slug=${product.slug}" class="bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-xl shadow-soft hover:shadow-lg transition group relative overflow-hidden">
                 <div class="p-4">
@@ -881,13 +793,7 @@ function renderRelatedProducts(products) {
  * Render related products in "Sản phẩm cùng nhóm" section
  */
 function renderGroupedProducts(products) {
-    if (!products || products.length === 0) {
-        console.log('⚠️ No products to render in grouped section');
-        return;
-    }
-    
-    console.log('🎨 Rendering grouped products:', products.length, 'products');
-    console.log('📍 Current product slug:', productState.product?.slug);
+    if (!products || products.length === 0) return;
     
     // Find the grouped products section - look for the h4 with specific text
     const h4Elements = document.querySelectorAll('h4.font-bold.mb-3');
@@ -899,27 +805,14 @@ function renderGroupedProducts(products) {
         }
     });
     
-    if (!groupedContainer) {
-        console.log('⚠️ Grouped products container not found');
-        return;
-    }
+    if (!groupedContainer) return;
     
-    // Sort grouped products by price (ascending) but keep current product first
-    const sorted = sortProductsByPrice(products, true);
-
     let productsHTML = '';
-    sorted.forEach((product, index) => {
-        const isCurrent = product.isCurrent || (productState.product && product.slug === productState.product.slug);
-        
-        console.log(`Product ${index}:`, {
-            name: product.name,
-            slug: product.slug,
-            isCurrent: isCurrent,
-            currentProductSlug: productState.product?.slug
-        });
+    products.forEach((product, index) => {
+        const isCurrent = product.isCurrent || false;
         
         productsHTML += `
-            <label class="cursor-pointer" ${!isCurrent ? `onclick="window.location.href='product-detail.html?slug=${product.slug}'"` : 'style="cursor: default;"'}>
+            <label class="cursor-pointer" ${!isCurrent ? `onclick="window.location.href='product-detail.html?slug=${product.slug}'"` : ''}>
                 <input ${isCurrent ? 'checked' : ''} class="peer sr-only" name="grouped_product" type="radio"/>
                 <div class="h-full relative p-3 border rounded-lg bg-surface-light dark:bg-surface-dark ${isCurrent ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-200 dark:border-gray-700 peer-checked:border-red-500 peer-checked:ring-1 peer-checked:ring-red-500 hover:border-gray-300 dark:hover:border-gray-600'} transition group flex flex-col justify-between">
                     <div>
@@ -931,13 +824,12 @@ function renderGroupedProducts(products) {
                             <div class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">${product.name}</div>
                         </div>
                     </div>
-                    <div class="mt-2 text-center text-primary font-bold text-base">${formatPrice(getProductDisplayPrice(product))}</div>
+                    <div class="mt-2 text-center text-primary font-bold text-base">${formatPrice(product.price)}</div>
                 </div>
             </label>
         `;
     });
     
-    console.log('✅ Rendered HTML length:', productsHTML.length);
     groupedContainer.innerHTML = productsHTML;
 }
 
@@ -1151,22 +1043,19 @@ async function initProductDetailPage() {
     
     console.log('📌 Product slug:', slug);
     
-    // Fetch product detail first
-    const product = await fetchProductDetail(slug);
+    // Fetch all data in parallel
+    const [product, relatedProducts] = await Promise.all([
+        fetchProductDetail(slug),
+        fetchRelatedProducts(slug)
+    ]);
     
     if (!product) {
         showToastNotification('Không tìm thấy sản phẩm', 'error');
         return;
     }
     
-    // Store product in state BEFORE fetching related products
-    productState.product = product;
-    
     // Render product detail
     renderProductDetail(product);
-    
-    // Now fetch related products (will include current product)
-    const relatedProducts = await fetchRelatedProducts(slug);
     
     // Render related products
     if (relatedProducts && relatedProducts.length > 0) {

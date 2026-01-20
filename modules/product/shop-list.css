@@ -219,6 +219,7 @@
 .pagination-numbers {
     display: flex;
     gap: 6px;
+    align-items: center;
 }
 
 .pagination-number {
@@ -246,6 +247,13 @@
     background: var(--primary-color, #2563eb);
     border-color: var(--primary-color, #2563eb);
     color: white;
+}
+
+.pagination-ellipsis {
+    color: #999;
+    font-weight: bold;
+    padding: 0 4px;
+    user-select: none;
 }
 
 /* Skeleton Loading */

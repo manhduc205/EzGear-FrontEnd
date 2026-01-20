@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo & Thống Kê - EzGear Admin</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Admin Common CSS -->
+    <link rel="stylesheet" href="../admin-common.css">
+    
+    <!-- Report CSS -->
+    <link rel="stylesheet" href="./report.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Đang tải dữ liệu...</p>
+    </div>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar"></aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1><i class="fas fa-chart-line me-2"></i>Báo Cáo & Thống Kê</h1>
+                    <div class="breadcrumb">
+                        <a href="../dashboard.html">Trang chủ</a> / Báo cáo
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="date-range-picker">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                    <div class="user-info" id="userInfo"></div>
+                    <button class="btn-logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="overview">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Tổng quan</span>
+                    </button>
+                    <button class="tab-btn" data-tab="inventory">
+                        <i class="fas fa-warehouse"></i>
+                        <span>Báo cáo & Kho vận</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Overview -->
+                <div class="tab-content active" id="tab-overview">
+                    <!-- Summary Cards -->
+                    <div class="row g-4 mb-4">
+                        <!-- Card 1: Doanh thu hôm nay -->
+                        <div class="col-xl-3 col-lg-6 col-md-6">
+                            <div class="summary-card revenue-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h3 class="card-value" id="todayRevenue">0 ₫</h3>
+                                    <p class="card-label">Doanh thu hôm nay</p>
+                                    <div class="card-trend up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+12.5%</span>
+                                    </div>
+                                </div>
+                                <div class="card-wave">
+                                    <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                                        <path d="M0,100 C150,200 350,0 500,100 L500,150 L0,150 Z" fill="rgba(255,255,255,0.1)"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Đơn hàng mới -->
+                        <div class="col-xl-3 col-lg-6 col-md-6">
+                            <div class="summary-card orders-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h3 class="card-value" id="newOrders">0</h3>
+                                    <p class="card-label">Đơn hàng mới</p>
+                                    <div class="card-trend up">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+8.3%</span>
+                                    </div>
+                                </div>
+                                <div class="card-wave">
+                                    <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                                        <path d="M0,100 C150,200 350,0 500,100 L500,150 L0,150 Z" fill="rgba(255,255,255,0.1)"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Sắp hết hàng -->
+                        <div class="col-xl-3 col-lg-6 col-md-6">
+                            <div class="summary-card stock-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h3 class="card-value" id="lowStockItems">0</h3>
+                                    <p class="card-label">Sắp hết hàng</p>
+                                    <div class="card-trend warning">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span>Cần nhập thêm</span>
+                                    </div>
+                                </div>
+                                <div class="card-wave">
+                                    <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                                        <path d="M0,100 C150,200 350,0 500,100 L500,150 L0,150 Z" fill="rgba(255,255,255,0.1)"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Tỷ lệ hủy -->
+                        <div class="col-xl-3 col-lg-6 col-md-6">
+                            <div class="summary-card cancel-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="card-info">
+                                    <h3 class="card-value" id="cancelRate">0%</h3>
+                                    <p class="card-label">Tỷ lệ hủy đơn</p>
+                                    <div class="card-trend down">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <span>-2.1%</span>
+                                    </div>
+                                </div>
+                                <div class="card-wave">
+                                    <svg viewBox="0 0 500 150" preserveAspectRatio="none">
+                                        <path d="M0,100 C150,200 350,0 500,100 L500,150 L0,150 Z" fill="rgba(255,255,255,0.1)"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="row g-4">
+                        <!-- Bar Chart: Doanh thu & Lợi nhuận -->
+                        <div class="col-xl-8 col-lg-7">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <div class="chart-title">
+                                        <i class="fas fa-chart-bar"></i>
+                                        <h3>Doanh thu & Lợi nhuận 7 ngày qua</h3>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <span class="legend-item">
+                                            <span class="legend-color revenue"></span>
+                                            Doanh thu
+                                        </span>
+                                        <span class="legend-item">
+                                            <span class="legend-color profit"></span>
+                                            Lợi nhuận
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pie Chart: Tỷ lệ danh mục -->
+                        <div class="col-xl-4 col-lg-5">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <div class="chart-title">
+                                        <i class="fas fa-chart-pie"></i>
+                                        <h3>Tỷ lệ danh mục</h3>
+                                    </div>
+                                </div>
+                                <div class="chart-body pie-chart-body">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                                <div class="category-legend" id="categoryLegend">
+                                    <!-- Dynamic legend -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Inventory & Reports -->
+                <div class="tab-content" id="tab-inventory">
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <div class="filter-item">
+                                <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                                <input type="text" id="searchInput" class="filter-input" placeholder="Nhập tên sản phẩm...">
+                            </div>
+                            <div class="filter-item">
+                                <label><i class="fas fa-filter"></i> Trạng thái</label>
+                                <select id="statusFilter" class="filter-select">
+                                    <option value="all">Tất cả</option>
+                                    <option value="low-stock">Sắp hết hàng</option>
+                                    <option value="dead-stock">Tồn kho chết</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label><i class="fas fa-calendar"></i> Thời gian</label>
+                                <select id="timeFilter" class="filter-select">
+                                    <option value="7">7 ngày qua</option>
+                                    <option value="30">30 ngày qua</option>
+                                    <option value="90">90 ngày qua</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn-filter" onclick="applyFilters()">
+                                <i class="fas fa-check"></i> Áp dụng
+                            </button>
+                            <button class="btn-reset" onclick="resetFilters()">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                            <button class="btn-export" onclick="exportData()">
+                                <i class="fas fa-file-excel"></i> Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tables Row -->
+                    <div class="row g-4">
+                        <!-- Top Products Table -->
+                        <div class="col-xl-7">
+                            <div class="table-card">
+                                <div class="table-header">
+                                    <div class="table-title">
+                                        <i class="fas fa-trophy"></i>
+                                        <h3>Top Sản Phẩm Bán Chạy</h3>
+                                    </div>
+                                    <span class="table-badge">Top 10</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" id="topProductsTable">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="fas fa-hashtag"></i> #</th>
+                                                <th><i class="fas fa-box"></i> Sản phẩm</th>
+                                                <th><i class="fas fa-barcode"></i> SKU</th>
+                                                <th><i class="fas fa-shopping-bag"></i> Đã bán</th>
+                                                <th><i class="fas fa-money-bill"></i> Doanh thu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="topProductsBody">
+                                            <!-- Dynamic content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dead Stock Table -->
+                        <div class="col-xl-5">
+                            <div class="table-card warning-card">
+                                <div class="table-header">
+                                    <div class="table-title">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <h3>Cảnh Báo Tồn Kho</h3>
+                                    </div>
+                                    <span class="table-badge danger">Dead Stock</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" id="deadStockTable">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="fas fa-box"></i> Sản phẩm</th>
+                                                <th><i class="fas fa-barcode"></i> SKU</th>
+                                                <th><i class="fas fa-cubes"></i> Tồn kho</th>
+                                                <th><i class="fas fa-clock"></i> Không bán</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="deadStockBody">
+                                            <!-- Dynamic content -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="row g-4 mt-2">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="quick-stat-card">
+                                <div class="stat-icon blue">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="totalProducts">0</h4>
+                                    <p>Tổng sản phẩm</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="quick-stat-card">
+                                <div class="stat-icon green">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="inStockProducts">0</h4>
+                                    <p>Còn hàng</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="quick-stat-card">
+                                <div class="stat-icon orange">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="lowStockProducts">0</h4>
+                                    <p>Sắp hết</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="quick-stat-card">
+                                <div class="stat-icon red">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="outOfStockProducts">0</h4>
+                                    <p>Hết hàng</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Admin Common JS -->
+    <script src="../admin-common.js"></script>
+    
+    <!-- Report JS -->
+    <script src="./report.js"></script>
+</body>
+</html>

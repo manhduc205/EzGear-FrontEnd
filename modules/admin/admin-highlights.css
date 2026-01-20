@@ -1,0 +1,120 @@
+/* ===================================
+   🎨 ADMIN COMMON - KEY IMPROVEMENTS
+   ===================================
+   
+   File này chứa các đoạn CSS quan trọng đã được cải thiện
+   Để tham khảo và hiểu các thay đổi chính
+   ================================== */
+
+/* 1. SIDEBAR GRADIENT - Gradient đẹp cho sidebar */
+.sidebar {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 2. LOGO GRADIENT TEXT - Text gradient cho logo */
+.sidebar-logo {
+    background: linear-gradient(135deg, #ff6b6b, #c8102e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 3. MENU ITEM ANIMATION - Animation khi hover menu */
+.menu-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #c8102e;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.menu-item:hover::before {
+    transform: scaleY(1);
+}
+
+/* 4. BUTTON RIPPLE EFFECT - Ripple effect khi click button */
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* 5. GRADIENT BUTTONS - Buttons với gradient đẹp */
+.btn-primary {
+    background: linear-gradient(135deg, #c8102e 0%, #a00d24 100%);
+    box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #a00d24 0%, #800a1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(200, 16, 46, 0.4);
+}
+
+/* 6. SEARCH BOX FOCUS - Search box với focus effect đẹp */
+.search-box input:focus {
+    border-color: #c8102e;
+    box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.1), 0 4px 12px rgba(200, 16, 46, 0.1);
+    transform: translateY(-1px);
+}
+
+/* 7. USER AVATAR ANIMATION - Avatar với rotate effect */
+.user-info:hover .user-avatar {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 4px 15px rgba(200, 16, 46, 0.4);
+}
+
+/* 8. TABLE CARD HOVER - Card với lift effect */
+.table-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* 9. TOPBAR GRADIENT - Topbar với gradient và blur */
+.topbar {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(200, 16, 46, 0.1);
+}
+
+/* 10. LOGOUT BUTTON - Nút logout với gradient nổi bật */
+.btn-logout {
+    background: linear-gradient(135deg, #c8102e 0%, #a00d24 100%);
+    box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3);
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #a00d24 0%, #800a1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(200, 16, 46, 0.4);
+}
+
+/* ===================================
+   🎯 USAGE EXAMPLES
+   ===================================
+   
+   Apply these classes to your HTML:
+   
+   <button class="btn btn-primary">Primary</button>
+   <button class="btn btn-success">Success</button>
+   <button class="btn btn-danger">Danger</button>
+   <button class="btn-logout">Đăng xuất</button>
+   
+   ================================== */

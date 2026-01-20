@@ -49,7 +49,7 @@ function renderResult(status, orderCode) {
         primaryBtn.onclick = () => window.location.href = '../../index.html';
         
         secondaryBtn.textContent = 'Xem Đơn Hàng';
-        secondaryBtn.onclick = () => window.location.href = `../order/details.html?code=${orderCode}`;
+        secondaryBtn.onclick = () => window.location.href = `../order/order-detail.html?code=${orderCode}`;
 
         // Clear cart
         clearCart();
