@@ -385,8 +385,16 @@ function updateSummary() {
         return sum + (price * quantity);
     }, 0);
     
-    const discount = cartState.voucher ? (subtotal * cartState.voucher.discountPercent / 100) : 0;
-    const total = subtotal - discount;
+    // Support either percent-based or fixed-amount voucher
+    let discount = 0;
+    if (cartState.voucher) {
+        if (typeof cartState.voucher.discountAmount === 'number' && cartState.voucher.discountAmount > 0) {
+            discount = Math.min(cartState.voucher.discountAmount, subtotal);
+        } else if (typeof cartState.voucher.discountPercent === 'number' && cartState.voucher.discountPercent > 0) {
+            discount = subtotal * cartState.voucher.discountPercent / 100;
+        }
+    }
+    const total = Math.max(0, subtotal - discount);
 
     // Update UI
     document.getElementById('selectedCount').textContent = cartState.selectedItems.size;
@@ -447,27 +455,53 @@ async function changeQuantity(skuId, newQuantity) {
     const stockQuantity = item.stockQuantity || item.stock || 100;
     const currentQuantity = item.quantity || 1;
     
-    // Validate quantity
-    if (newQuantity < 1) newQuantity = 1;
+    // If trying to decrease below 1, remove the item silently (no global loading overlay)
+    if (newQuantity < 1) {
+        await removeItemSilent(skuId);
+        return;
+    }
+
+    // Validate max quantity
     if (newQuantity > stockQuantity) {
         showToast(`Chỉ còn ${stockQuantity} sản phẩm trong kho`, 'warning');
         newQuantity = stockQuantity;
     }
-    
+
     if (newQuantity === currentQuantity) return;
-    
-    // Show loading
-    showLoading(true);
-    
+
+    // Update UI optimistically: update local state then persist to backend without global loader
     try {
+        // Update local item quantity so UI responds instantly
+        item.quantity = newQuantity;
+        renderCartItems();
+        updateSummary();
+
+        // Persist change
         await updateQuantityAPI(skuId, newQuantity, cartState.currentProvinceId);
-        // Reload cart to get latest data from backend
+
+        // Reload cart to sync with backend (silent)
         await loadCart();
         showToast('Cập nhật số lượng thành công', 'success');
     } catch (error) {
         console.error('Change quantity error:', error);
-    } finally {
-        showLoading(false);
+        // Re-load to ensure consistency
+        await loadCart();
+        showToast('Cập nhật số lượng thất bại', 'error');
+    }
+}
+
+/**
+ * Remove item silently without showing global loading overlay
+ */
+async function removeItemSilent(skuId) {
+    try {
+        await removeItemAPI(skuId, cartState.currentProvinceId);
+        cartState.selectedItems.delete(skuId);
+        await loadCart();
+        showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'success');
+    } catch (error) {
+        console.error('Silent remove error:', error);
+        showToast('Xóa sản phẩm thất bại', 'error');
     }
 }
 
@@ -475,8 +509,7 @@ async function changeQuantity(skuId, newQuantity) {
  * Remove item from cart
  */
 async function removeItem(skuId) {
-    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
-    
+    // Remove confirmation prompt to make it smoother
     showLoading(true);
     
     try {
@@ -525,7 +558,7 @@ async function deleteSelected() {
 /**
  * Apply voucher
  */
-function applyVoucher() {
+async function applyVoucher() {
     const voucherCode = document.getElementById('voucherInput').value.trim();
     
     if (!voucherCode) {
@@ -533,24 +566,104 @@ function applyVoucher() {
         return;
     }
     
-    // Mock voucher validation (replace with real API call)
-    const mockVouchers = {
-        'EZGEAR10': { code: 'EZGEAR10', discountPercent: 10, name: 'Giảm 10%' },
-        'EZGEAR20': { code: 'EZGEAR20', discountPercent: 20, name: 'Giảm 20%' },
-        'WELCOME50': { code: 'WELCOME50', discountPercent: 50, name: 'Chào mừng - Giảm 50%' }
-    };
+    // Check if there are selected items
+    if (cartState.selectedItems.size === 0) {
+        showToast('Vui lòng chọn sản phẩm trước khi áp dụng voucher', 'warning');
+        return;
+    }
     
-    const voucher = mockVouchers[voucherCode.toUpperCase()];
-    
-    if (voucher) {
-        cartState.voucher = voucher;
+    showLoading(true);
+    try {
+        let result = null;
+
+        // Try multiple endpoint patterns to be robust
+        const endpoints = [
+            `${window.BASE_URL}/api/vouchers/validate/${voucherCode}`,
+            `${window.BASE_URL}/api/vouchers/validate?code=${encodeURIComponent(voucherCode)}`,
+            `${window.BASE_URL}/api/vouchers/validate`
+        ];
+
+        for (const url of endpoints) {
+            try {
+                let resp;
+                if (url.endsWith('/validate')) {
+                    // try POST body pattern
+                    resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                        },
+                        body: JSON.stringify({ code: voucherCode })
+                    });
+                } else {
+                    resp = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${TokenHelper.getAccessToken()}`
+                        }
+                    });
+                }
+
+                if (!resp.ok) {
+                    // try next endpoint
+                    continue;
+                }
+
+                const json = await resp.json().catch(() => null);
+                if (json && json.success && json.payload) {
+                    result = json;
+                    break;
+                }
+            } catch (e) {
+                // ignore and try next
+                console.warn('Voucher endpoint attempt failed:', e);
+                continue;
+            }
+        }
+
+        // If backend attempts all failed, fallback to client-side mock validation
+        if (!result) {
+            const mockVouchers = {
+                'EZGEAR10': { code: 'EZGEAR10', discountPercent: 10, name: 'Giảm 10%' },
+                'EZGEAR20': { code: 'EZGEAR20', discountPercent: 20, name: 'Giảm 20%' },
+                'WELCOME50': { code: 'WELCOME50', discountPercent: 50, name: 'Chào mừng - Giảm 50%' }
+            };
+
+            const mv = mockVouchers[voucherCode.toUpperCase()];
+            if (mv) {
+                cartState.voucher = Object.assign({}, mv);
+                document.getElementById('voucherInput').value = '';
+                document.getElementById('voucherApplied').style.display = 'flex';
+                document.getElementById('voucherName').textContent = cartState.voucher.name;
+                updateSummary();
+                showToast('Áp dụng mã giảm giá thành công! (mock)', 'success');
+                return;
+            }
+
+            throw new Error('Mã giảm giá không hợp lệ hoặc server không hỗ trợ endpoint');
+        }
+
+        const voucher = result.payload;
+        cartState.voucher = {
+            code: voucher.code,
+            discountPercent: voucher.discountPercent || 0,
+            discountAmount: voucher.discountAmount || 0,
+            name: voucher.name || voucher.code,
+            id: voucher.id
+        };
+
         document.getElementById('voucherInput').value = '';
         document.getElementById('voucherApplied').style.display = 'flex';
-        document.getElementById('voucherName').textContent = voucher.name;
+        document.getElementById('voucherName').textContent = cartState.voucher.name;
         updateSummary();
         showToast('Áp dụng mã giảm giá thành công!', 'success');
-    } else {
-        showToast('Mã giảm giá không hợp lệ', 'error');
+    } catch (error) {
+        console.error('Apply voucher error:', error);
+        showToast(error.message || 'Áp dụng mã giảm giá thất bại', 'error');
+    } finally {
+        showLoading(false);
     }
 }
 

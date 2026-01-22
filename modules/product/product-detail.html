@@ -97,14 +97,14 @@
 <span class="material-icons-outlined text-primary mr-3 text-2xl">cached</span>
 <div>
 <p class="text-sm font-medium">1 ĐỔI 1 trong 30 ngày</p>
-<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">nếu có lỗi phần cứng nhà sản xuất. Bảo hành 12 tháng tại trung tâm bảo hành chính hãng Apple.</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">nếu có lỗi phần cứng nhà sản xuất. Bảo hành 12 tháng tại trung tâm bảo hành chính hãng.</p>
 <a class="text-accent-blue text-xs hover:underline mt-1 block" href="#">Xem chi tiết</a>
 </div>
 </div>
 <div class="flex items-start p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
 <span class="material-icons-outlined text-primary mr-3 text-2xl">settings</span>
 <div>
-<p class="text-sm">Máy, Sách hướng dẫn, Cây lấy sim, Cáp Type C</p>
+<p class="text-sm">Máy, Sách hướng dẫn, Balo, Cáp Sạc</p>
 </div>
 </div>
 <div class="flex items-start p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -252,48 +252,85 @@
                         <span class="bg-red-600 text-white text-[10px] px-1 ml-2 rounded font-bold">Mới</span>
 </div>
 </div>
-<div class="bg-gray-100 dark:bg-gray-800/50 rounded-xl p-4">
-<div class="flex justify-between items-center mb-3">
-<div class="text-sm">
-<div class="font-bold text-gray-900 dark:text-white">Xem chi nhánh có hàng</div>
-<div class="text-xs text-gray-500">Có <span class="text-blue-600 font-bold">33</span> cửa hàng có sản phẩm</div>
+<!-- Find In Store Section -->
+<div class="bg-gray-100 dark:bg-gray-800/50 rounded-xl p-4" id="findInStoreContainer">
+    <div class="flex justify-between items-center mb-3">
+        <div class="text-sm">
+            <div class="font-bold text-gray-900 dark:text-white">Xem chi nhánh có hàng</div>
+            <div class="text-xs text-gray-500">Có <span class="text-blue-600 font-bold" id="storeCount">0</span> cửa hàng có sản phẩm</div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openProvinceModal()" class="text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 hover:border-primary transition flex items-center gap-1">
+                <span id="selectedProvinceName">Chọn Tỉnh/TP</span>
+                <i class="fas fa-chevron-down text-[10px]"></i>
+            </button>
+            <button onclick="openDistrictModal()" id="districtSelectBtn" class="text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1.5 hover:border-primary transition flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span id="selectedDistrictName">Chọn Quận/Huyện</span>
+                <i class="fas fa-chevron-down text-[10px]"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Store List -->
+    <div id="storeList" class="relative">
+        <div class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x" id="storeCards">
+            <!-- Store cards will be rendered here -->
+        </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="storeEmpty" class="hidden text-center py-8">
+        <span class="material-icons text-gray-400 text-4xl">store</span>
+        <p class="text-sm text-gray-500 mt-2">Không tìm thấy cửa hàng nào ở khu vực này</p>
+    </div>
 </div>
-<div class="flex gap-2">
-<select class="text-xs border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-<option>Hà Nội</option>
-<option>TP. HCM</option>
-</select>
-<select class="text-xs border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-<option>Quận/Huyện</option>
-</select>
+
+<!-- Province Selection Modal -->
+<div class="modal" id="provinceModal">
+    <div class="modal-content location-modal" style="max-width: 600px;">
+        <div class="location-header">
+            <div class="location-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="provinceSearchInput" placeholder="Tìm kiếm tỉnh/thành phố..." oninput="handleProvinceSearch()">
+            </div>
+            <button class="btn-close-location" onclick="closeProvinceModal()">
+                <i class="fas fa-times"></i> Đóng
+            </button>
+        </div>
+        <div class="location-body">
+            <p class="location-instruction">Chọn Tỉnh/Thành phố để tìm cửa hàng</p>
+            <div class="location-list" id="provinceList">
+                <!-- Province items will be rendered here -->
+            </div>
+        </div>
+    </div>
 </div>
-</div>
-<div class="relative">
-<div class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
-<div class="snap-start flex-shrink-0 w-64 bg-white dark:bg-surface-dark p-3 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
-<p class="font-medium mb-1 line-clamp-2">282 Minh Khai, Q. Hai Bà Trưng, Hà Nội</p>
-<div class="flex gap-2 mt-2">
-<a class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded flex items-center gap-1 hover:bg-red-100 transition" href="tel:02471010282">
-<span class="material-icons text-[10px]">call</span> 02471010282
-                                    </a>
-<a class="border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded flex items-center gap-1 hover:bg-gray-50 transition" href="#">
-<span class="material-icons text-[10px]">map</span> Bản đồ
-                                    </a>
-</div>
-</div>
-<div class="snap-start flex-shrink-0 w-64 bg-white dark:bg-surface-dark p-3 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
-<p class="font-medium mb-1 line-clamp-2">51 Đại Cồ Việt, P. Lê Đại Hành, Q. Hai Bà Trưng</p>
-<div class="flex gap-2 mt-2">
-<a class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded flex items-center gap-1 hover:bg-red-100 transition" href="tel:02471000051">
-<span class="material-icons text-[10px]">call</span> 02471000051
-                                    </a>
-<a class="border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded flex items-center gap-1 hover:bg-gray-50 transition" href="#">
-<span class="material-icons text-[10px]">map</span> Bản đồ
-                                    </a>
-</div>
-</div>
-</div>
-</div>
+
+<!-- District Selection Modal -->
+<div class="modal" id="districtModal">
+    <div class="modal-content location-modal" style="max-width: 600px;">
+        <div class="location-header">
+            <div class="location-search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="districtSearchInput" placeholder="Tìm kiếm quận/huyện..." oninput="handleDistrictSearch()">
+            </div>
+            <button class="btn-close-location" onclick="closeDistrictModal()">
+                <i class="fas fa-times"></i> Đóng
+            </button>
+        </div>
+        <div class="location-body">
+            <div class="flex items-center justify-between mb-3">
+                <p class="location-instruction">Chọn Quận/Huyện để tìm cửa hàng</p>
+                <button onclick="clearDistrictSelection()" id="clearDistrictBtn" class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium px-3 py-1.5 border border-red-300 dark:border-red-600 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-1 hidden">
+                    <i class="fas fa-times-circle text-sm"></i>
+                    Xóa lựa chọn
+                </button>
+            </div>
+            <div class="location-list" id="districtList">
+                <!-- District items will be rendered here -->
+            </div>
+        </div>
+    </div>
 </div>
 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
 <div class="flex items-center gap-2 mb-3 text-red-600 dark:text-red-400 font-bold text-lg uppercase">
@@ -314,11 +351,11 @@
 <span class="text-xs font-bold">Trả góp 0%</span>
 <span class="text-[10px]">Duyệt nhanh qua điện thoại</span>
 </button>
-<button class="flex-[2] bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-xl p-2 flex flex-col items-center justify-center shadow-lg hover:shadow-red-500/30 transition transform active:scale-95 h-16">
+<button onclick="handleBuyNow()" class="flex-[2] bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-xl p-2 flex flex-col items-center justify-center shadow-lg hover:shadow-red-500/30 transition transform active:scale-95 h-16">
 <span class="text-lg font-bold uppercase">Mua Ngay</span>
 <span class="text-[10px]">Giao nhanh từ 2 giờ hoặc nhận tại cửa hàng</span>
 </button>
-<button class="flex-1 bg-white dark:bg-surface-dark border-2 border-red-500 text-red-500 rounded-xl p-2 flex flex-col items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 transition h-16 group">
+<button onclick="handleAddToCart()" class="flex-1 bg-white dark:bg-surface-dark border-2 border-red-500 text-red-500 rounded-xl p-2 flex flex-col items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 transition h-16 group">
 <span class="material-icons text-xl group-hover:scale-110 transition">add_shopping_cart</span>
 <span class="text-[10px] font-bold mt-1">Thêm vào giỏ</span>
 </button>

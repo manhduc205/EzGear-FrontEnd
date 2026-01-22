@@ -455,13 +455,14 @@ body {
 .cart-item {
   background: white;
   border-radius: 12px;
-  padding: 25px;
+  padding: 20px;
   display: flex;
   gap: 20px;
   box-shadow: 0 2px 8px var(--hover-shadow);
   border: 2px solid transparent;
   transition: all 0.3s;
   position: relative;
+  margin-bottom: 16px;
 }
 
 
@@ -690,6 +691,9 @@ body {
   outline: none;
   border-left: 1px solid var(--border-color);
   border-right: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Remove Button */

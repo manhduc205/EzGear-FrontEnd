@@ -513,14 +513,17 @@ function renderSkuOptions(product) {
     const versionContainer = document.querySelector('.grid.grid-cols-3.gap-3');
     if (!versionContainer) return;
     
+    // Determine which SKU should be selected (first available one)
+    const selectedSku = product.skus.find(sku => sku.isStockAvailable) || product.skus[0];
+    
     let skuHTML = '';
     product.skus.forEach((sku, index) => {
-        const isFirst = index === 0;
+        const isSelected = sku.id === selectedSku.id;
         const isOutOfStock = !sku.isStockAvailable;
         
         skuHTML += `
             <button class="sku-option relative py-3 px-2 border rounded-lg text-sm font-medium transition ${
-                isFirst 
+                isSelected 
                     ? 'border-2 border-primary text-primary bg-red-50 dark:bg-red-900/20 font-bold shadow-sm' 
                     : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-primary dark:hover:border-primary'
             } ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -532,7 +535,7 @@ function renderSkuOptions(product) {
                 ${isOutOfStock ? 'disabled' : ''}>
                 ${sku.optionName || sku.skuName}
                 ${isOutOfStock ? '<span class="block text-xs text-red-500">Hết hàng</span>' : ''}
-                ${isFirst ? `
+                ${isSelected ? `
                     <span class="absolute -top-2 -right-2 bg-primary text-white rounded-full p-0.5">
                         <span class="material-icons text-xs leading-none block">check</span>
                     </span>
@@ -616,6 +619,25 @@ function setupSkuSelectionEvents() {
 function selectSku(sku) {
     productState.selectedSku = sku;
     console.log('✅ Selected SKU:', sku);
+    console.log('📌 productState.selectedSku is now:', productState.selectedSku);
+    
+    // Dispatch event for Find In Store to listen
+    if (sku && sku.id) {
+        document.dispatchEvent(new CustomEvent('skuChanged', { 
+            detail: { skuId: sku.id } 
+        }));
+        
+        // Update Find In Store immediately if already initialized
+        if (FindInStoreState && FindInStoreState.currentSkuId !== sku.id) {
+            FindInStoreState.currentSkuId = sku.id;
+            console.log('🔄 SKU changed, finding stores for new SKU:', sku.id);
+            findStores();
+        } else if (!FindInStoreState) {
+            // If Find In Store not initialized yet, just update button based on SKU stock
+            console.log('📦 Find In Store not initialized, checking SKU stock availability');
+            updateBuyButton(sku.isStockAvailable || false);
+        }
+    }
 }
 
 /**
@@ -855,6 +877,52 @@ window.openImageModal = openImageModal;
 // ==================== ACTION HANDLERS ====================
 
 /**
+ * Handle Add to Cart button click
+ */
+window.handleAddToCart = async function() {
+    console.log('🛒 Add to Cart clicked');
+    console.log('📌 Current selectedSku:', productState.selectedSku);
+    
+    if (!productState.selectedSku) {
+        showToastNotification('Vui lòng chọn phiên bản sản phẩm', 'error');
+        return;
+    }
+    
+    if (!productState.selectedSku.isStockAvailable) {
+        showToastNotification('Sản phẩm đã hết hàng', 'error');
+        return;
+    }
+    
+    await addToCart(productState.selectedSku.id, 1);
+};
+
+/**
+ * Handle Buy Now button click
+ */
+window.handleBuyNow = async function() {
+    console.log('🛍️ Buy Now clicked');
+    console.log('📌 Current selectedSku:', productState.selectedSku);
+    
+    if (!productState.selectedSku) {
+        showToastNotification('Vui lòng chọn phiên bản sản phẩm', 'error');
+        return;
+    }
+    
+    if (!productState.selectedSku.isStockAvailable) {
+        showToastNotification('Sản phẩm đã hết hàng', 'error');
+        return;
+    }
+    
+    // Add to cart first
+    const success = await addToCart(productState.selectedSku.id, 1);
+    
+    if (success) {
+        // Redirect to checkout
+        window.location.href = '/modules/checkout/checkout.html';
+    }
+};
+
+/**
  * Setup action buttons (Add to cart, Buy now, etc.)
  */
 function setupActionButtons() {
@@ -863,58 +931,6 @@ function setupActionButtons() {
     
     allButtons.forEach(btn => {
         const btnText = btn.textContent || '';
-        
-        // Add to Cart button
-        if (btnText.includes('Thêm vào giỏ')) {
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                if (!productState.selectedSku) {
-                    showToastNotification('Vui lòng chọn phiên bản sản phẩm', 'error');
-                    return;
-                }
-                
-                if (!productState.selectedSku.isStockAvailable) {
-                    showToastNotification('Sản phẩm đã hết hàng', 'error');
-                    return;
-                }
-                
-                // Animation
-                const icon = btn.querySelector('.material-icons');
-                if (icon) icon.classList.add('animate-bounce');
-                
-                const success = await addToCart(productState.selectedSku.id, 1);
-                
-                setTimeout(() => {
-                    if (icon) icon.classList.remove('animate-bounce');
-                }, 500);
-            });
-        }
-        
-        // Buy Now button
-        if (btnText.includes('Mua Ngay')) {
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                if (!productState.selectedSku) {
-                    showToastNotification('Vui lòng chọn phiên bản sản phẩm', 'error');
-                    return;
-                }
-                
-                if (!productState.selectedSku.isStockAvailable) {
-                    showToastNotification('Sản phẩm đã hết hàng', 'error');
-                    return;
-                }
-                
-                // Add to cart first
-                const success = await addToCart(productState.selectedSku.id, 1);
-                
-                if (success) {
-                    // Redirect to checkout
-                    window.location.href = '/modules/checkout/checkout.html';
-                }
-            });
-        }
         
         // Favorite button
         if (btnText.includes('Yêu thích')) {
@@ -1060,7 +1076,26 @@ async function initProductDetailPage() {
     // Render related products
     if (relatedProducts && relatedProducts.length > 0) {
         renderRelatedProducts(relatedProducts);
-        renderGroupedProducts(relatedProducts);
+        
+        // Calculate base price for current product
+        let currentPrice = product.price || 0;
+        if (product.skus && product.skus.length > 0) {
+            const availableSkus = product.skus.filter(sku => sku.isStockAvailable);
+            if (availableSkus.length > 0) {
+                currentPrice = Math.min(...availableSkus.map(sku => sku.price));
+            } else {
+                currentPrice = product.skus[0].price;
+            }
+        }
+        
+        // Add current product to grouped products list
+        const currentProductItem = {
+            ...product,
+            price: currentPrice,
+            isCurrent: true
+        };
+        
+        renderGroupedProducts([currentProductItem, ...relatedProducts]);
     }
     
     // Fetch and render reviews
@@ -1076,7 +1111,598 @@ async function initProductDetailPage() {
     // Setup address selector
     setupAddressSelector();
     
+    // Initialize Find In Store
+    initFindInStore();
+    
     console.log('✅ Product detail page initialized successfully');
+}
+
+// ==================== FIND IN STORE LOGIC ====================
+
+const FindInStoreState = {
+    provinces: [],
+    districts: [],
+    stores: [],
+    selectedProvinceId: null,
+    selectedDistrictId: null,
+    currentSkuId: null
+};
+
+/**
+ * Initialize Find In Store functionality
+ */
+async function initFindInStore() {
+    console.log('🏪 Initializing Find In Store...');
+    
+    // Get current SKU ID from productState
+    FindInStoreState.currentSkuId = productState.selectedSku?.id || null;
+    
+    if (!FindInStoreState.currentSkuId) {
+        console.warn('⚠️ No SKU selected, waiting for SKU selection');
+        // Disable buy button until SKU is selected
+        updateBuyButton(false);
+        // Listen for SKU changes
+        document.addEventListener('skuChanged', (e) => {
+            FindInStoreState.currentSkuId = e.detail.skuId;
+            loadProvinces();
+        });
+        return;
+    }
+    
+    // Load provinces and initial stores
+    await loadProvinces();
+    
+    // Sync with header location if available
+    syncWithHeaderLocation();
+    
+    await findStores();
+    
+    // Setup event listeners
+    setupFindInStoreListeners();
+    
+    // Listen for location changes from header
+    window.addEventListener('locationChanged', (e) => {
+        if (e.detail && e.detail.id) {
+            selectProvince(e.detail.id, e.detail.name);
+        }
+    });
+}
+
+/**
+ * Sync with header location selection
+ */
+function syncWithHeaderLocation() {
+    try {
+        const savedLoc = localStorage.getItem('selectedLocation');
+        if (savedLoc) {
+            const parsed = JSON.parse(savedLoc);
+            if (parsed && parsed.id && parsed.name) {
+                // Update UI without triggering API calls yet
+                FindInStoreState.selectedProvinceId = parsed.id;
+                document.getElementById('selectedProvinceName').textContent = parsed.name;
+                
+                // Enable district button
+                const districtBtn = document.getElementById('districtSelectBtn');
+                if (districtBtn) districtBtn.disabled = false;
+                
+                // Load districts for this province
+                loadDistricts(parsed.id);
+                
+                console.log('✅ Synced with header location:', parsed.name);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error syncing with header location:', error);
+    }
+}
+
+/**
+ * Load provinces from API
+ */
+async function loadProvinces() {
+    try {
+        console.log('📍 Loading provinces...');
+        
+        const token = typeof TokenHelper !== 'undefined' ? TokenHelper.getAccessToken() : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const response = await fetch(`${window.BASE_URL}/api/locations`, { headers });
+        
+        if (!response.ok) throw new Error('Failed to fetch provinces');
+        
+        const data = await response.json();
+        FindInStoreState.provinces = Array.isArray(data) ? data : (data.payload || []);
+        
+        console.log('✅ Provinces loaded:', FindInStoreState.provinces.length);
+    } catch (error) {
+        console.error('❌ Error loading provinces:', error);
+        // Fallback data
+        FindInStoreState.provinces = [
+            { id: 201, name: 'Hà Nội' },
+            { id: 202, name: 'Hồ Chí Minh' },
+            { id: 203, name: 'Đà Nẵng' }
+        ];
+    }
+}
+
+/**
+ * Load districts for selected province
+ */
+async function loadDistricts(provinceId) {
+    if (!provinceId) {
+        FindInStoreState.districts = [];
+        const districtBtn = document.getElementById('districtSelectBtn');
+        if (districtBtn) districtBtn.disabled = true;
+        return;
+    }
+    
+    try {
+        console.log('📍 Loading districts for province:', provinceId);
+        
+        const token = typeof TokenHelper !== 'undefined' ? TokenHelper.getAccessToken() : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const response = await fetch(
+            `${window.BASE_URL}/api/locations/districts?provinceId=${provinceId}`,
+            { headers }
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch districts');
+        
+        const data = await response.json();
+        FindInStoreState.districts = Array.isArray(data) ? data : (data.payload || []);
+        
+        // Enable district button
+        const districtBtn = document.getElementById('districtSelectBtn');
+        if (districtBtn) {
+            districtBtn.disabled = FindInStoreState.districts.length === 0;
+        }
+        
+        console.log('✅ Districts loaded:', FindInStoreState.districts.length);
+    } catch (error) {
+        console.error('❌ Error loading districts:', error);
+        FindInStoreState.districts = [];
+        const districtBtn = document.getElementById('districtSelectBtn');
+        if (districtBtn) districtBtn.disabled = true;
+    }
+}
+
+/**
+ * Find stores based on selected location
+ */
+async function findStores() {
+    if (!FindInStoreState.currentSkuId) {
+        console.warn('⚠️ No SKU ID available for finding stores');
+        // Still update button to disabled state when no SKU
+        updateBuyButton(false);
+        return;
+    }
+    
+    try {
+        console.log('🔍 Finding stores...', {
+            skuId: FindInStoreState.currentSkuId,
+            provinceId: FindInStoreState.selectedProvinceId,
+            districtId: FindInStoreState.selectedDistrictId
+        });
+        
+        const token = typeof TokenHelper !== 'undefined' ? TokenHelper.getAccessToken() : null;
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        // Build query params
+        const params = new URLSearchParams({
+            skuId: FindInStoreState.currentSkuId
+        });
+        
+        if (FindInStoreState.selectedProvinceId) {
+            params.append('provinceId', FindInStoreState.selectedProvinceId);
+        }
+        
+        if (FindInStoreState.selectedDistrictId) {
+            params.append('districtId', FindInStoreState.selectedDistrictId);
+        }
+        
+        const response = await fetch(
+            `${window.BASE_URL}/api/stocks/public/locations?${params}`,
+            { headers }
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch stores');
+        
+        const data = await response.json();
+        
+        if (data.success && data.payload) {
+            FindInStoreState.stores = Array.isArray(data.payload) ? data.payload : [];
+        } else {
+            FindInStoreState.stores = [];
+        }
+        
+        renderStoreList();
+        
+        console.log('✅ Stores found:', FindInStoreState.stores.length);
+    } catch (error) {
+        console.error('❌ Error finding stores:', error);
+        FindInStoreState.stores = [];
+        renderStoreList();
+    }
+}
+
+/**
+ * Open province modal
+ */
+window.openProvinceModal = function() {
+    const modal = document.getElementById('provinceModal');
+    if (modal) {
+        modal.classList.add('show');
+        renderProvinceList(FindInStoreState.provinces);
+        document.getElementById('provinceSearchInput').value = '';
+        document.getElementById('provinceSearchInput').focus();
+    }
+};
+
+/**
+ * Close province modal
+ */
+window.closeProvinceModal = function() {
+    const modal = document.getElementById('provinceModal');
+    if (modal) modal.classList.remove('show');
+};
+
+/**
+ * Open district modal
+ */
+window.openDistrictModal = function() {
+    if (FindInStoreState.districts.length === 0) return;
+    
+    const modal = document.getElementById('districtModal');
+    if (modal) {
+        modal.classList.add('show');
+        renderDistrictList(FindInStoreState.districts);
+        document.getElementById('districtSearchInput').value = '';
+        document.getElementById('districtSearchInput').focus();
+        
+        // Show/hide clear button based on selection
+        const clearBtn = document.getElementById('clearDistrictBtn');
+        if (clearBtn) {
+            if (FindInStoreState.selectedDistrictId) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }
+    }
+};
+
+/**
+ * Close district modal
+ */
+window.closeDistrictModal = function() {
+    const modal = document.getElementById('districtModal');
+    if (modal) modal.classList.remove('show');
+};
+
+/**
+ * Clear district selection
+ */
+window.clearDistrictSelection = function() {
+    FindInStoreState.selectedDistrictId = null;
+    
+    // Reset UI
+    document.getElementById('selectedDistrictName').textContent = 'Chọn Quận/Huyện';
+    
+    // Hide clear button
+    const clearBtn = document.getElementById('clearDistrictBtn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    
+    // Find stores with only province filter
+    findStores();
+    
+    // Close modal
+    closeDistrictModal();
+};
+
+
+/**
+ * Handle province search
+ */
+window.handleProvinceSearch = function() {
+    const input = document.getElementById('provinceSearchInput');
+    const filter = input.value.toLowerCase();
+    const filtered = FindInStoreState.provinces.filter(p => 
+        p.name.toLowerCase().includes(filter)
+    );
+    renderProvinceList(filtered);
+};
+
+/**
+ * Handle district search
+ */
+window.handleDistrictSearch = function() {
+    const input = document.getElementById('districtSearchInput');
+    const filter = input.value.toLowerCase();
+    const filtered = FindInStoreState.districts.filter(d => 
+        d.name.toLowerCase().includes(filter)
+    );
+    renderDistrictList(filtered);
+};
+
+/**
+ * Select province
+ */
+window.selectProvince = function(id, name) {
+    FindInStoreState.selectedProvinceId = id;
+    FindInStoreState.selectedDistrictId = null;
+    
+    // Update UI
+    document.getElementById('selectedProvinceName').textContent = name;
+    document.getElementById('selectedDistrictName').textContent = 'Chọn Quận/Huyện';
+    
+    // Enable district button
+    const districtBtn = document.getElementById('districtSelectBtn');
+    if (districtBtn) districtBtn.disabled = false;
+    
+    closeProvinceModal();
+    
+    // Save to localStorage (sync with header)
+    const locationObj = { id, name };
+    localStorage.setItem('selectedLocation', JSON.stringify(locationObj));
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('locationChanged', { detail: locationObj }));
+    
+    // Load districts and find stores
+    loadDistricts(id).then(() => findStores());
+};
+
+/**
+ * Select district
+ */
+window.selectDistrict = function(id, name) {
+    FindInStoreState.selectedDistrictId = id;
+    
+    // Update UI
+    document.getElementById('selectedDistrictName').textContent = name;
+    
+    closeDistrictModal();
+    
+    // Find stores
+    findStores();
+};
+
+/**
+ * Render province list
+ */
+function renderProvinceList(provinces) {
+    const list = document.getElementById('provinceList');
+    if (!list) return;
+    
+    const currentId = FindInStoreState.selectedProvinceId;
+    
+    if (provinces.length === 0) {
+        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #6b7280;">Không tìm thấy kết quả</div>';
+        return;
+    }
+    
+    list.innerHTML = provinces.map(p => `
+        <div class="location-item ${p.id === currentId ? 'selected' : ''}" onclick="selectProvince(${p.id}, '${p.name}')">
+            <span>${p.name}</span>
+            <i class="fas fa-check"></i>
+        </div>
+    `).join('');
+}
+
+/**
+ * Render district list
+ */
+function renderDistrictList(districts) {
+    const list = document.getElementById('districtList');
+    if (!list) return;
+    
+    const currentId = FindInStoreState.selectedDistrictId;
+    
+    if (districts.length === 0) {
+        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #6b7280;">Không tìm thấy kết quả</div>';
+        return;
+    }
+    
+    list.innerHTML = districts.map(d => `
+        <div class="location-item ${d.id === currentId ? 'selected' : ''}" onclick="selectDistrict(${d.id}, '${d.name}')">
+            <span>${d.name}</span>
+            <i class="fas fa-check"></i>
+        </div>
+    `).join('');
+}
+
+/**
+ * Render store list
+ */
+function renderStoreList() {
+    const storeCards = document.getElementById('storeCards');
+    const storeList = document.getElementById('storeList');
+    const storeEmpty = document.getElementById('storeEmpty');
+    const storeCount = document.getElementById('storeCount');
+    
+    if (!storeCards || !storeList || !storeEmpty || !storeCount) return;
+    
+    // Update count
+    storeCount.textContent = FindInStoreState.stores.length;
+    
+    if (FindInStoreState.stores.length === 0) {
+        storeList.classList.add('hidden');
+        storeEmpty.classList.remove('hidden');
+        // No stores found = no stock
+        console.log('⚠️ No stores found - disabling buy button');
+        updateBuyButton(false);
+        return;
+    }
+    
+    storeList.classList.remove('hidden');
+    storeEmpty.classList.add('hidden');
+    
+    // Check if any store has stock
+    const hasStock = FindInStoreState.stores.some(store => store.quantity > 0);
+    console.log('📍 Stock check:', {
+        storesFound: FindInStoreState.stores.length,
+        hasStock: hasStock,
+        stores: FindInStoreState.stores.map(s => ({ name: s.branchName, qty: s.quantity }))
+    });
+    
+    updateBuyButton(hasStock);
+    
+    storeCards.innerHTML = FindInStoreState.stores.map(store => {
+        const stockClass = store.quantity > 10 ? 'in-stock' : 'low-stock';
+        const stockText = store.quantity > 10 
+            ? `Còn ${store.quantity} sản phẩm` 
+            : `Chỉ còn ${store.quantity} sản phẩm`;
+        
+        return `
+            <div class="store-card">
+                <div class="store-card-name">${store.branchName || 'Chi nhánh'}</div>
+                <div class="store-card-address">${store.fullAddress || 'Địa chỉ không có'}</div>
+                <div class="store-stock-badge ${stockClass}">
+                    <span class="material-icons text-[10px] mr-1">inventory_2</span>
+                    ${stockText}
+                </div>
+                <div class="store-card-actions">
+                    ${store.phone ? `
+                        <a href="tel:${store.phone}" class="store-phone-btn">
+                            <span class="material-icons text-[10px]">call</span> ${store.phone}
+                        </a>
+                    ` : ''}
+                    ${store.mapUrl ? `
+                        <a href="${store.mapUrl}" target="_blank" rel="noopener noreferrer" class="store-map-btn">
+                            <span class="material-icons text-[10px]">map</span> Bản đồ
+                        </a>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Update buy button based on stock availability
+ */
+function updateBuyButton(hasStock) {
+    console.log('🔘 updateBuyButton called with hasStock:', hasStock);
+    
+    // Find all potential buy buttons
+    const buyButtons = [
+        // Try by class first
+        ...document.querySelectorAll('.bg-gradient-to-r.from-red-600'),
+        // Then by text content
+        ...Array.from(document.querySelectorAll('button')).filter(btn => {
+            const text = btn.textContent.trim().toUpperCase();
+            return text.includes('MUA NGAY') || text.includes('TẠM HẾT HÀNG');
+        })
+    ];
+    
+    console.log('🔍 Found buy buttons:', buyButtons.length);
+    
+    if (buyButtons.length === 0) {
+        console.warn('⚠️ Buy button not found - will try again in 500ms');
+        // Retry after a short delay in case button hasn't rendered yet
+        setTimeout(() => {
+            const retryButtons = [
+                ...document.querySelectorAll('.bg-gradient-to-r.from-red-600'),
+                ...Array.from(document.querySelectorAll('button')).filter(btn => {
+                    const text = btn.textContent.trim().toUpperCase();
+                    return text.includes('MUA NGAY') || text.includes('TẠM HẾT HÀNG');
+                })
+            ];
+            if (retryButtons.length > 0) {
+                console.log('✅ Found buy buttons on retry:', retryButtons.length);
+                updateButtonState(retryButtons, hasStock);
+            } else {
+                console.error('❌ Buy button still not found after retry');
+            }
+        }, 500);
+        return;
+    }
+    
+    updateButtonState(buyButtons, hasStock);
+}
+
+/**
+ * Update button state helper
+ */
+function updateButtonState(buyButtons, hasStock) {
+    // Update all buy buttons found
+    buyButtons.forEach(buyButton => {
+        if (!hasStock) {
+            // Disable and change text to "Tạm Hết Hàng"
+            buyButton.disabled = true;
+            buyButton.classList.add('opacity-60', 'cursor-not-allowed');
+            buyButton.classList.remove('hover:from-red-500', 'hover:to-red-400', 'active:scale-95');
+            buyButton.style.pointerEvents = 'none';
+            
+            // Find the text element inside button
+            const textSpan = buyButton.querySelector('.text-lg, .font-bold, span');
+            if (textSpan) {
+                textSpan.textContent = 'TẠM HẾT HÀNG';
+            } else {
+                // If no span found, change button text directly
+                const textNode = Array.from(buyButton.childNodes).find(node => 
+                    node.nodeType === Node.TEXT_NODE || node.nodeName === 'SPAN'
+                );
+                if (textNode) {
+                    if (textNode.nodeType === Node.TEXT_NODE) {
+                        textNode.textContent = 'TẠM HẾT HÀNG';
+                    } else {
+                        textNode.textContent = 'TẠM HẾT HÀNG';
+                    }
+                }
+            }
+            
+            console.log('❌ Buy button disabled - No stock available');
+        } else {
+            // Enable and restore text
+            buyButton.disabled = false;
+            buyButton.classList.remove('opacity-60', 'cursor-not-allowed');
+            buyButton.classList.add('hover:from-red-500', 'hover:to-red-400', 'active:scale-95');
+            buyButton.style.pointerEvents = '';
+            
+            const textSpan = buyButton.querySelector('.text-lg, .font-bold, span');
+            if (textSpan && textSpan.textContent.includes('HẾT HÀNG')) {
+                textSpan.textContent = 'MUA NGAY';
+            } else if (textSpan) {
+                const textNode = Array.from(buyButton.childNodes).find(node => 
+                    node.nodeType === Node.TEXT_NODE || node.nodeName === 'SPAN'
+                );
+                if (textNode && textNode.textContent.includes('HẾT HÀNG')) {
+                    if (textNode.nodeType === Node.TEXT_NODE) {
+                        textNode.textContent = 'MUA NGAY';
+                    } else {
+                        textNode.textContent = 'MUA NGAY';
+                    }
+                }
+            }
+            
+            console.log('✅ Buy button enabled - Stock available');
+        }
+    });
+}
+
+/**
+ * Setup event listeners for Find In Store
+ */
+function setupFindInStoreListeners() {
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        const provinceModal = document.getElementById('provinceModal');
+        const districtModal = document.getElementById('districtModal');
+        
+        if (e.target === provinceModal) {
+            closeProvinceModal();
+        }
+        if (e.target === districtModal) {
+            closeDistrictModal();
+        }
+    });
+    
+    console.log('✅ Find In Store listeners setup complete');
 }
 
 // ==================== EVENT LISTENERS ====================

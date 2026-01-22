@@ -932,10 +932,11 @@
             }
         } catch (error) {
             console.warn('Failed to fetch locations, using fallback:', error);
-            // Fallback data matching cart.js
+            // Fallback data
             LocationState.locations = [
-                { id: 1, name: 'Hà Nội' },
-                { id: 2, name: 'Hồ Chí Minh' }
+                { id: 201, name: 'Hà Nội' },
+                { id: 202, name: 'Hồ Chí Minh' },
+                { id: 203, name: 'Đà Nẵng' }
             ];
         }
     }
@@ -997,6 +998,14 @@
 
         updateHeaderLocation(locationName);
     })();
+
+    // Listen for location changes from other pages (e.g., product-detail)
+    window.addEventListener('locationChanged', (e) => {
+        if (e.detail && e.detail.name) {
+            LocationState.selectedLocation = e.detail;
+            updateHeaderLocation(e.detail.name);
+        }
+    });
 
     // ==================== USER INFO LOGIC ====================
     (function() {
@@ -1090,20 +1099,7 @@
             suggestions: []
         };
 
-        // Category suggestions based on keywords
-        const CATEGORY_SUGGESTIONS = {
-            'mac': ['Macbook', 'Macbook Pro', 'Mac mini', 'Macbook M4', 'Macbook M3'],
-            'iphone': ['iPhone', 'iPhone 17', 'iPhone 16 Pro', 'iPhone 15'],
-            'samsung': ['Samsung', 'Galaxy S', 'Galaxy Z', 'Samsung Tab'],
-            'laptop': ['Laptop Gaming', 'Laptop Văn Phòng', 'Laptop Đồ Họa', 'Laptop Dell', 'Laptop Asus'],
-            'pc': ['PC Gaming', 'PC Văn Phòng', 'Máy tính để bàn'],
-            'tai nghe': ['Tai nghe Bluetooth', 'Tai nghe Gaming', 'Tai nghe Apple'],
-            'chuot': ['Chuột Gaming', 'Chuột không dây', 'Chuột Logitech'],
-            'ban phim': ['Bàn phím cơ', 'Bàn phím Gaming', 'Bàn phím không dây'],
-            'dell': ['Laptop Dell', 'Dell Inspiron', 'Dell XPS', 'Dell Vostro'],
-            'asus': ['Laptop Asus', 'Asus ROG', 'Asus TUF', 'Asus Vivobook'],
-            'acer': ['Laptop Acer', 'Acer Nitro', 'Acer Aspire', 'Acer Predator']
-        };
+        // Category suggestions based on keywor
 
         // Get category suggestions based on keyword
         function getCategorySuggestions(keyword) {
