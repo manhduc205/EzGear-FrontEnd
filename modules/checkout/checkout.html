@@ -18,6 +18,7 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="./checkout.css">
+    <link rel="stylesheet" href="../../assets/css/voucher-modal.css">
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -198,19 +199,16 @@
                         
                         <!-- Voucher Section in Summary -->
                         <div class="summary-voucher">
-                            <div class="voucher-input-group">
-                                <input type="text" id="voucherInput" placeholder="Mã giảm giá" class="voucher-input">
-                                <button class="btn-voucher" onclick="applyVoucher()">
-                                    <i class="fas fa-check"></i>
-                                </button>
+                            <div id="voucherContainer">
+                                <!-- Voucher select button sẽ được tạo bằng JS -->
                             </div>
-                            <div id="voucherApplied" class="voucher-tag" style="display: none;">
-                                <i class="fas fa-tag"></i>
-                                <div class="voucher-info">
+                            <div id="voucherApplied" class="voucher-applied" style="display: none;">
+                                <div class="voucher-applied-left">
+                                    <i class="fas fa-check-circle"></i>
                                     <span class="voucher-code" id="appliedVoucherCode"></span>
                                     <span class="voucher-value" id="appliedVoucherValue">-0₫</span>
                                 </div>
-                                <button class="btn-remove" onclick="removeVoucher()">
+                                <button class="btn-remove-voucher" onclick="removeVoucher()">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
@@ -430,6 +428,7 @@
     <script src="../../assets/js/core/api.js"></script>
     <script src="../../assets/js/core/config.js"></script>
     <script src="../../assets/js/core/utils.js"></script>
+    <script src="../../assets/js/voucher-modal.js"></script>
     <script src="./checkout.js"></script>
 </body>
 </html>

@@ -18,6 +18,7 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="./cart.css">
+    <link rel="stylesheet" href="../../assets/css/voucher-modal.css">
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -110,24 +111,16 @@
 
                     <!-- Voucher Section -->
                     <div class="voucher-section">
-                        <div class="voucher-input">
-                            <input 
-                                type="text" 
-                                id="voucherInput" 
-                                placeholder="Nhập mã giảm giá"
-                                autocomplete="off"
-                            >
-                            <button id="applyVoucherBtn">
-                                <i class="fas fa-check"></i> Áp dụng
-                            </button>
+                        <div id="cartVoucherContainer">
+                            <!-- Voucher select button sẽ được tạo bằng JS -->
                         </div>
                         <!-- Applied Voucher -->
-                        <div class="voucher-applied" id="voucherApplied" style="display: none;">
+                        <div class="voucher-applied" id="cartVoucherApplied" style="display: none;">
                             <div class="voucher-applied-left">
                                 <i class="fas fa-check-circle"></i>
-                                <span id="voucherName">-</span>
+                                <span id="cartVoucherName">-</span>
                             </div>
-                            <button class="voucher-remove" id="removeVoucherBtn">
+                            <button class="voucher-remove" id="removeCartVoucherBtn">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -200,6 +193,7 @@
     <script src="../../assets/js/core/api.js"></script>
     <script src="../../assets/js/core/config.js"></script>
     <script src="../../assets/js/core/utils.js"></script>
+    <script src="../../assets/js/voucher-modal.js"></script>
     <script src="./cart.js"></script>
 </body>
 </html>

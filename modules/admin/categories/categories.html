@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../admin-common.css">
+    <link rel="stylesheet" href="categories.css">
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
@@ -52,14 +53,13 @@
                                 <th>Tên Danh Mục</th>
                                 <th>Slug</th>
                                 <th style="width: 120px;">Sắp Xếp</th>
-                                <th style="width: 120px;">Trạng Thái</th>
-                                <th style="width: 180px;">Ngày Tạo</th>
-                                <th style="width: 150px;">Thao Tác</th>
+                                <th style="width: 150px;">Trạng Thái</th>
+                                <th style="width: 180px;">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody id="categoriesTableBody">
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                <td colspan="6" style="text-align: center; padding: 40px;">
                                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
                                     <p>Đang tải dữ liệu...</p>
                                 </td>
@@ -89,12 +89,52 @@
                 <div class="form-group">
                     <label for="categorySlug">Slug (URL)</label>
                     <input type="text" id="categorySlug" class="form-control" placeholder="Tự động tạo từ tên">
-                    <small style="color: #666;">Để trống để tự động tạo từ tên danh mục</small>
+                    <small>Để trống để tự động tạo từ tên danh mục</small>
                 </div>
 
                 <div class="form-group">
                     <label for="sortOrder">Thứ Tự Sắp Xếp</label>
                     <input type="number" id="sortOrder" class="form-control" value="0" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="brandSearch">Thương Hiệu (Brands)</label>
+                    <div class="brand-select-container">
+                        <div class="brand-search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="brandSearch" class="form-control" placeholder="Tìm kiếm thương hiệu..." onkeyup="filterBrands()">
+                        </div>
+                        <div class="brand-dual-listbox">
+                            <div class="brand-list-section">
+                                <div class="brand-list-header">
+                                    <span>Danh sách thương hiệu</span>
+                                    <span class="brand-count" id="availableBrandCount">0</span>
+                                </div>
+                                <div class="brand-list" id="availableBrandList">
+                                    <div style="text-align: center; padding: 20px; color: #999;">
+                                        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="brand-list-arrows">
+                                <button type="button" class="btn-arrow" onclick="addSelectedBrands()" title="Thêm vào category">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <button type="button" class="btn-arrow" onclick="removeSelectedBrands()" title="Xóa khỏi category">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                            </div>
+                            <div class="brand-list-section">
+                                <div class="brand-list-header">
+                                    <span>Đã chọn</span>
+                                    <span class="brand-count" id="selectedBrandCount">0</span>
+                                </div>
+                                <div class="brand-list" id="selectedBrandList">
+                                    <div style="text-align: center; padding: 20px; color: #999;">Chưa chọn thương hiệu nào</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">

@@ -2,12 +2,20 @@ let categories = [];
 let filteredCategories = [];
 let editingId = null;
 
+// Brand management
+let allBrands = [];
+let availableBrands = [];
+let selectedBrands = [];
+let selectedAvailableIds = new Set();
+let selectedSelectedIds = new Set();
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAdminAuth()) return;
     
     await loadSidebar();
     loadUserInfo();
+    await loadBrands();
     await loadCategories();
 });
 
@@ -57,6 +65,27 @@ async function loadCategories() {
     }
 }
 
+// Load all brands
+async function loadBrands() {
+    try {
+        const response = await fetch(`${BASE_URL}/brands`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load brands');
+        }
+        
+        const data = await response.json();
+        allBrands = data.payload || data || [];
+        console.log('Loaded brands:', allBrands.length);
+    } catch (error) {
+        console.error('Error loading brands:', error);
+        showToast('Lỗi tải brands: ' + error.message, 'error');
+    }
+}
+
 // Render categories table
 function renderCategories() {
     const tbody = document.getElementById('categoriesTableBody');
@@ -64,7 +93,7 @@ function renderCategories() {
     if (filteredCategories.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align: center; padding: 40px;">
+                <td colspan="6" style="text-align: center; padding: 40px;">
                     <i class="fas fa-list" style="font-size: 2rem; color: #ccc;"></i>
                     <p style="color: #999; margin-top: 10px;">Chưa có danh mục nào</p>
                 </td>
@@ -76,7 +105,6 @@ function renderCategories() {
     tbody.innerHTML = filteredCategories.map(category => {
         const statusClass = category.isActive ? 'badge-success' : 'badge-danger';
         const statusText = category.isActive ? 'Hoạt động' : 'Ngưng hoạt động';
-        const createdDate = category.createdAt ? formatDateTime(category.createdAt) : 'N/A';
         
         return `
             <tr>
@@ -84,15 +112,16 @@ function renderCategories() {
                 <td><strong>${category.name}</strong></td>
                 <td><code>${category.slug || 'N/A'}</code></td>
                 <td style="text-align: center;">${category.sortOrder || 0}</td>
-                <td><span class="badge ${statusClass}">${statusText}</span></td>
-                <td>${createdDate}</td>
-                <td>
-                    <button class="btn-icon btn-edit" onclick="editCategory(${category.id})" title="Sửa">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon btn-delete" onclick="deleteCategory(${category.id})" title="Xóa">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td style="text-align: center;"><span class="badge ${statusClass}">${statusText}</span></td>
+                <td style="text-align: center;">
+                    <div class="action-buttons">
+                        <button class="btn-action btn-edit" onclick="editCategory(${category.id})" title="Sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteCategory(${category.id})" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -158,6 +187,12 @@ function openAddModal() {
     document.getElementById('categoryId').value = '';
     document.getElementById('sortOrder').value = '0';
     document.getElementById('isActive').checked = true;
+    
+    // Reset brand selection
+    selectedBrands = [];
+    availableBrands = [...allBrands];
+    renderBrandLists();
+    
     document.getElementById('addModal').style.display = 'flex';
 }
 
@@ -168,7 +203,7 @@ function closeModal() {
 }
 
 // Edit category
-function editCategory(id) {
+async function editCategory(id) {
     const category = categories.find(c => c.id === id);
     if (!category) return;
     
@@ -179,7 +214,43 @@ function editCategory(id) {
     document.getElementById('categorySlug').value = category.slug || '';
     document.getElementById('sortOrder').value = category.sortOrder || 0;
     document.getElementById('isActive').checked = category.isActive;
+    
+    // Load brands for this category
+    await loadCategoryBrands(id);
+    
     document.getElementById('addModal').style.display = 'flex';
+}
+
+// Load brands for a category
+async function loadCategoryBrands(categoryId) {
+    try {
+        const response = await fetch(`${BASE_URL}/brands/category/${categoryId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load category brands');
+        }
+        
+        const data = await response.json();
+        const categoryBrands = data.payload || data || [];
+        
+        // Set selected brands
+        selectedBrands = [...categoryBrands];
+        
+        // Set available brands (all - selected)
+        const selectedIds = new Set(selectedBrands.map(b => b.id));
+        availableBrands = allBrands.filter(b => !selectedIds.has(b.id));
+        
+        renderBrandLists();
+    } catch (error) {
+        console.error('Error loading category brands:', error);
+        // If error, show all as available
+        selectedBrands = [];
+        availableBrands = [...allBrands];
+        renderBrandLists();
+    }
 }
 
 // Save category (Create or Update)
@@ -199,7 +270,8 @@ async function saveCategory(event) {
         name: name,
         slug: slug,
         sortOrder: parseInt(document.getElementById('sortOrder').value) || 0,
-        isActive: document.getElementById('isActive').checked
+        isActive: document.getElementById('isActive').checked,
+        brandIds: selectedBrands.map(b => b.id) // Add brand IDs
     };
     
     if (!categoryData.name) {
@@ -272,3 +344,156 @@ window.onclick = function(event) {
         closeModal();
     }
 };
+
+// ========== BRAND MULTI-SELECT FUNCTIONS ==========
+
+// Render brand lists
+function renderBrandLists() {
+    renderAvailableBrands();
+    renderSelectedBrands();
+    updateBrandCounts();
+    selectedAvailableIds.clear();
+    selectedSelectedIds.clear();
+}
+
+// Render available brands
+function renderAvailableBrands() {
+    const container = document.getElementById('availableBrandList');
+    const searchTerm = document.getElementById('brandSearch').value.toLowerCase();
+    
+    const filtered = availableBrands.filter(brand => 
+        brand.name.toLowerCase().includes(searchTerm)
+    );
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="brand-list-empty">
+                <i class="fas fa-inbox"></i>
+                <p>${searchTerm ? 'Không tìm thấy brand' : 'Tất cả brands đã được chọn'}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = filtered.map(brand => `
+        <div class="brand-item" data-id="${brand.id}">
+            <input type="checkbox" 
+                   id="avail-${brand.id}" 
+                   onchange="toggleAvailableSelection(${brand.id})">
+            <div class="brand-item-info">
+                <div class="brand-item-logo">${brand.name.charAt(0).toUpperCase()}</div>
+                <span class="brand-item-name">${brand.name}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render selected brands
+function renderSelectedBrands() {
+    const container = document.getElementById('selectedBrandList');
+    
+    if (selectedBrands.length === 0) {
+        container.innerHTML = `
+            <div class="brand-list-empty">
+                <i class="fas fa-hand-pointer"></i>
+                <p>Chưa chọn brand nào</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = selectedBrands.map(brand => `
+        <div class="brand-item" data-id="${brand.id}">
+            <input type="checkbox" 
+                   id="sel-${brand.id}" 
+                   onchange="toggleSelectedSelection(${brand.id})">
+            <div class="brand-item-info">
+                <div class="brand-item-logo">${brand.name.charAt(0).toUpperCase()}</div>
+                <span class="brand-item-name">${brand.name}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Update brand counts
+function updateBrandCounts() {
+    document.getElementById('availableBrandCount').textContent = availableBrands.length;
+    document.getElementById('selectedBrandCount').textContent = selectedBrands.length;
+}
+
+// Toggle available brand selection
+function toggleAvailableSelection(brandId) {
+    const checkbox = document.getElementById(`avail-${brandId}`);
+    if (checkbox.checked) {
+        selectedAvailableIds.add(brandId);
+    } else {
+        selectedAvailableIds.delete(brandId);
+    }
+}
+
+// Toggle selected brand selection
+function toggleSelectedSelection(brandId) {
+    const checkbox = document.getElementById(`sel-${brandId}`);
+    if (checkbox.checked) {
+        selectedSelectedIds.add(brandId);
+    } else {
+        selectedSelectedIds.delete(brandId);
+    }
+}
+
+// Add selected brands
+function addSelectedBrands() {
+    if (selectedAvailableIds.size === 0) {
+        showToast('Vui lòng chọn ít nhất một brand', 'warning');
+        return;
+    }
+    
+    // Move from available to selected
+    const toMove = availableBrands.filter(b => selectedAvailableIds.has(b.id));
+    selectedBrands = [...selectedBrands, ...toMove];
+    availableBrands = availableBrands.filter(b => !selectedAvailableIds.has(b.id));
+    
+    renderBrandLists();
+}
+
+// Remove selected brands
+function removeSelectedBrands() {
+    if (selectedSelectedIds.size === 0) {
+        showToast('Vui lòng chọn ít nhất một brand để xóa', 'warning');
+        return;
+    }
+    
+    // Move from selected to available
+    const toMove = selectedBrands.filter(b => selectedSelectedIds.has(b.id));
+    availableBrands = [...availableBrands, ...toMove].sort((a, b) => a.name.localeCompare(b.name));
+    selectedBrands = selectedBrands.filter(b => !selectedSelectedIds.has(b.id));
+    
+    renderBrandLists();
+}
+
+// Filter brands by search
+function filterBrands() {
+    renderAvailableBrands();
+}
+
+// Select all available brands
+function selectAllAvailable() {
+    availableBrands.forEach(brand => {
+        const checkbox = document.getElementById(`avail-${brand.id}`);
+        if (checkbox) {
+            checkbox.checked = true;
+            selectedAvailableIds.add(brand.id);
+        }
+    });
+}
+
+// Select all selected brands
+function selectAllSelected() {
+    selectedBrands.forEach(brand => {
+        const checkbox = document.getElementById(`sel-${brand.id}`);
+        if (checkbox) {
+            checkbox.checked = true;
+            selectedSelectedIds.add(brand.id);
+        }
+    });
+}

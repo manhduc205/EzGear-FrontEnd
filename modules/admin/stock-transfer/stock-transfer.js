@@ -1,7 +1,7 @@
 /* ==================== STOCK TRANSFER MANAGEMENT JS ==================== */
 
 // ==================== CONSTANTS & STATE ====================
-const BASE_URL = 'http://127.0.0.1:8080/api';
+// BASE_URL is already defined in admin-common.js
 const TRANSFERS_API = BASE_URL + '/stock-transfers';
 const WAREHOUSES_API = BASE_URL + '/warehouses';
 
@@ -12,15 +12,65 @@ let state = {
     filteredTransfers: []
 };
 
+// ==================== HTTP REQUEST HELPER ====================
+async function httpRequest(url, options = {}) {
+    const token = localStorage.getItem('accessToken'); // Changed from 'token' to 'accessToken'
+    
+    const config = {
+        method: options.method || 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+            ...options.headers
+        }
+    };
+
+    if (options.body) {
+        config.body = options.body;
+    }
+
+    try {
+        const response = await fetch(url, config);
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+            throw new Error(errorData.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('HTTP Request Error:', error);
+        throw error;
+    }
+}
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Stock Transfer page loaded');
+    
+    // admin-common.js will handle authentication check
+    // Load sidebar and user info  
+    if (typeof loadSidebar === 'function') {
+        await loadSidebar();
+    }
+    if (typeof loadUserInfo === 'function') {
+        loadUserInfo();
+    }
+    
     // Initial Data Load
     showLoading(true);
-    await Promise.all([
-        loadWarehouses(),
-        loadTransfers()
-    ]);
-    showLoading(false);
+    try {
+        await Promise.all([
+            loadWarehouses(),
+            loadTransfers()
+        ]);
+        console.log('Data loaded successfully');
+    } catch (error) {
+        console.error('Error during initialization:', error);
+    } finally {
+        showLoading(false);
+    }
 });
 
 // ==================== DATA LOADING ====================
@@ -209,9 +259,13 @@ function removeProductRow(rowId) {
 }
 
 async function submitCreateTransfer() {
+    console.log('submitCreateTransfer called');
+    
     const fromId = document.getElementById('fromWarehouse').value;
     const toId = document.getElementById('toWarehouse').value;
     const note = document.getElementById('transferNote').value.trim();
+    
+    console.log('Form values:', { fromId, toId, note });
     
     // Validation
     if (!fromId || !toId) {
@@ -228,9 +282,11 @@ async function submitCreateTransfer() {
     const items = [];
     const rows = document.querySelectorAll('#createItemsBody tr');
     
+    console.log('Found rows:', rows.length);
+    
     for (let row of rows) {
-        const skuId = row.querySelector('.item-sku').value;
-        const quantity = row.querySelector('.item-qty').value;
+        const skuId = row.querySelector('.item-sku')?.value;
+        const quantity = row.querySelector('.item-qty')?.value;
         
         if (skuId && quantity) {
             items.push({
@@ -239,6 +295,8 @@ async function submitCreateTransfer() {
             });
         }
     }
+
+    console.log('Items to transfer:', items);
 
     if (items.length === 0) {
         showToast('Vui lòng thêm ít nhất một sản phẩm', 'warning');
@@ -252,6 +310,8 @@ async function submitCreateTransfer() {
         items: items
     };
 
+    console.log('Payload to send:', payload);
+
     showLoading(true);
     try {
         const response = await httpRequest(TRANSFERS_API, {
@@ -259,6 +319,7 @@ async function submitCreateTransfer() {
             body: JSON.stringify(payload)
         });
 
+        console.log('Create response:', response);
         showToast('Tạo phiếu chuyển thành công!', 'success');
         closeCreateModal();
         await loadTransfers(); // Reload table
@@ -338,14 +399,20 @@ function setupActionButtons(transfer) {
 
     if (transfer.status === 'PENDING') {
         buttonsHtml = `
-            <button type="button" class="btn btn-success" onclick="approveTransfer(${transfer.id})">
-                <i class="fas fa-check-circle"></i> Duyệt & Xuất Kho
+            <button type="button" class="btn btn-success" onclick="shipTransfer(${transfer.id})">
+                <i class="fas fa-shipping-fast"></i> Xuất Kho Chuyển Đi
+            </button>
+            <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})">
+                <i class="fas fa-times-circle"></i> Hủy Phiếu
             </button>
         `;
     } else if (transfer.status === 'SHIPPING' || transfer.status === 'APPROVED') {
         buttonsHtml = `
-            <button type="button" class="btn btn-success" onclick="completeTransfer(${transfer.id})">
-                <i class="fas fa-check-double"></i> Hoàn Thành
+            <button type="button" class="btn btn-success" onclick="receiveTransfer(${transfer.id})">
+                <i class="fas fa-check-double"></i> Nhập Kho
+            </button>
+            <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})">
+                <i class="fas fa-times-circle"></i> Hủy Phiếu
             </button>
         `;
     }
@@ -359,20 +426,28 @@ function setupActionButtons(transfer) {
     footer.innerHTML = buttonsHtml;
 }
 
-async function approveTransfer(id) {
-    if (!confirm('Xác nhận duyệt và xuất kho cho phiếu chuyển này?\n\nHành động này sẽ:\n- Trừ số lượng sản phẩm khỏi kho nguồn\n- Chuyển trạng thái sang "Đang chuyển"')) {
+async function shipTransfer(id) {
+    if (!confirm('Xác nhận xuất kho chuyển đi?\n\nHành động này sẽ:\n- Trừ số lượng sản phẩm khỏi kho nguồn\n- Chuyển trạng thái sang "Đang chuyển"')) {
         return;
     }
 
-    await callTransferAction(`${TRANSFERS_API}/${id}/approve`, 'Duyệt phiếu thành công!');
+    await callTransferAction(`${TRANSFERS_API}/${id}/ship`, 'Đã xuất kho chuyển đi thành công!');
 }
 
-async function completeTransfer(id) {
+async function receiveTransfer(id) {
     if (!confirm('Xác nhận đã nhận đủ hàng và nhập kho?\n\nHành động này sẽ:\n- Cộng số lượng sản phẩm vào kho đích\n- Hoàn thành phiếu chuyển')) {
         return;
     }
 
-    await callTransferAction(`${TRANSFERS_API}/${id}/complete`, 'Hoàn thành phiếu thành công!');
+    await callTransferAction(`${TRANSFERS_API}/${id}/receive`, 'Đã nhập kho thành công!');
+}
+
+async function cancelTransfer(id) {
+    if (!confirm('Xác nhận hủy phiếu chuyển kho?\n\nHành động này KHÔNG THỂ hoàn tác!')) {
+        return;
+    }
+
+    await callTransferAction(`${TRANSFERS_API}/${id}/cancel`, 'Đã hủy phiếu chuyển kho thành công!');
 }
 
 async function callTransferAction(url, successMsg) {

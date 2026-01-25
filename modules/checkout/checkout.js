@@ -16,11 +16,11 @@ let checkoutState = {
 };
 
 // ==================== API ENDPOINTS ====================
-const CHECKOUT_API = `${window.BASE_URL}/api/orders/place`;
-const ADDRESS_API = `${window.BASE_URL}/api/customer-addresses`;
-const SHIPPING_SERVICES_API = `${window.BASE_URL}/api/shipping/available-services`;
-const SHIPPING_FEE_API = `${window.BASE_URL}/api/shipping/fee`;
-const APPLY_VOUCHER_API = `${window.BASE_URL}/api/voucher/apply`;
+const CHECKOUT_API = `http://localhost:8080/api/orders/place`;
+const ADDRESS_API = `http://localhost:8080/api/customer-addresses`;
+const SHIPPING_SERVICES_API = `http://localhost:8080/api/shipping/available-services`;
+const SHIPPING_FEE_API = `http://localhost:8080/api/shipping/fee`;
+const APPLY_VOUCHER_API = `http://localhost:8080/api/voucher/apply`;
 
 // ==================== INITIALIZATION ====================
 
@@ -56,6 +56,11 @@ async function initCheckout() {
         if (savedVoucher) {
             const voucher = JSON.parse(savedVoucher);
             checkoutState.voucherCode = voucher.code;
+            checkoutState.voucherDiscount = voucher.discountAmount || 0;
+            console.log('🎫 Restored voucher from cart:', voucher);
+            
+            // Show applied voucher immediately
+            showAppliedVoucherDisplay(voucher.code, voucher.discountAmount || 0);
         }
         
         console.log('📦 Cart items:', checkoutState.cartItems);
@@ -65,9 +70,14 @@ async function initCheckout() {
         
         // Render products from cart items
         renderProductsFromCart();
+        
+        // Initialize voucher modal
+        initializeVoucherModal();
+        
+        // Calculate summary (including voucher discount)
         calculateLocalSummary();
         
-        // Load user addresses
+        // Load user addresses (and auto-select default)
         await loadUserAddresses();
         
         // Show message to select address first
@@ -112,6 +122,8 @@ function renderProductsFromCart() {
     productCount.textContent = checkoutState.cartItems.length;
     
     productsList.innerHTML = checkoutState.cartItems.map(item => {
+        // Map CartItemResponse from backend
+        // Backend returns: skuId, skuName, productName, imageUrl, price, quantity, selected, categoryId, isOutOfStock, availableQuantity
         const lineTotal = (item.price || 0) * (item.quantity || 1);
         
         return `
@@ -269,11 +281,60 @@ async function loadUserAddresses() {
         const addresses = data.payload || data.data || data;
         
         if (addresses && addresses.length > 0) {
-            // Auto-select default address
-            const defaultAddress = addresses.find(addr => addr.isDefault);
+            console.log('🔍 Checking all addresses for default field:', addresses.map(addr => ({
+                id: addr.id,
+                name: addr.receiverName,
+                isDefault: addr.isDefault,
+                default: addr.default,
+                is_default: addr.is_default
+            })));
+            
+            // 🔥 FIX: Auto-select default address - Check multiple field names
+            const defaultAddress = addresses.find(addr => {
+                return addr.isDefault === true || 
+                       addr.default === true || 
+                       addr.is_default === true ||
+                       addr.isDefault === 1 ||
+                       addr.default === 1 ||
+                       addr.is_default === 1;
+            });
+            
             if (defaultAddress) {
+                console.log('🏠 Auto-selecting default address:', defaultAddress);
+                console.log('🏠 Default field values:', {
+                    isDefault: defaultAddress.isDefault,
+                    default: defaultAddress.default,
+                    is_default: defaultAddress.is_default
+                });
+                
+                // 🔥 FIX: Ensure proper selection and UI update
                 await selectAddress(defaultAddress);
+                
+                // 🔥 FIX: Force UI update if selectAddress didn't work properly
+                setTimeout(() => {
+                    if (checkoutState.selectedAddress) {
+                        document.getElementById('noAddress').style.display = 'none';
+                        document.getElementById('selectedAddressCard').style.display = 'flex';
+                        console.log('✅ UI updated - default address selected');
+                    } else {
+                        console.warn('⚠️ selectAddress failed, showing address selection');
+                        document.getElementById('noAddress').style.display = 'block';
+                        document.getElementById('selectedAddressCard').style.display = 'none';
+                    }
+                }, 100);
+                
+            } else {
+                console.log('📍 No default address found, showing address selection');
+                console.log('🔍 All addresses checked:', addresses.map(addr => `ID:${addr.id} isDefault:${addr.isDefault} default:${addr.default} is_default:${addr.is_default}`));
+                // Show the address selection UI
+                document.getElementById('noAddress').style.display = 'block';
+                document.getElementById('selectedAddressCard').style.display = 'none';
             }
+        } else {
+            console.log('📍 No addresses found');
+            // Show the address selection UI
+            document.getElementById('noAddress').style.display = 'block';
+            document.getElementById('selectedAddressCard').style.display = 'none';
         }
         
     } catch (error) {
@@ -1214,16 +1275,95 @@ async function loadShippingFee(serviceId) {
 // ==================== VOUCHER MANAGEMENT ====================
 
 /**
- * Apply voucher - Call API to validate and calculate discount
+ * Initialize voucher modal
  */
-async function applyVoucher() {
-    const voucherInput = document.getElementById('voucherInput');
-    const voucherCode = voucherInput.value.trim().toUpperCase();
+function initializeVoucherModal() {
+    // Create voucher select button
+    createVoucherSelectButton('voucherContainer', 'voucherInput', 'Chọn Voucher Của Bạn');
     
-    if (!voucherCode) {
+    // Initialize voucher modal with checkout specific options
+    if (typeof initVoucherModal === 'function') {
+        initVoucherModal({
+            modalId: 'voucherModal',
+            inputId: 'voucherInput',
+            cartData: getCartDataForVoucher(),
+            onApply: (code) => {
+                // Auto apply voucher when selected from modal
+                applyVoucherCode(code);
+            }
+        });
+    }
+    
+    // Update voucher input event listener
+    const voucherInput = document.getElementById('voucherInput');
+    if (voucherInput) {
+        voucherInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyVoucherCode(voucherInput.value);
+            }
+        });
+        
+        voucherInput.addEventListener('change', (e) => {
+            if (e.target.value.trim()) {
+                applyVoucherCode(e.target.value);
+            }
+        });
+    }
+}
+
+/**
+ * Get cart data formatted for voucher system
+ */
+function getCartDataForVoucher() {
+    const totalPrice = checkoutState.cartItems.reduce((sum, item) => {
+        return sum + ((item.price || 0) * (item.quantity || 1));
+    }, 0);
+    
+    const items = checkoutState.cartItems.map(item => {
+        // Map CartItemResponse from backend
+        // Backend returns: skuId, skuName, productName, imageUrl, price, quantity, selected, categoryId, isOutOfStock, availableQuantity
+        
+        return {
+            skuId: item.skuId,
+            skuName: item.skuName,
+            productName: item.productName,
+            imageUrl: item.imageUrl,
+            categoryId: item.categoryId, // Backend trả về trực tiếp categoryId
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            selected: item.selected || false,
+            isOutOfStock: item.isOutOfStock || item.outOfStock || false,
+            availableQuantity: item.availableQuantity || 0
+        };
+    });
+    
+    console.log('🛒 Checkout cart data for voucher:', { totalPrice, itemsCount: items.length, items });
+    
+    return {
+        totalPrice,
+        items
+    };
+}
+
+/**
+ * Update cart data in voucher modal when cart changes
+ */
+function updateVoucherModalCartData() {
+    if (window.voucherModal) {
+        window.voucherModal.updateCartData(getCartDataForVoucher());
+    }
+}
+
+/**
+ * Apply voucher with code - Updated to work with new system
+ */
+async function applyVoucherCode(code) {
+    if (!code || !code.trim()) {
         showToast('Vui lòng nhập mã giảm giá', 'warning');
         return;
     }
+    
+    const voucherCode = code.trim().toUpperCase();
     
     // Validate có sản phẩm và địa chỉ
     if (!checkoutState.cartItems || checkoutState.cartItems.length === 0) {
@@ -1242,13 +1382,18 @@ async function applyVoucher() {
         const shippingFee = checkoutState.currentShippingFee || 0;
         
         // Build items for voucher validation
-        const items = checkoutState.cartItems.map(item => ({
-            skuId: item.skuId || item.id,
-            productId: item.productId,
-            categoryId: item.categoryId,
-            price: item.price || 0,
-            quantity: item.quantity || 1
-        }));
+        const items = checkoutState.cartItems.map(item => {
+            // Map CartItemResponse from backend
+            // Backend returns: skuId, skuName, productName, imageUrl, price, quantity, selected, categoryId, isOutOfStock, availableQuantity
+            
+            return {
+                skuId: item.skuId,
+                productId: item.productId,
+                categoryId: item.categoryId, // Backend trả về trực tiếp categoryId
+                price: item.price || 0,
+                quantity: item.quantity || 1
+            };
+        });
         
         const requestBody = {
             code: voucherCode,
@@ -1284,10 +1429,7 @@ async function applyVoucher() {
         checkoutState.voucherDiscount = discount;
         
         // Show applied voucher UI
-        document.getElementById('voucherApplied').style.display = 'flex';
-        document.getElementById('appliedVoucherCode').textContent = voucherCode;
-        document.getElementById('appliedVoucherValue').textContent = `-${formatPrice(discount)}`;
-        voucherInput.value = '';
+        showAppliedVoucherDisplay(voucherCode, discount);
         
         // Update summary
         calculateLocalSummary();
@@ -1297,9 +1439,38 @@ async function applyVoucher() {
     } catch (error) {
         console.error('❌ Apply voucher error:', error);
         showToast(error.message || 'Mã giảm giá không hợp lệ', 'error');
-        voucherInput.value = '';
+        
+        // Clear input on error
+        const voucherInput = document.getElementById('voucherInput');
+        if (voucherInput) {
+            voucherInput.value = '';
+        }
     } finally {
         showLoading(false);
+    }
+}
+
+/**
+ * Show applied voucher display
+ */
+function showAppliedVoucherDisplay(code, discount) {
+    // Hide voucher container and show applied voucher
+    document.getElementById('voucherContainer').style.display = 'none';
+    document.getElementById('voucherApplied').style.display = 'flex';
+    
+    // Update applied voucher info
+    document.getElementById('appliedVoucherCode').textContent = code;
+    document.getElementById('appliedVoucherValue').textContent = `-${formatPrice(discount)}`;
+}
+
+/**
+ * Apply voucher - Call API to validate and calculate discount
+ * Legacy function - now calls applyVoucherCode
+ */
+async function applyVoucher() {
+    const voucherInput = document.getElementById('voucherInput');
+    if (voucherInput && voucherInput.value) {
+        await applyVoucherCode(voucherInput.value);
     }
 }
 
@@ -1309,8 +1480,16 @@ async function applyVoucher() {
 async function removeVoucher() {
     checkoutState.voucherCode = null;
     checkoutState.voucherDiscount = 0;
-    document.getElementById('voucherInput').value = '';
+    
+    // Clear voucher input
+    const voucherInput = document.getElementById('voucherInput');
+    if (voucherInput) {
+        voucherInput.value = '';
+    }
+    
+    // Hide applied voucher and show voucher container
     document.getElementById('voucherApplied').style.display = 'none';
+    document.getElementById('voucherContainer').style.display = 'block';
     
     // Update summary
     calculateLocalSummary();
