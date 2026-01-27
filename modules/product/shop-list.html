@@ -18,7 +18,7 @@
     
     <!-- CSS -->
     <link rel="stylesheet" href="./shop.css?v=9">
-    <link rel="stylesheet" href="./shop-list.css?v=9">
+    <link rel="stylesheet" href="./shop-list.css?v=14">
     <link rel="stylesheet" href="../../assets/css/footer.css">
 </head>
 <body>
@@ -44,7 +44,7 @@
                         Thương hiệu
                     </h3>
                     <div class="brand-filters" id="brandFilters">
-                        <button class="brand-filter-btn active" data-brand-id="">
+                        <button class="brand-filter-btn active" data-brand="">
                             Tất cả
                         </button>
                     </div>
@@ -77,7 +77,7 @@
                     </div>
                     <div class="sort-options">
                         <select class="sort-select" id="sortSelect">
-                            <option value="">Mặc định</option>
+                            <option value="">Sắp xếp: Mặc định</option>
                             <option value="price-asc">Giá: Thấp đến Cao</option>
                             <option value="price-desc">Giá: Cao đến Thấp</option>
                             <option value="top-rated">Đánh giá cao nhất</option>
@@ -127,11 +127,11 @@
     <div id="toastContainer"></div>
 
     <!-- Scripts -->
-    <script src="../../assets/js/core/api.js?v=9"></script>
-    <script src="../../assets/js/core/config.js?v=9"></script>
-    <script src="../../assets/js/core/utils.js?v=9"></script>
-    <script src="./shop.js?v=9"></script>
-    <script src="./shop-list.js?v=9"></script>
+    <script src="../../assets/js/core/api.js?v=14"></script>
+    <script src="../../assets/js/core/config.js?v=14"></script>
+    <script src="../../assets/js/core/utils.js?v=14"></script>
+    <script src="./shop.js?v=14"></script>
+    <script src="./shop-list.js?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await ComponentLoader.load('#header-container', '../../components/header.html');

@@ -1,6 +1,9 @@
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <div class="shop-header">
     <div class="shop-header-inner">
-        <div class="shop-header-left">
+        <div class="shop-header-left" onclick="window.location.href='/modules/product/shop.html'" style="cursor: pointer;">
             <i class="fas fa-store shop-logo"></i>
             <h1>EzGear</h1>
         </div>
@@ -141,10 +144,14 @@
     .shop-header {
         background: var(--primary-red);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        position: sticky;
+        position: fixed;
         top: 0;
-        z-index: 9999;
+        left: 0;
+        right: 0;
+        z-index: 99999;
         width: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
     }
 
     .shop-header-inner {
@@ -373,6 +380,14 @@
     .search-product-rating .stars {
         color: #ffc107;
         font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    
+    .search-product-rating .star-icon {
+        display: inline-block;
+        vertical-align: middle;
     }
 
     .search-product-rating .count {
@@ -1101,21 +1116,43 @@
 
         // Category suggestions based on keywor
 
-        // Get category suggestions based on keyword
-        function getCategorySuggestions(keyword) {
+        // Get category suggestions based on keyword (async API call)
+        async function getCategorySuggestions(keyword) {
             if (!keyword || keyword.length < 2) return [];
             
-            const lowerKeyword = keyword.toLowerCase().replace(/\s+/g, '');
-            const suggestions = [];
-            
-            for (const [key, values] of Object.entries(CATEGORY_SUGGESTIONS)) {
-                if (key.replace(/\s+/g, '').includes(lowerKeyword) || lowerKeyword.includes(key.replace(/\s+/g, ''))) {
-                    suggestions.push(...values);
+            try {
+                const baseUrl = window.BASE_URL || 'http://127.0.0.1:8080';
+                
+                // 📡 Fetch all categories from API
+                const response = await fetch(`${baseUrl}/api/categories`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
+                const data = await response.json();
+                
+                // Extract categories from response
+                const categories = data.payload || data || [];
+                
+                // Filter categories by keyword
+                const lowerKeyword = keyword.toLowerCase();
+                const filtered = categories.filter(cat => 
+                    cat.name.toLowerCase().includes(lowerKeyword) ||
+                    (cat.slug && cat.slug.toLowerCase().includes(lowerKeyword))
+                );
+                
+                // Return category names, limit to 5
+                return filtered.slice(0, 5).map(cat => cat.name);
+            } catch (error) {
+                console.error('❌ Error loading category suggestions:', error);
+                return [];
             }
-            
-            // Remove duplicates and limit to 5
-            return [...new Set(suggestions)].slice(0, 5);
         }
 
         // Format price to VND
@@ -1124,15 +1161,30 @@
             return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
         }
 
-        // Generate star rating HTML
+        // Generate star rating HTML with Font Awesome icons
         function generateStars(rating) {
-            const fullStars = Math.floor(rating || 0);
-            const hasHalf = (rating % 1) >= 0.5;
-            let stars = '';
-            for (let i = 0; i < fullStars; i++) stars += '★';
-            if (hasHalf) stars += '½';
-            for (let i = fullStars + (hasHalf ? 1 : 0); i < 5; i++) stars += '☆';
-            return stars;
+            const full = Math.floor(rating || 0);
+            const hasHalf = ((rating || 0) - full) >= 0.5;
+            const remaining = 5 - full - (hasHalf ? 1 : 0);
+            
+            let starsHtml = '';
+            
+            // Full stars
+            for (let i = 0; i < full; i++) {
+                starsHtml += '<i class="fas fa-star" style="color: #FFD700;"></i>';
+            }
+            
+            // Half star
+            if (hasHalf) {
+                starsHtml += '<i class="fas fa-star-half-alt" style="color: #FFD700;"></i>';
+            }
+            
+            // Empty stars
+            for (let i = 0; i < remaining; i++) {
+                starsHtml += '<i class="far fa-star" style="color: #e0e0e0;"></i>';
+            }
+            
+            return starsHtml;
         }
 
         // Search products via Elasticsearch API
@@ -1173,14 +1225,14 @@
             }
         }
 
-        // Render suggestions
-        function renderSuggestions(keyword) {
+        // Render suggestions (now async)
+        async function renderSuggestions(keyword) {
             const suggestionsContainer = document.getElementById('searchSuggestions');
             const suggestionList = document.getElementById('suggestionList');
             
             if (!suggestionsContainer || !suggestionList) return;
             
-            const suggestions = getCategorySuggestions(keyword);
+            const suggestions = await getCategorySuggestions(keyword);
             
             if (suggestions.length === 0) {
                 suggestionsContainer.classList.remove('show');
@@ -1279,8 +1331,8 @@
             showLoading(true);
             showEmpty(false);
             
-            // Render suggestions immediately
-            renderSuggestions(keyword);
+            // Render suggestions (now awaited)
+            await renderSuggestions(keyword);
             
             // Fetch products from API
             const products = await searchProducts(keyword);
@@ -1382,5 +1434,82 @@
         });
 
         console.log('✅ Search functionality initialized');
+    })();
+    
+    // ==================== CART BADGE UPDATE ====================
+    (function() {
+        // Update cart badge with current cart count
+        async function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            if (!badge) return;
+            
+            try {
+                // Check if user is logged in
+                if (typeof TokenHelper !== 'undefined' && TokenHelper.isLoggedIn()) {
+                    const baseUrl = window.BASE_URL || 'http://127.0.0.1:8080';
+                    const token = TokenHelper.getAccessToken();
+                    
+                    const response = await fetch(`${baseUrl}/api/cart`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const items = data.payload?.items || data.items || [];
+                        const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                        badge.textContent = totalItems;
+                    } else {
+                        badge.textContent = '0';
+                    }
+                } else {
+                    // Not logged in, show 0
+                    badge.textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error updating cart badge:', error);
+                badge.textContent = '0';
+            }
+        }
+        
+        // Update cart badge on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateCartBadge);
+        } else {
+            updateCartBadge();
+        }
+        
+        // Listen for cart update events
+        window.addEventListener('cartUpdated', updateCartBadge);
+        
+        // Make function global so other pages can call it
+        window.updateCartBadge = updateCartBadge;
+        
+        console.log('✅ Cart badge initialized');
+    })();
+</script>
+<script>
+    // Ensure page content doesn't jump when header is fixed.
+    (function() {
+        const header = document.querySelector('.shop-header');
+        if (!header) return;
+
+        function adjustBodyPadding() {
+            const h = header.offsetHeight || 0;
+            // apply padding-top to body so content starts below fixed header
+            document.body.style.paddingTop = h + 'px';
+        }
+
+        // Adjust immediately and on load/resize/fonts load
+        adjustBodyPadding();
+        window.addEventListener('load', adjustBodyPadding);
+        window.addEventListener('resize', adjustBodyPadding);
+
+        // In case dynamic content changes header height
+        const ro = new ResizeObserver(adjustBodyPadding);
+        ro.observe(header);
     })();
 </script>

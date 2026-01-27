@@ -26,21 +26,11 @@ const CATEGORY_ICONS = {
     'default': 'devices'
 };
 
-// Hardcoded Categories - Always display these
-const HARDCODED_CATEGORIES = [
-    { id: 1, name: 'Laptop Gaming', slug: 'laptop-gaming' },
-    { id: 2, name: 'Laptop Văn Phòng', slug: 'laptop-van-phong' },
-    { id: 3, name: 'Laptop Đồ Họa', slug: 'laptop-do-hoa' },
-    { id: 4, name: 'Macbook', slug: 'macbook' },
-    { id: 5, name: 'Thiết Bị Văn Phòng', slug: 'thiet-bi-van-phong' },
-    { id: 6, name: 'PC Gaming', slug: 'pc-gaming' }
-];
-
-// Brands will be loaded from the API; no hardcoded brands in JS
+// Hardcoded Categories - REMOVED, will load from API instead
 
 // State Management
 const shopState = {
-    categories: [...HARDCODED_CATEGORIES], // Use hardcoded categories by default
+    categories: [], // Load from API
     allBrands: [], // load from API (empty until fetched)
     currentSlide: 0,
     bannerImages: [
@@ -63,18 +53,20 @@ const shopState = {
 async function loadCategories() {
     try {
         const url = `${BASE_URL}/api/categories`;
+        console.log(`📡 Loading categories from: ${url}`);
         const data = await httpRequest(url, { method: 'GET' });
         const apiCategories = data.payload || data || [];
         if (apiCategories.length > 0) {
             shopState.categories = apiCategories;
-            console.log('✅ Categories loaded from API:', shopState.categories.length);
+            console.log(`✅ Loaded ${apiCategories.length} categories from API:`, 
+                apiCategories.map(c => `${c.name} (${c.slug})`).join(', '));
         } else {
-            console.log('📌 Using hardcoded categories');
+            throw new Error('No categories returned from API');
         }
         return shopState.categories;
     } catch (error) {
-        console.warn('⚠️ API Error, using hardcoded categories:', error.message);
-        // Keep hardcoded categories already in shopState
+        console.error(`❌ Error loading categories:`, error.message);
+        shopState.categories = [];
         return shopState.categories;
     }
 }
@@ -100,10 +92,10 @@ async function loadAllBrands() {
 /**
  * Load products by category slug with filters
  * @param {string} slug - Category slug (e.g., 'laptop-gaming', 'laptop-van-phong')
- * @param {object} options - Filter options { limit, page, sortBy, brandId }
+ * @param {object} options - Filter options { limit, page, sortBy, brand }
  */
 async function loadProductsByCategorySlug(slug, options = {}) {
-    const { limit = 12, page = 0, sortBy = '', brandId = null } = options;
+    const { limit = 12, page = 0, sortBy = '', brand = null } = options;
     
     try {
         // IMPORTANT: Load ALL products (limit=1000) để sort toàn bộ trên frontend
@@ -115,9 +107,9 @@ async function loadProductsByCategorySlug(slug, options = {}) {
             url += `&sort=${sortBy}`;
         }
         
-        // Add brand filter
-        if (brandId) {
-            url += `&brandId=${brandId}`;
+        // Add brand filter - use brand slug/name (string)
+        if (brand) {
+            url += `&brand=${encodeURIComponent(brand)}`;
         }
         
         const data = await httpRequest(url, { method: 'GET' });
@@ -157,33 +149,22 @@ async function loadProductsByCategorySlug(slug, options = {}) {
 }
 
 /**
- * Load brands by category slug - extract from products
+ * Load brands by category ID using the new API endpoint
  */
-async function loadBrandsByCategorySlug(slug) {
+async function loadBrandsByCategoryId(categoryId) {
     try {
-        // Load all products for this category to extract unique brands
-        const url = `${BASE_URL}/api/products/public/category/${slug}?page=0&limit=1000`;
+        const url = `${BASE_URL}/api/brands/${categoryId}`;
         const data = await httpRequest(url, { method: 'GET' });
         
         if (data.success && data.payload) {
-            const products = data.payload.content || [];
-            
-            // Extract unique brands from products
-            const brandMap = new Map();
-            products.forEach(product => {
-                if (product.brand && product.brand.id) {
-                    brandMap.set(product.brand.id, product.brand);
-                }
-            });
-            
-            const categoryBrands = Array.from(brandMap.values());
-            console.log(`✅ Found ${categoryBrands.length} brands in category ${slug}`);
+            const categoryBrands = data.payload || [];
+            console.log(`✅ Found ${categoryBrands.length} brands in category ID ${categoryId}`);
             return categoryBrands;
         }
         
         return [];
     } catch (error) {
-        console.error(`❌ Error loading brands for ${slug}:`, error.message);
+        console.error(`❌ Error loading brands for category ${categoryId}:`, error.message);
         return [];
     }
 }
@@ -238,22 +219,23 @@ async function updateCartBadge() {
  * CategorySection - Component to render a category section with products
  */
 class CategorySection {
-    constructor(container, { title, slug, limit = 12 }) {
+    constructor(container, { title, slug, categoryId, limit = 12 }) {
         this.container = container;
         this.title = title;
         this.slug = slug;
+        this.categoryId = categoryId;
         this.limit = limit;
         this.products = [];
         this.brands = [];
         this.loading = true;
         this.error = false;
-        this.selectedBrandId = null;
+        this.selectedBrand = null; // Store brand slug/name instead of ID
         this.sortBy = '';
         this.sectionId = `category-section-${slug}`;
         
         // Initialize state for this section
         shopState.categorySections[slug] = {
-            selectedBrandId: null,
+            selectedBrand: null, // Store brand slug/name
             sortBy: ''
         };
         
@@ -308,8 +290,12 @@ class CategorySection {
      */
     async loadData() {
         try {
-            // Load brands for this category
-            this.brands = await loadBrandsByCategorySlug(this.slug);
+            // Load brands for this category using categoryId
+            if (this.categoryId) {
+                this.brands = await loadBrandsByCategoryId(this.categoryId);
+            } else {
+                this.brands = [];
+            }
             this.renderBrandFilters();
             
             // Load products
@@ -340,7 +326,7 @@ class CategorySection {
             limit: this.limit,
             page: 0,
             sortBy: state.sortBy,
-            brandId: state.selectedBrandId
+            brand: state.selectedBrand // Use brand slug/name
         });
         
         this.products = result.products;
@@ -362,10 +348,11 @@ class CategorySection {
         `;
         
         this.brands.forEach(brand => {
+            const brandSlug = (brand.slug || brand.name || '').toLowerCase();
             html += `
                 <button class="brand-filter-btn" 
-                        data-brand-id="${brand.id}"
-                        onclick="handleBrandFilter('${this.slug}', ${brand.id}, this)">
+                        data-brand-slug="${brandSlug}"
+                        onclick="handleBrandFilter('${this.slug}', '${brandSlug}', this)">
                     ${brand.name}
                 </button>
             `;
@@ -485,7 +472,7 @@ class CategorySection {
 /**
  * Handle brand filter selection
  */
-async function handleBrandFilter(slug, brandId, buttonEl) {
+async function handleBrandFilter(slug, brandSlug, buttonEl) {
     // Update active state
     const container = document.getElementById(`brand-filters-${slug}`);
     if (container) {
@@ -495,8 +482,10 @@ async function handleBrandFilter(slug, brandId, buttonEl) {
         buttonEl.classList.add('active');
     }
     
-    // Update state
-    shopState.categorySections[slug].selectedBrandId = brandId;
+    // Update state - store brand slug/name
+    shopState.categorySections[slug].selectedBrand = brandSlug;
+    
+    console.log(`🔍 Filter brand: ${brandSlug || 'all'} for category: ${slug}`);
     
     // Reload products
     const section = shopState.categorySections[slug].instance;
@@ -534,7 +523,7 @@ async function reloadCategorySectionProducts(slug) {
         limit: 12,
         page: 0,
         sortBy: state.sortBy,
-        brandId: state.selectedBrandId
+        brand: state.selectedBrand // Use brand slug/name
     });
     
     if (result.products.length === 0) {
@@ -687,6 +676,7 @@ async function renderCategorySections() {
         const section = new CategorySection(sectionWrapper, {
             title: category.name,
             slug: category.slug,
+            categoryId: category.id,
             limit: 12
         });
         

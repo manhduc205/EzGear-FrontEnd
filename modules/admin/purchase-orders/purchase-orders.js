@@ -270,8 +270,8 @@ async function openEditModal(id) {
                     <div class="order-item" id="item_${itemCounter}" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;">
                         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: start;">
                             <div>
-                                <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">SKU ID</label>
-                                <input type="number" class="form-control item-sku-id" placeholder="ID SKU" value="${item.skuId || item.sku || ''}" required>
+                                <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">Mã SKU</label>
+                                <input type="text" class="form-control item-sku-code" placeholder="Nhập mã SKU" value="${item.skuCode || item.sku || ''}" required>
                             </div>
                             <div>
                                 <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">Số lượng</label>
@@ -316,8 +316,8 @@ function addOrderItem() {
         <div class="order-item" id="item_${itemCounter}" style="padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;">
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: start;">
                 <div>
-                    <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">SKU ID</label>
-                    <input type="number" class="form-control item-sku-id" placeholder="ID SKU" required>
+                    <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">Mã SKU</label>
+                    <input type="text" class="form-control item-sku-code" placeholder="Nhập mã SKU (VD: SKU-LAPTOP-001)" required>
                 </div>
                 <div>
                     <label style="font-size: 0.85rem; margin-bottom: 5px; display: block;">Số lượng</label>
@@ -379,13 +379,13 @@ async function createOrder() {
     // Collect items
     const items = [];
     document.querySelectorAll('.order-item').forEach(itemDiv => {
-        const skuId = itemDiv.querySelector('.item-sku-id').value;
+        const skuCode = itemDiv.querySelector('.item-sku-code').value.trim();
         const quantity = itemDiv.querySelector('.item-quantity').value;
         const unitPrice = itemDiv.querySelector('.item-price').value;
         
-        if (skuId && quantity && unitPrice) {
+        if (skuCode && quantity && unitPrice) {
             items.push({
-                skuId: parseInt(skuId),
+                skuCode: skuCode,
                 quantity: parseInt(quantity),
                 unitPrice: parseFloat(unitPrice)
             });

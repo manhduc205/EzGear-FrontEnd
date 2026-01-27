@@ -139,7 +139,101 @@
             </div>
         </div>
     </div>
-
+    <!-- Add SKU Modal -->
+    <div class="modal" id="addSkuModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Thêm Biến Thể Mới</h2>
+                <button class="btn-close" onclick="closeAddSkuModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Product Info Display -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px; color: #c8102e;">Thông Tin Sản Phẩm</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <p><strong>Tên sản phẩm:</strong> <span id="addSkuProductName"></span></p>
+                        <p><strong>Mã Series:</strong> <span id="addSkuSeriesCode"></span></p>
+                        <p><strong>Danh mục:</strong> <span id="addSkuCategory"></span></p>
+                        <p><strong>Thương hiệu:</strong> <span id="addSkuBrand"></span></p>
+                    </div>
+                </div>
+                
+                <form id="addSkuForm" onsubmit="event.preventDefault(); saveNewSku();">
+                    <input type="hidden" id="addSkuProductId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addSkuName">Tên SKU <span class="required">*</span></label>
+                            <input type="text" id="addSkuName" class="form-control" required placeholder="VD: Laptop Asus ROG - Core i7 16GB">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuCode">Mã SKU <span class="required">*</span></label>
+                            <input type="text" id="addSkuCode" class="form-control" required placeholder="VD: SKU-LAPTOP-001">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addSkuPrice">Giá (VNĐ) <span class="required">*</span></label>
+                            <input type="number" id="addSkuPrice" class="form-control" min="0" step="1000" required placeholder="20000000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuBarcode">Barcode</label>
+                            <input type="text" id="addSkuBarcode" class="form-control" placeholder="Mã vạch">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addSkuOption">Tên tùy chọn</label>
+                            <input type="text" id="addSkuOption" class="form-control" placeholder="VD: Core i7 - 16GB RAM">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuWeight">Trọng lượng (gram)</label>
+                            <input type="number" id="addSkuWeight" class="form-control" min="0" placeholder="2500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="addSkuLength">Dài (cm)</label>
+                            <input type="number" id="addSkuLength" class="form-control" min="0" step="0.1" placeholder="35">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuWidth">Rộng (cm)</label>
+                            <input type="number" id="addSkuWidth" class="form-control" min="0" step="0.1" placeholder="25">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuHeight">Cao (cm)</label>
+                            <input type="number" id="addSkuHeight" class="form-control" min="0" step="0.1" placeholder="2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="addSkuActive">Trạng thái <span class="required">*</span></label>
+                            <select id="addSkuActive" class="form-control" required>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                        <button type="button" class="btn btn-secondary" onclick="closeAddSkuModal()">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Tạo Biến Thể
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Edit Product Modal -->
     <div class="modal" id="editProductModal">
         <div class="modal-content" style="max-width: 800px;">

@@ -184,6 +184,10 @@ function renderProducts(list) {
             </td>
             <td>
                 <div class="action-buttons">
+                    <button class="btn btn-sm btn-success" onclick="openAddSkuModal(${item.id})" title="Thêm biến thể">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                    
                     <button class="btn btn-sm btn-info" onclick="openGalleryModal(${item.id})" title="Album Ảnh">
                         <i class="fas fa-images"></i>
                     </button>
@@ -381,6 +385,106 @@ async function deleteProduct(id, name) {
         loadProducts();
     } catch (e) {
         showToast(e.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ================== ADD SKU MODAL ==================
+async function openAddSkuModal(productId) {
+    showLoading(true);
+    try {
+        // Fetch product details
+        const response = await httpRequest(`${BASE_URL}/products/admin/${productId}`);
+        
+        if (!response.success || !response.payload) {
+            throw new Error('Không thể tải thông tin sản phẩm');
+        }
+        
+        const product = response.payload;
+        
+        // Store product ID in hidden field
+        document.getElementById('addSkuProductId').value = product.id;
+        
+        // Display product info
+        document.getElementById('addSkuProductName').textContent = product.name || 'N/A';
+        document.getElementById('addSkuSeriesCode').textContent = product.seriesCode || 'N/A';
+        document.getElementById('addSkuCategory').textContent = product.categoryName || 'N/A';
+        document.getElementById('addSkuBrand').textContent = product.brandName || 'N/A';
+        
+        // Reset form fields
+        document.getElementById('addSkuForm').reset();
+        document.getElementById('addSkuProductId').value = product.id;
+        
+        // Show modal
+        document.getElementById('addSkuModal').classList.add('active');
+        
+    } catch (error) {
+        console.error('Error loading product for SKU creation:', error);
+        showToast('Lỗi: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function closeAddSkuModal() {
+    document.getElementById('addSkuModal').classList.remove('active');
+    document.getElementById('addSkuForm').reset();
+}
+
+async function saveNewSku() {
+    const productId = document.getElementById('addSkuProductId').value;
+    const skuName = document.getElementById('addSkuName').value.trim();
+    const skuCode = document.getElementById('addSkuCode').value.trim();
+    const skuPrice = document.getElementById('addSkuPrice').value;
+    const skuBarcode = document.getElementById('addSkuBarcode').value.trim();
+    const skuWeight = document.getElementById('addSkuWeight').value;
+    const skuLength = document.getElementById('addSkuLength').value;
+    const skuWidth = document.getElementById('addSkuWidth').value;
+    const skuHeight = document.getElementById('addSkuHeight').value;
+    const skuActive = document.getElementById('addSkuActive').value === 'true';
+    const optionName = document.getElementById('addSkuOption').value.trim();
+    
+    if (!productId || !skuName || !skuCode || !skuPrice) {
+        showToast('Vui lòng điền đầy đủ thông tin bắt buộc', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const payload = {
+            productId: parseInt(productId),
+            sku: skuCode,
+            name: skuName,
+            optionName: optionName || null,
+            price: parseInt(skuPrice),
+            barcode: skuBarcode || null,
+            weightGram: skuWeight ? parseInt(skuWeight) : null,
+            lengthCm: skuLength ? parseFloat(skuLength) : null,
+            widthCm: skuWidth ? parseFloat(skuWidth) : null,
+            heightCm: skuHeight ? parseFloat(skuHeight) : null,
+            isActive: skuActive
+        };
+        
+        console.log('Creating SKU with payload:', payload);
+        
+        const response = await httpRequest(`${BASE_URL}/product-skus`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.success) {
+            showToast('Thêm biến thể thành công!', 'success');
+            closeAddSkuModal();
+            // Optionally reload the products list
+            await loadProducts();
+        } else {
+            throw new Error(response.message || 'Failed to create SKU');
+        }
+    } catch (error) {
+        console.error('Error creating SKU:', error);
+        showToast('Lỗi: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
