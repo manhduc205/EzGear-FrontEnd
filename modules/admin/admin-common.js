@@ -95,7 +95,7 @@ async function loadSidebar() {
     const currentPage = pathParts.pop();
     const parentFolder = pathParts.pop();
     
-    const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'report'].includes(parentFolder);
+    const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'report', 'picking'].includes(parentFolder);
     const base = isInSubDir ? '../' : './';
     const stockTransferLink = isInSubDir ? '../stock-transfer/stock-transfer.html' : './stock-transfer/stock-transfer.html';
     const branchesLink = isInSubDir ? '../branches/branches.html' : './branches/branches.html';
@@ -110,6 +110,7 @@ async function loadSidebar() {
     const stockTransactionsLink = isInSubDir ? '../stock-transactions/stock-transactions.html' : './stock-transactions/stock-transactions.html';
     const purchaseOrdersLink = isInSubDir ? '../purchase-orders/purchase-orders.html' : './purchase-orders/purchase-orders.html';
     const reportLink = isInSubDir ? '../report/report.html' : './report/report.html';
+    const pickingLink = isInSubDir ? '../picking/picking.html' : './picking/picking.html';
     
     sidebar.innerHTML = `
         <div class="sidebar-header" title="Nhấn để về Dashboard">
@@ -163,6 +164,10 @@ async function loadSidebar() {
                 <a href="${warehousesLink}" class="menu-item ${currentPage === 'warehouses.html' ? 'active' : ''}">
                     <i class="fas fa-warehouse"></i>
                     <span class="menu-item-text">Kho hàng</span>
+                </a>
+                <a href="${pickingLink}" class="menu-item ${currentPage === 'picking.html' ? 'active' : ''}">
+                    <i class="fas fa-hand-holding-box"></i>
+                    <span class="menu-item-text">Nhặt hàng</span>
                 </a>
                 <a href="${stockTransactionsLink}" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">
                     <i class="fas fa-exchange-alt"></i>

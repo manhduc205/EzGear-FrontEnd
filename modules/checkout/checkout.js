@@ -1676,7 +1676,7 @@ function showSuccessModal(orderResult) {
 function viewOrderDetails() {
     // Redirect to order details page
     const orderCode = document.getElementById('orderCode').textContent;
-    window.location.href = `../order/order-detail.html?code=${orderCode}`;
+    window.location.href = `../order/order-detail.html?orderCode=${orderCode}`;
 }
 
 // ==================== UTILITY FUNCTIONS ====================
