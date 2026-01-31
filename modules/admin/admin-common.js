@@ -166,7 +166,7 @@ async function loadSidebar() {
                     <span class="menu-item-text">Kho hàng</span>
                 </a>
                 <a href="${pickingLink}" class="menu-item ${currentPage === 'picking.html' ? 'active' : ''}">
-                    <i class="fas fa-hand-holding-box"></i>
+                    <i class="fas fa-clipboard-check"></i>
                     <span class="menu-item-text">Nhặt hàng</span>
                 </a>
                 <a href="${stockTransactionsLink}" class="menu-item ${currentPage === 'stock-transactions.html' ? 'active' : ''}">

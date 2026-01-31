@@ -114,19 +114,18 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th width="8%">ID</th>
-                                <th width="12%">Mã Phiếu</th>
-                                <th width="18%">Kho Nguồn</th>
-                                <th width="18%">Kho Đích</th>
+                                <th width="18%">Mã Phiếu</th>
+                                <th width="15%">Kho Nguồn</th>
+                                <th width="15%">Kho Đích</th>
                                 <th width="12%">Ngày Tạo</th>
-                                <th width="10%">Trạng Thái</th>
+                                <th width="14%">Trạng Thái</th>
                                 <th width="10%">Số Lượng SP</th>
-                                <th width="12%" class="text-center">Thao Tác</th>
+                                <th width="20%" class="text-center">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody id="transfersTableBody">
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 40px;">
+                                <td colspan="7" style="text-align: center; padding: 40px;">
                                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #c8102e;"></i>
                                     <p style="margin-top: 10px; color: #999;">Đang tải dữ liệu...</p>
                                 </td>
@@ -169,20 +168,28 @@
                         <textarea id="transferNote" class="form-control" rows="2" placeholder="Nhập ghi chú cho phiếu chuyển (không bắt buộc)"></textarea>
                     </div>
 
+                    <!-- Product Search Section -->
+                    <div class="form-group">
+                        <label for="productSearch">Tìm Kiếm Sản Phẩm</label>
+                        <div class="product-search-wrapper">
+                            <input type="text" id="productSearch" class="form-control" placeholder="Nhập tên hoặc mã sản phẩm để tìm kiếm..." autocomplete="off">
+                            <i class="fas fa-search search-icon"></i>
+                            <div id="productSearchResults" class="search-results-dropdown"></div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <label style="margin: 0; font-weight: 600;">Danh Sách Sản Phẩm <span class="required">*</span></label>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="addProductRow()" style="padding: 5px 12px;">
-                                <i class="fas fa-plus"></i> Thêm sản phẩm
-                            </button>
                         </div>
                         
                         <div class="product-list-container">
                             <table class="product-table">
                                 <thead>
                                     <tr>
-                                        <th width="50%">SKU ID</th>
-                                        <th width="40%">Số Lượng</th>
+                                        <th width="45%">Tên Sản Phẩm</th>
+                                        <th width="25%">Mã SKU</th>
+                                        <th width="20%">Số Lượng</th>
                                         <th width="10%" class="text-center">Xóa</th>
                                     </tr>
                                 </thead>
@@ -193,7 +200,7 @@
                         </div>
                         <div id="emptyItemsMsg" class="empty-msg">
                             <i class="fas fa-box-open"></i>
-                            <p>Chưa có sản phẩm nào. Nhấn "Thêm sản phẩm" để bắt đầu.</p>
+                            <p>Chưa có sản phẩm nào. Tìm kiếm và chọn sản phẩm bên trên để bắt đầu.</p>
                         </div>
                     </div>
                 </form>
@@ -224,6 +231,10 @@
                     <div class="detail-card">
                         <div class="detail-label"><i class="fas fa-barcode"></i> Mã Phiếu</div>
                         <div class="detail-value" id="detailCode">...</div>
+                    </div>
+                    <div class="detail-card" id="detailRefCodeContainer" style="display: none;">
+                        <div class="detail-label"><i class="fas fa-hashtag"></i> Mã Tham Chiếu</div>
+                        <div class="detail-value" id="detailRefCode">...</div>
                     </div>
                     <div class="detail-card">
                         <div class="detail-label"><i class="fas fa-warehouse"></i> Kho Nguồn</div>

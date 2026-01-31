@@ -4,12 +4,15 @@
 // BASE_URL is already defined in admin-common.js
 const TRANSFERS_API = BASE_URL + '/stock-transfers';
 const WAREHOUSES_API = BASE_URL + '/warehouses';
+const PRODUCT_SEARCH_API = BASE_URL + '/product-skus/admin/search';
 
 let state = {
     transfers: [],
     warehouses: [],
     currentTransfer: null,
-    filteredTransfers: []
+    filteredTransfers: [],
+    searchTimeout: null,
+    selectedProducts: new Map() // Map to track selected products by skuId
 };
 
 // ==================== HTTP REQUEST HELPER ====================
@@ -37,8 +40,23 @@ async function httpRequest(url, options = {}) {
             throw new Error(errorData.message || `HTTP ${response.status}`);
         }
 
-        const data = await response.json();
-        return data;
+        // Check content type to determine how to parse response
+        const contentType = response.headers.get('content-type');
+        
+        // If the response is text or if it's an action endpoint, return text
+        if (contentType && contentType.includes('text/plain')) {
+            return await response.text();
+        }
+        
+        // Try to parse as JSON, fallback to text if it fails
+        try {
+            const data = await response.json();
+            return data;
+        } catch (e) {
+            // If JSON parsing fails, return the text
+            const text = await response.text();
+            return text;
+        }
     } catch (error) {
         console.error('HTTP Request Error:', error);
         throw error;
@@ -71,6 +89,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } finally {
         showLoading(false);
     }
+    
+    // Setup product search
+    setupProductSearch();
 });
 
 // ==================== DATA LOADING ====================
@@ -141,7 +162,7 @@ function renderTransferTable(transfers) {
     if (!transfers || transfers.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 60px 20px;">
+                <td colspan="7" style="text-align: center; padding: 60px 20px;">
                     <i class="fas fa-box-open" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px; display: block;"></i>
                     <p style="color: #999; font-size: 1rem; margin: 0;">Không có phiếu chuyển nào</p>
                 </td>
@@ -150,22 +171,52 @@ function renderTransferTable(transfers) {
         return;
     }
 
-    tbody.innerHTML = transfers.map(t => `
-        <tr>
-            <td style="font-weight: 600; color: #c8102e;">#${t.id}</td>
-            <td><span style="font-family: monospace; font-weight: 500;">${t.code || 'N/A'}</span></td>
-            <td>${t.fromWarehouseName || t.fromWarehouse?.name || '-'}</td>
-            <td>${t.toWarehouseName || t.toWarehouse?.name || '-'}</td>
-            <td>${formatDate(t.createdAt)}</td>
-            <td>${getStatusBadge(t.status)}</td>
-            <td class="text-center" style="font-weight: 600;">${t.items?.length || 0}</td>
-            <td class="text-center">
-                <button class="btn-icon" onclick="openDetailModal(${t.id})" title="Xem chi tiết">
-                    <i class="fas fa-eye"></i>
+    tbody.innerHTML = transfers.map(t => {
+        // Generate action buttons based on status
+        let actionButtons = '';
+        
+        if (t.status === 'PENDING') {
+            actionButtons = `
+                <button class="btn-icon btn-icon-success" onclick="event.stopPropagation(); shipTransfer(${t.id})" title="Xuất kho chuyển đi">
+                    <i class="fas fa-shipping-fast"></i>
                 </button>
-            </td>
-        </tr>
-    `).join('');
+                <button class="btn-icon btn-icon-danger" onclick="event.stopPropagation(); cancelTransfer(${t.id})" title="Hủy phiếu">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+        } else if (t.status === 'SHIPPING' || t.status === 'APPROVED') {
+            actionButtons = `
+                <button class="btn-icon btn-icon-success" onclick="event.stopPropagation(); receiveTransfer(${t.id})" title="Nhập kho">
+                    <i class="fas fa-check-double"></i>
+                </button>
+                <button class="btn-icon btn-icon-danger" onclick="event.stopPropagation(); cancelTransfer(${t.id})" title="Hủy phiếu">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+        }
+        
+        actionButtons += `
+            <button class="btn-icon" onclick="openDetailModal(${t.id})" title="Xem chi tiết">
+                <i class="fas fa-eye"></i>
+            </button>
+        `;
+        
+        return `
+            <tr>
+                <td><span style="font-family: monospace; font-weight: 500;">${t.code || 'N/A'}</span></td>
+                <td>${t.fromWarehouseName || t.fromWarehouse?.name || '-'}</td>
+                <td>${t.toWarehouseName || t.toWarehouse?.name || '-'}</td>
+                <td>${formatDate(t.createdAt)}</td>
+                <td>${getStatusBadge(t.status)}</td>
+                <td class="text-center" style="font-weight: 600;">${t.items?.length || 0}</td>
+                <td class="text-center">
+                    <div style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+                        ${actionButtons}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function getStatusBadge(status) {
@@ -214,9 +265,12 @@ function openCreateModal() {
     document.getElementById('createTransferForm').reset();
     document.getElementById('createItemsBody').innerHTML = '';
     document.getElementById('emptyItemsMsg').style.display = 'block';
+    document.getElementById('productSearch').value = '';
+    document.getElementById('productSearchResults').innerHTML = '';
+    document.getElementById('productSearchResults').style.display = 'none';
     
-    // Add one empty row by default
-    addProductRow();
+    // Clear selected products
+    state.selectedProducts.clear();
     
     // Show modal
     document.getElementById('createTransferModal').classList.add('show');
@@ -226,36 +280,153 @@ function closeCreateModal() {
     document.getElementById('createTransferModal').classList.remove('show');
 }
 
-function addProductRow() {
+function addProductToList(product) {
+    // Check if product already added
+    if (state.selectedProducts.has(product.id)) {
+        showToast('Sản phẩm này đã được thêm vào danh sách', 'warning');
+        return;
+    }
+    
     const tbody = document.getElementById('createItemsBody');
     document.getElementById('emptyItemsMsg').style.display = 'none';
     
-    const rowId = Date.now() + Math.random();
+    const rowId = `sku-${product.id}`;
     const row = document.createElement('tr');
-    row.id = `row-${rowId}`;
+    row.id = rowId;
+    row.dataset.skuId = product.id;
     row.innerHTML = `
-        <td>
-            <input type="number" class="item-sku" placeholder="Nhập SKU ID" required min="1" step="1">
-        </td>
+        <td>${product.skuName || product.name || 'N/A'}</td>
+        <td><span class="status-badge" style="background: #e9ecef; color: #495057;">${product.skuCode || 'N/A'}</span></td>
         <td>
             <input type="number" class="item-qty" placeholder="Số lượng" required min="1" value="1" step="1">
         </td>
         <td class="text-center">
-            <button type="button" class="btn-remove-row" onclick="removeProductRow('${rowId}')" title="Xóa">
+            <button type="button" class="btn-remove-row" onclick="removeProductRow('${product.id}')" title="Xóa">
                 <i class="fas fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(row);
+    
+    // Add to selected products
+    state.selectedProducts.set(product.id, product);
+    
+    // Clear search
+    document.getElementById('productSearch').value = '';
+    document.getElementById('productSearchResults').innerHTML = '';
+    document.getElementById('productSearchResults').style.display = 'none';
 }
 
-function removeProductRow(rowId) {
-    const row = document.getElementById(`row-${rowId}`);
-    if (row) row.remove();
+function removeProductRow(skuId) {
+    const row = document.getElementById(`sku-${skuId}`);
+    if (row) {
+        row.remove();
+        state.selectedProducts.delete(skuId);
+    }
     
     if (document.getElementById('createItemsBody').children.length === 0) {
         document.getElementById('emptyItemsMsg').style.display = 'block';
     }
+}
+
+// ==================== PRODUCT SEARCH ====================
+
+function setupProductSearch() {
+    const searchInput = document.getElementById('productSearch');
+    const searchResults = document.getElementById('productSearchResults');
+    
+    if (!searchInput) return;
+    
+    // Search on input
+    searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.trim();
+        
+        // Clear previous timeout
+        if (state.searchTimeout) {
+            clearTimeout(state.searchTimeout);
+        }
+        
+        // Hide results if empty
+        if (!keyword) {
+            searchResults.innerHTML = '';
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search
+        state.searchTimeout = setTimeout(() => {
+            searchProducts(keyword);
+        }, 300);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.product-search-wrapper')) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+async function searchProducts(keyword) {
+    const searchResults = document.getElementById('productSearchResults');
+    
+    try {
+        searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...</div>';
+        searchResults.style.display = 'block';
+        
+        const payload = {
+            keyword: keyword,
+            isActive: true,
+            page: 0,
+            size: 10
+        };
+        
+        const response = await httpRequest(PRODUCT_SEARCH_API, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        let products = [];
+        if (response.payload && response.payload.content) {
+            products = response.payload.content;
+        } else if (response.content) {
+            products = response.content;
+        } else if (Array.isArray(response)) {
+            products = response;
+        }
+        
+        displaySearchResults(products);
+    } catch (error) {
+        console.error('Search error:', error);
+        searchResults.innerHTML = '<div class="search-error"><i class="fas fa-exclamation-circle"></i> Lỗi tìm kiếm</div>';
+    }
+}
+
+function displaySearchResults(products) {
+    const searchResults = document.getElementById('productSearchResults');
+    
+    if (!products || products.length === 0) {
+        searchResults.innerHTML = '<div class="search-empty"><i class="fas fa-inbox"></i> Không tìm thấy sản phẩm</div>';
+        return;
+    }
+    
+    const html = products.map(product => {
+        const isSelected = state.selectedProducts.has(product.id);
+        return `
+            <div class="search-result-item ${isSelected ? 'selected' : ''}" 
+                 onclick="${isSelected ? '' : `addProductToList(${JSON.stringify(product).replace(/"/g, '&quot;')})` }">
+                <div class="result-info">
+                    <div class="result-name">${product.skuName || product.name || 'N/A'}</div>
+                    <div class="result-meta">
+                        <span class="result-sku"><i class="fas fa-barcode"></i> ${product.skuCode || 'N/A'}</span>
+                    </div>
+                </div>
+                ${isSelected ? '<div class="result-badge"><i class="fas fa-check"></i> Đã chọn</div>' : '<div class="result-action"><i class="fas fa-plus"></i></div>'}
+            </div>
+        `;
+    }).join('');
+    
+    searchResults.innerHTML = html;
 }
 
 async function submitCreateTransfer() {
@@ -285,7 +456,7 @@ async function submitCreateTransfer() {
     console.log('Found rows:', rows.length);
     
     for (let row of rows) {
-        const skuId = row.querySelector('.item-sku')?.value;
+        const skuId = row.dataset.skuId;
         const quantity = row.querySelector('.item-qty')?.value;
         
         if (skuId && quantity) {
@@ -345,10 +516,33 @@ async function openDetailModal(id) {
 
         // Populate Info
         document.getElementById('detailCode').textContent = transfer.code || 'N/A';
+        
+        // Reference code (optional field)
+        const refCodeContainer = document.getElementById('detailRefCodeContainer');
+        const refCodeValue = document.getElementById('detailRefCode');
+        if (transfer.referenceCode && transfer.referenceCode.trim()) {
+            refCodeValue.textContent = transfer.referenceCode;
+            refCodeContainer.style.display = 'block';
+        } else {
+            refCodeContainer.style.display = 'none';
+        }
+        
         document.getElementById('detailFrom').textContent = transfer.fromWarehouseName || transfer.fromWarehouse?.name || '-';
         document.getElementById('detailTo').textContent = transfer.toWarehouseName || transfer.toWarehouse?.name || '-';
         document.getElementById('detailDate').textContent = formatDate(transfer.createdAt);
-        document.getElementById('detailCreator').textContent = transfer.createdBy || transfer.createdByName || 'Admin';
+        
+        // Handle creator name from different possible fields
+        let creatorName = 'Admin';
+        if (transfer.createdBy) {
+            if (typeof transfer.createdBy === 'object') {
+                creatorName = transfer.createdBy.fullName || transfer.createdBy.email || transfer.createdBy.username || 'Admin';
+            } else {
+                creatorName = transfer.createdBy;
+            }
+        } else if (transfer.createdByName) {
+            creatorName = transfer.createdByName;
+        }
+        document.getElementById('detailCreator').textContent = creatorName;
         document.getElementById('detailStatus').innerHTML = getStatusBadge(transfer.status);
         
         // Note
@@ -364,14 +558,28 @@ async function openDetailModal(id) {
         // Populate Items
         const tbody = document.getElementById('detailItemsBody');
         if (transfer.items && transfer.items.length > 0) {
-            tbody.innerHTML = transfer.items.map((item, index) => `
-                <tr>
-                    <td style="font-weight: 600;">${index + 1}</td>
-                    <td>${item.productName || item.skuName || 'Sản phẩm #' + item.skuId}</td>
-                    <td><span class="status-badge" style="background: #e9ecef; color: #495057;">${item.skuCode || 'SKU-' + item.skuId}</span></td>
-                    <td class="text-end" style="font-weight: 600;">${item.quantity}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = transfer.items.map((item, index) => {
+                // Extract product info from different possible structures
+                let productName = 'N/A';
+                let skuCode = 'N/A';
+                
+                if (item.productSku) {
+                    productName = item.productSku.name || item.productSku.skuName || 'N/A';
+                    skuCode = item.productSku.sku || item.productSku.skuCode || 'N/A';
+                } else {
+                    productName = item.productName || item.skuName || item.name || 'Sản phẩm #' + (item.skuId || item.id);
+                    skuCode = item.skuCode || item.sku || 'N/A';
+                }
+                
+                return `
+                    <tr>
+                        <td style="font-weight: 600; color: #666;">${index + 1}</td>
+                        <td style="color: #333;">${productName}</td>
+                        <td><span class="status-badge" style="background: #e9ecef; color: #495057; font-family: monospace;">${skuCode}</span></td>
+                        <td class="text-end" style="font-weight: 600; color: #c8102e;">${item.quantity}</td>
+                    </tr>
+                `;
+            }).join('');
         } else {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding: 30px; color: #999;">Không có sản phẩm</td></tr>';
         }
@@ -399,64 +607,111 @@ function setupActionButtons(transfer) {
 
     if (transfer.status === 'PENDING') {
         buttonsHtml = `
-            <button type="button" class="btn btn-success" onclick="shipTransfer(${transfer.id})">
-                <i class="fas fa-shipping-fast"></i> Xuất Kho Chuyển Đi
-            </button>
-            <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})">
-                <i class="fas fa-times-circle"></i> Hủy Phiếu
-            </button>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn btn-success" onclick="shipTransfer(${transfer.id})" style="min-width: 160px;">
+                    <i class="fas fa-shipping-fast"></i> Xuất Kho Chuyển Đi
+                </button>
+                <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})" style="min-width: 120px;">
+                    <i class="fas fa-times-circle"></i> Hủy Phiếu
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="min-width: 100px;">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
         `;
     } else if (transfer.status === 'SHIPPING' || transfer.status === 'APPROVED') {
         buttonsHtml = `
-            <button type="button" class="btn btn-success" onclick="receiveTransfer(${transfer.id})">
-                <i class="fas fa-check-double"></i> Nhập Kho
-            </button>
-            <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})">
-                <i class="fas fa-times-circle"></i> Hủy Phiếu
-            </button>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn btn-success" onclick="receiveTransfer(${transfer.id})" style="min-width: 140px;">
+                    <i class="fas fa-check-double"></i> Nhập Kho
+                </button>
+                <button type="button" class="btn btn-danger" onclick="cancelTransfer(${transfer.id})" style="min-width: 120px;">
+                    <i class="fas fa-times-circle"></i> Hủy Phiếu
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="min-width: 100px;">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        `;
+    } else if (transfer.status === 'COMPLETED') {
+        buttonsHtml = `
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="min-width: 100px;">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        `;
+    } else if (transfer.status === 'CANCELLED') {
+        buttonsHtml = `
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="min-width: 100px;">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
+        `;
+    } else {
+        buttonsHtml = `
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeDetailModal()" style="min-width: 100px;">
+                    <i class="fas fa-times"></i> Đóng
+                </button>
+            </div>
         `;
     }
-
-    buttonsHtml += `
-        <button type="button" class="btn btn-secondary" onclick="closeDetailModal()">
-            <i class="fas fa-times"></i> Đóng
-        </button>
-    `;
     
     footer.innerHTML = buttonsHtml;
 }
 
 async function shipTransfer(id) {
-    if (!confirm('Xác nhận xuất kho chuyển đi?\n\nHành động này sẽ:\n- Trừ số lượng sản phẩm khỏi kho nguồn\n- Chuyển trạng thái sang "Đang chuyển"')) {
+    const confirmMsg = `🚚 XÁC NHẬN XUẤT KHO CHUYỂN ĐI\n\n` +
+        `Hành động này sẽ:\n` +
+        `✓ Trừ số lượng sản phẩm khỏi kho nguồn\n` +
+        `✓ Chuyển trạng thái sang "Đang chuyển"\n\n` +
+        `Bạn có chắc chắn muốn tiếp tục?`;
+    
+    if (!confirm(confirmMsg)) {
         return;
     }
 
-    await callTransferAction(`${TRANSFERS_API}/${id}/ship`, 'Đã xuất kho chuyển đi thành công!');
+    await callTransferAction(`${TRANSFERS_API}/${id}/ship`, '✓ Đã xuất kho chuyển đi thành công!');
 }
 
 async function receiveTransfer(id) {
-    if (!confirm('Xác nhận đã nhận đủ hàng và nhập kho?\n\nHành động này sẽ:\n- Cộng số lượng sản phẩm vào kho đích\n- Hoàn thành phiếu chuyển')) {
+    const confirmMsg = `📦 XÁC NHẬN NHẬP KHO\n\n` +
+        `Hành động này sẽ:\n` +
+        `✓ Cộng số lượng sản phẩm vào kho đích\n` +
+        `✓ Hoàn thành phiếu chuyển kho\n\n` +
+        `Bạn có chắc chắn đã nhận đủ hàng?`;
+    
+    if (!confirm(confirmMsg)) {
         return;
     }
 
-    await callTransferAction(`${TRANSFERS_API}/${id}/receive`, 'Đã nhập kho thành công!');
+    await callTransferAction(`${TRANSFERS_API}/${id}/receive`, '✓ Đã nhập kho thành công!');
 }
 
 async function cancelTransfer(id) {
-    if (!confirm('Xác nhận hủy phiếu chuyển kho?\n\nHành động này KHÔNG THỂ hoàn tác!')) {
+    const confirmMsg = `⚠️ XÁC NHẬN HỦY PHIẾU CHUYỂN KHO\n\n` +
+        `CẢNH BÁO: Hành động này KHÔNG THỂ hoàn tác!\n\n` +
+        `Bạn có chắc chắn muốn hủy phiếu này?`;
+    
+    if (!confirm(confirmMsg)) {
         return;
     }
 
-    await callTransferAction(`${TRANSFERS_API}/${id}/cancel`, 'Đã hủy phiếu chuyển kho thành công!');
+    await callTransferAction(`${TRANSFERS_API}/${id}/cancel`, '✓ Đã hủy phiếu chuyển kho thành công!');
 }
 
 async function callTransferAction(url, successMsg) {
     showLoading(true);
     try {
-        await httpRequest(url, {
+        const response = await httpRequest(url, {
             method: 'POST'
         });
 
+        // Response can be either a string message or an object
+        console.log('Action response:', response);
+        
         showToast(successMsg, 'success');
         closeDetailModal();
         await loadTransfers(); // Reload list

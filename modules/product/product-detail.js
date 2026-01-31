@@ -1073,6 +1073,11 @@ async function initProductDetailPage() {
     // Render product detail
     renderProductDetail(product);
     
+    // Load reviews for this product
+    if (product.id) {
+        await loadProductReviews(product.id, 0);
+    }
+    
     // Render related products
     if (relatedProducts && relatedProducts.length > 0) {
         renderRelatedProducts(relatedProducts);
@@ -1703,6 +1708,464 @@ function setupFindInStoreListeners() {
     });
     
     console.log('✅ Find In Store listeners setup complete');
+}
+
+// ==================== REVIEWS API FUNCTIONS ====================
+
+/**
+ * Load reviews for current product
+ */
+async function loadProductReviews(productId, page = 0) {
+    if (!productId) {
+        console.error('Product ID is required to load reviews');
+        return;
+    }
+    
+    try {
+        const url = `${window.BASE_URL}/api/reviews/product/${productId}?page=${page}&size=${productState.reviews.pageSize}`;
+        console.log('Loading reviews from:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to load reviews');
+        
+        const data = await response.json();
+        console.log('Reviews data:', data);
+        
+        // Update state
+        productState.reviews = {
+            content: data.content || [],
+            totalPages: data.totalPages || 0,
+            totalElements: data.totalElements || 0,
+            currentPage: page,
+            pageSize: data.size || 5
+        };
+        
+        // Render reviews
+        renderReviews();
+        renderReviewsPagination();
+        
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+        renderReviewsError();
+    }
+}
+
+/**
+ * Render reviews list
+ */
+function renderReviews() {
+    const container = document.getElementById('reviews-list');
+    if (!container) return;
+    
+    const reviews = productState.reviews.content;
+    
+    if (reviews.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <span class="material-icons text-6xl text-gray-300 dark:text-gray-600">rate_review</span>
+                <p class="text-gray-500 dark:text-gray-400 mt-4">Chưa có đánh giá nào cho sản phẩm này</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Hãy là người đầu tiên đánh giá sản phẩm này!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    reviews.forEach(review => {
+        const userName = review.user?.fullName || review.user?.username || 'Người dùng';
+        const avatarLetter = getAvatarLetter(userName);
+        const avatarColor = getAvatarColor(userName);
+        const ratingLabel = getRatingLabel(review.rating);
+        const relativeTime = formatRelativeTime(review.createdAt);
+        const isCurrentUser = review.user?.id === TokenHelper.getUserInfo()?.id;
+        
+        html += `
+            <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                        ${avatarLetter}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-900 dark:text-white">${userName}</span>
+                                ${review.verified ? '<span class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Đã mua hàng</span>' : ''}
+                            </div>
+                            ${isCurrentUser ? `
+                                <button onclick="openEditReviewModal(${review.id})" 
+                                    class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                                    <span class="material-icons text-sm">edit</span>
+                                    Chỉnh sửa
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="flex text-yellow-500">
+                                ${generateStarRating(review.rating, 'text-sm')}
+                            </div>
+                            <span class="text-sm text-green-600 font-medium">${ratingLabel}</span>
+                        </div>
+                        ${review.comment ? `
+                            <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">${review.comment}</p>
+                        ` : ''}
+                        ${review.images && review.images.length > 0 ? `
+                            <div class="flex gap-2 mb-3 flex-wrap">
+                                ${review.images.map(img => `
+                                    <img src="${img}" alt="Review image" 
+                                        class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
+                                        onclick="openImageModal('${img}')">
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                            <span class="material-icons-outlined text-sm mr-1">schedule</span>
+                            Đánh giá đã đăng ${relativeTime}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Render pagination
+ */
+function renderReviewsPagination() {
+    const container = document.getElementById('reviews-pagination');
+    if (!container) return;
+    
+    const { currentPage, totalPages } = productState.reviews;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="flex justify-center items-center gap-2">';
+    
+    // Previous button
+    html += `
+        <button onclick="loadProductReviews(${productState.product.id}, ${currentPage - 1})" 
+            ${currentPage === 0 ? 'disabled' : ''}
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <span class="material-icons text-sm">chevron_left</span>
+        </button>
+    `;
+    
+    // Page numbers
+    for (let i = 0; i < totalPages; i++) {
+        if (i === 0 || i === totalPages - 1 || Math.abs(i - currentPage) <= 1) {
+            html += `
+                <button onclick="loadProductReviews(${productState.product.id}, ${i})" 
+                    class="px-4 py-2 border rounded-lg transition ${i === currentPage ? 'bg-primary text-white border-primary' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800'}">
+                    ${i + 1}
+                </button>
+            `;
+        } else if (Math.abs(i - currentPage) === 2) {
+            html += '<span class="px-2 text-gray-500">...</span>';
+        }
+    }
+    
+    // Next button
+    html += `
+        <button onclick="loadProductReviews(${productState.product.id}, ${currentPage + 1})" 
+            ${currentPage >= totalPages - 1 ? 'disabled' : ''}
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <span class="material-icons text-sm">chevron_right</span>
+        </button>
+    `;
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Render error message
+ */
+function renderReviewsError() {
+    const container = document.getElementById('reviews-list');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="text-center py-12">
+            <span class="material-icons text-6xl text-red-300 dark:text-red-600">error_outline</span>
+            <p class="text-gray-500 dark:text-gray-400 mt-4">Không thể tải đánh giá</p>
+            <button onclick="loadProductReviews(${productState.product?.id || 0}, 0)" 
+                class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-red-700 transition">
+                Thử lại
+            </button>
+        </div>
+    `;
+}
+
+// ==================== EDIT REVIEW FUNCTIONS ====================
+
+let editReviewState = {
+    reviewId: null,
+    rating: 0,
+    comment: '',
+    images: []
+};
+
+/**
+ * Convert base64 string to File object
+ */
+function base64ToFile(base64String, filename) {
+    // Extract base64 data and mime type
+    const arr = base64String.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    
+    return new File([u8arr], filename, { type: mime });
+}
+
+/**
+ * Open edit review modal
+ */
+async function openEditReviewModal(reviewId) {
+    const review = productState.reviews.content.find(r => r.id === reviewId);
+    if (!review) {
+        alert('Không tìm thấy đánh giá');
+        return;
+    }
+    
+    // Set state
+    editReviewState = {
+        reviewId: review.id,
+        rating: review.rating,
+        comment: review.comment || '',
+        images: review.images || []
+    };
+    
+    // Populate form
+    document.getElementById('editReviewId').value = review.id;
+    document.getElementById('editReviewComment').value = review.comment || '';
+    
+    // Set rating stars
+    const stars = document.querySelectorAll('#editStarRating .material-icons');
+    stars.forEach((star, index) => {
+        if (index < review.rating) {
+            star.classList.remove('text-gray-300');
+            star.classList.add('text-yellow-500');
+        } else {
+            star.classList.add('text-gray-300');
+            star.classList.remove('text-yellow-500');
+        }
+    });
+    
+    // Show existing images
+    renderEditReviewImages();
+    
+    // Setup star click events
+    setupEditStarRating();
+    
+    // Show modal
+    const modal = document.getElementById('editReviewModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+/**
+ * Close edit review modal
+ */
+function closeEditReviewModal() {
+    const modal = document.getElementById('editReviewModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    
+    // Reset state
+    editReviewState = {
+        reviewId: null,
+        rating: 0,
+        comment: '',
+        images: []
+    };
+}
+
+/**
+ * Setup star rating click events
+ */
+function setupEditStarRating() {
+    const stars = document.querySelectorAll('#editStarRating .material-icons');
+    stars.forEach((star, index) => {
+        star.onclick = () => {
+            editReviewState.rating = index + 1;
+            stars.forEach((s, i) => {
+                if (i <= index) {
+                    s.classList.remove('text-gray-300');
+                    s.classList.add('text-yellow-500');
+                } else {
+                    s.classList.add('text-gray-300');
+                    s.classList.remove('text-yellow-500');
+                }
+            });
+        };
+    });
+}
+
+/**
+ * Handle file upload change
+ */
+function handleEditReviewFilesChange(event) {
+    const files = Array.from(event.target.files);
+    
+    // Validate file count
+    if (editReviewState.images.length + files.length > 5) {
+        alert('Chỉ được tải lên tối đa 5 tệp');
+        return;
+    }
+    
+    // Validate file size
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    for (const file of files) {
+        if (file.size > maxSize) {
+            alert(`Tệp ${file.name} vượt quá 5MB`);
+            return;
+        }
+    }
+    
+    // Convert files to base64 or URLs
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            editReviewState.images.push(e.target.result);
+            renderEditReviewImages();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Render preview images
+ */
+function renderEditReviewImages() {
+    const container = document.getElementById('editReviewImagesPreview');
+    if (!container) return;
+    
+    if (editReviewState.images.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    editReviewState.images.forEach((img, index) => {
+        html += `
+            <div class="relative group">
+                <img src="${img}" alt="Preview" class="w-full h-20 object-cover rounded-lg">
+                <button onclick="removeEditReviewImage(${index})" 
+                    class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <span class="material-icons text-sm">close</span>
+                </button>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Remove image from preview
+ */
+function removeEditReviewImage(index) {
+    editReviewState.images.splice(index, 1);
+    renderEditReviewImages();
+}
+
+/**
+ * Submit edit review
+ */
+async function submitEditReview() {
+    // Validate
+    if (editReviewState.rating === 0) {
+        alert('Vui lòng chọn số sao đánh giá');
+        return;
+    }
+    
+    try {
+        // Create FormData
+        const formData = new FormData();
+        
+        // Append basic fields
+        formData.append('rating', editReviewState.rating.toString());
+        formData.append('comment', document.getElementById('editReviewComment').value.trim());
+        
+        // Append images (convert base64 to File)
+        if (editReviewState.images && editReviewState.images.length > 0) {
+            editReviewState.images.forEach((base64Image, index) => {
+                try {
+                    const timestamp = Date.now();
+                    const filename = `review_edit_${editReviewState.reviewId}_${timestamp}_${index}.jpg`;
+                    const imageFile = base64ToFile(base64Image, filename);
+                    formData.append('files', imageFile);  // ✅ Backend dùng 'files' key
+                } catch (error) {
+                    console.error('Error converting image:', error);
+                }
+            });
+        }
+        
+        // Log FormData entries for debugging
+        console.log('📦 Updating review with FormData:');
+        for (let pair of formData.entries()) {
+            if (pair[1] instanceof File) {
+                console.log(pair[0], '(File):', pair[1].name, pair[1].size, 'bytes');
+            } else {
+                console.log(pair[0], ':', pair[1]);
+            }
+        }
+        
+        const url = `${window.BASE_URL}/api/reviews/${editReviewState.reviewId}`;
+        const token = TokenHelper.getAccessToken();
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`
+                // Don't set Content-Type - let browser set it with boundary for multipart
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to update review: ${response.status} - ${errorText}`);
+        }
+        
+        showToastNotification('✓ Cập nhật đánh giá thành công!', 'success');
+        closeEditReviewModal();
+        
+        // Reload reviews
+        await loadProductReviews(productState.product.id, productState.reviews.currentPage);
+        
+    } catch (error) {
+        console.error('Error updating review:', error);
+        alert('Không thể cập nhật đánh giá. Vui lòng thử lại.\n' + error.message);
+    }
+}
+
+/**
+ * Open image in modal
+ */
+function openImageModal(imageUrl) {
+    // Simple image viewer
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center';
+    modal.onclick = () => modal.remove();
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'max-w-full max-h-full object-contain';
+    
+    modal.appendChild(img);
+    document.body.appendChild(modal);
 }
 
 // ==================== EVENT LISTENERS ====================
