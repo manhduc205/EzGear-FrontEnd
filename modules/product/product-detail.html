@@ -10,6 +10,29 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="shop.css">
 <link rel="stylesheet" href="product-detail.css">
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+</style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-sans antialiased transition-colors duration-200">
 <div id="header-container"></div>
@@ -558,6 +581,9 @@
         </div>
     </div>
 </div>
+
+<!-- Toast Container -->
+<div id="toastContainer"></div>
 
 <script src="../../assets/js/core/api.js?v=6"></script>
 <script src="../../assets/js/core/config.js?v=6"></script>

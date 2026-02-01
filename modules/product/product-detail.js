@@ -142,20 +142,126 @@ function formatRelativeTime(dateString) {
  * Show toast notification
  */
 function showToastNotification(message, type = 'info') {
-    // Check if showToast exists from utils.js
-    if (typeof showToast === 'function') {
-        showToast(message, type);
-    } else {
-        // Fallback toast
-        const toast = document.createElement('div');
-        toast.className = `fixed top-5 right-5 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-        }`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+    console.log(`📢 Toast [${type}]: ${message}`);
+    
+    // Always use the utils showToast if available, with fallback
+    const useBuiltInToast = () => {
+        if (typeof showToast === 'function') {
+            console.log('✅ Using showToast from utils.js');
+            showToast(message, type);
+            return true;
+        }
+        return false;
+    };
+    
+    // Try built-in first
+    if (useBuiltInToast()) {
+        return;
     }
+    
+    // Fallback: Direct toast implementation
+    console.log('⚠️ Using custom toast implementation (utils.showToast not available)');
+    
+    // Ensure animations exist
+    if (!document.getElementById('toast-style-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-style-animations';
+        style.textContent = `
+            @keyframes toastSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(400px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes toastSlideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(400px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Get or create container
+    let container = document.getElementById('product-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'product-toast-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+        console.log('✅ Created toast container');
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    
+    // Determine colors
+    let bgColor = '#3b82f6'; // blue (info)
+    if (type === 'success') bgColor = '#22c55e'; // green
+    if (type === 'error') bgColor = '#ef4444'; // red
+    if (type === 'warning') bgColor = '#f59e0b'; // amber
+    
+    toast.style.cssText = `
+        background-color: ${bgColor};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        font-weight: 500;
+        font-size: 14px;
+        animation: toastSlideIn 0.3s ease-out forwards;
+        min-width: 250px;
+        max-width: 400px;
+        word-wrap: break-word;
+        pointer-events: auto;
+        cursor: pointer;
+    `;
+    
+    toast.textContent = message;
+    
+    // Click to dismiss
+    toast.addEventListener('click', () => {
+        toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 300);
+    });
+    
+    // Add to container
+    container.appendChild(toast);
+    console.log('✅ Toast added to container');
+    
+    // Auto remove after 3 seconds
+    const autoRemoveTimer = setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    }, 3000);
 }
 
 // ==================== API CALLS ====================
@@ -293,15 +399,16 @@ async function addToCart(skuId, quantity = 1) {
         
         if (response.ok && (data.success !== false)) {
             showToastNotification('Đã thêm sản phẩm vào giỏ hàng!', 'success');
-            if (typeof updateCartCount === 'function') {
-                updateCartCount();
+            
+            // Update cart badge in header
+            if (window.updateCartBadge) {
+                window.updateCartBadge();
             }
             return true;
         } else {
             throw new Error(data.message || 'Failed to add to cart');
         }
     } catch (error) {
-        console.error('❌ Error adding to cart:', error);
         showToastNotification('Lỗi thêm vào giỏ hàng: ' + error.message, 'error');
         return false;
     }
@@ -893,7 +1000,10 @@ window.handleAddToCart = async function() {
         return;
     }
     
-    await addToCart(productState.selectedSku.id, 1);
+    const success = await addToCart(productState.selectedSku.id, 1);
+    if (success) {
+        console.log('✅ Add to cart completed successfully');
+    }
 };
 
 /**
@@ -914,11 +1024,30 @@ window.handleBuyNow = async function() {
     }
     
     // Add to cart first
+    console.log('⏳ Adding to cart before checkout...');
     const success = await addToCart(productState.selectedSku.id, 1);
     
     if (success) {
-        // Redirect to checkout
-        window.location.href = '/modules/checkout/checkout.html';
+        console.log('✅ Product added to cart, redirecting to checkout...');
+        
+        // Save selected items for checkout
+        const checkoutItems = [{
+            skuId: productState.selectedSku.id,
+            quantity: 1,
+            selected: true
+        }];
+        localStorage.setItem('checkoutItems', JSON.stringify(checkoutItems));
+
+        // Mark this item as selected in cart API if possible, or assume checkout page handles it.
+        // If checkout page reads directly from cart API, we should ensure the item is selected there.
+        // Assuming checkout page uses cart API and filtered by selected=true or localStorage fallback.
+        
+        // Wait a moment for Toast to be seen
+        setTimeout(() => {
+            window.location.href = '/modules/checkout/checkout.html';
+        }, 800);
+    } else {
+        console.log('❌ Failed to add to cart, not redirecting');
     }
 };
 

@@ -65,6 +65,13 @@
     border-radius: 50%;
     color: #666;
     transition: all 0.3s ease;
+    font-size: 18px;
+}
+
+.social-link i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .social-link:hover {

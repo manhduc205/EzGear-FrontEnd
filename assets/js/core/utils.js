@@ -19,11 +19,13 @@ const ComponentLoader = {
                 element.innerHTML = html;
                 // Execute scripts in the loaded content if any
                 const scripts = element.querySelectorAll('script');
-                scripts.forEach(oldScript => {
+                Array.from(scripts).forEach(oldScript => { // Fix: Convert NodeList to Array
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                    newScript.textContent = oldScript.textContent; // Fix: use textContent instead of innerHTML
+                    if (oldScript.parentNode) {
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    }
                 });
             } else {
                 console.error(`Element not found: ${selector}`);
@@ -270,38 +272,101 @@ function toggleButtonLoading(btn, isLoading, loadingText = 'Đang xử lý...') 
  * @param {number} duration - Thời gian hiển thị (ms)
  */
 function showToast(message, type = 'info', duration = 3000) {
-  // Tạo toast element
+  // Find container or create it
+  let container = document.getElementById('global-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'global-toast-container';
+    container.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+    `;
+    document.body.appendChild(container);
+
+    // Add CSS animations style if not exists
+    if (!document.getElementById('toast-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.textContent = `
+            @keyframes toastSlideIn {
+                from { opacity: 0; transform: translateX(100%); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            @keyframes toastSlideOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100%); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+  }
+
+  // Create toast
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
+  
+  // Define colors
+  const colors = {
+      success: '#22c55e', // green-500
+      error: '#ef4444',   // red-500
+      warning: '#f59e0b', // amber-500
+      info: '#3b82f6'     // blue-500
+  };
+  
+  const iconMap = {
+      success: 'check_circle',
+      error: 'error',
+      warning: 'warning',
+      info: 'info'
+  };
+
+  const bgColor = colors[type] || colors.info;
+  const iconName = iconMap[type] || iconMap.info;
+
   toast.innerHTML = `
-    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-    <span>${message}</span>
+    <span class="material-icons" style="font-size: 20px;">${iconName}</span>
+    <span style="font-weight: 500;">${message}</span>
+    <span class="material-icons" style="font-size: 16px; margin-left: auto; cursor: pointer; opacity: 0.8;">close</span>
   `;
   
-  // Style inline (nếu chưa có CSS)
   toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    background: ${type === 'success' ? '#2ed573' : type === 'error' ? '#ff4757' : type === 'warning' ? '#ffa502' : '#3498db'};
+    background-color: ${bgColor};
     color: white;
+    padding: 12px 16px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 400px;
+    pointer-events: auto;
+    animation: toastSlideIn 0.3s ease-out;
+    transform-origin: right center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
   `;
+
+  // Close functionality
+  const closeBtn = toast.querySelector('.material-icons:last-child');
+  const closeToast = () => {
+      toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
+      setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+      }, 300);
+  };
   
-  document.body.appendChild(toast);
+  closeBtn.onclick = closeToast;
   
-  // Tự động xóa sau duration
-  setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+  // Auto remove
+  setTimeout(closeToast, duration);
+
+  container.appendChild(toast);
 }
 
 /**

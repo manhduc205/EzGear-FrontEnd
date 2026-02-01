@@ -81,6 +81,12 @@ async function loadAllBrands() {
         const apiBrands = data.payload || data || [];
         shopState.allBrands = apiBrands;
         console.log('✅ Brands loaded from API:', shopState.allBrands.length);
+        if (shopState.allBrands.length > 0) {
+            console.log('📸 Brand logos sample:', shopState.allBrands.slice(0, 3).map(b => ({
+                name: b.name,
+                logoUrl: b.logoUrl
+            })));
+        }
         return shopState.allBrands;
     } catch (error) {
         console.error('❌ Brands API Error:', error.message);
@@ -704,14 +710,15 @@ function renderBrandsGrid() {
     shopState.allBrands.slice(0, 12).forEach((brand) => {
         const logo = brand.logoUrl || placeholder;
         html += `
-            <div class="brand-item" onclick="filterGlobalByBrand(${brand.id})">
+            <div class="brand-item" onclick="filterGlobalByBrand(${brand.id})" title="${brand.name}">
                 <img src="${logo}" alt="${brand.name}" 
-                     onerror="this.src='${placeholder}'">
+                     onerror="this.onerror=null; this.src='${placeholder}'; console.warn('Brand image failed: ${brand.name}')">
             </div>
         `;
     });
 
     container.innerHTML = html;
+    console.log('✅ Rendered brands grid with', shopState.allBrands.slice(0, 12).length, 'brands');
 }
 
 /**
