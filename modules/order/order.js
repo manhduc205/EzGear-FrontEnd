@@ -60,52 +60,99 @@ function initOrderListPage() {
 }
 
 async function loadOrders(status) {
+    console.log('🔄 loadOrders() called with status:', status);
     showLoading(true);
     try {
         let orders = [];
         
-        // Try to fetch from API
-        if (typeof window.BASE_URL !== 'undefined') {
-             const url = `${window.BASE_URL}/api/orders/my-orders`; 
-             const token = localStorage.getItem('accessToken');
-             
-             if (!token) {
-                 console.warn("No access token found. Redirecting to login...");
-                 // Optional: window.location.href = '/modules/auth/auth.html';
-                 return;
-             }
+        console.log('🔍 window.API_BASE_URL:', window.API_BASE_URL);
+        console.log('🔍 window.BASE_URL:', window.BASE_URL);
+        
+        // Build API URL
+        const baseUrl = window.API_BASE_URL || window.BASE_URL || 'http://localhost:8080';
+        const url = `${baseUrl}/api/orders/my-orders`;
+        const token = localStorage.getItem('accessToken');
+        
+        console.log('🌐 Fetch URL:', url);
+        console.log('🔑 Token exists:', !!token);
+        console.log('🔑 Token value:', token ? token.substring(0, 20) + '...' : 'NONE');
+        
+        if (!token) {
+            console.error("❌ No access token found. User not logged in!");
+            document.getElementById('ordersList').innerHTML = `
+                <div class="text-center py-5 text-danger">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <p>Vui lòng đăng nhập để xem đơn hàng</p>
+                    <a href="../auth/auth.html" class="btn btn-primary mt-3">Đăng nhập</a>
+                </div>
+            `;
+            showLoading(false);
+            return;
+        }
 
-             try {
-                 console.log("Fetching orders from:", url);
-                 const response = await fetch(url, {
-                     headers: {
-                         'Authorization': `Bearer ${token}`,
-                         'Content-Type': 'application/json'
-                     }
-                 });
-                 
-                 if (response.ok) {
-                     const data = await response.json();
-                     console.log("Orders data received:", data);
-                     orders = data.payload || data;
-                 } else {
-                     console.error("Failed to fetch orders:", response.status, response.statusText);
-                     const errorText = await response.text();
-                     console.error("Error details:", errorText);
-                 }
-             } catch (e) {
-                 console.error("API call failed:", e);
-             }
+        try {
+            console.log("🚀 Starting fetch request...");
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response ok:', response.ok);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log("✅ Orders data received:", data);
+                console.log("✅ Data type:", typeof data);
+                console.log("✅ Is array:", Array.isArray(data));
+                
+                orders = data.payload || data.data || data;
+                console.log("✅ Final orders array:", orders);
+                console.log("✅ Orders count:", orders.length);
+            } else {
+                console.error("❌ Failed to fetch orders:", response.status, response.statusText);
+                const errorText = await response.text();
+                console.error("❌ Error details:", errorText);
+                
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="text-center py-5 text-danger">
+                        <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                        <p>Lỗi ${response.status}: ${response.statusText}</p>
+                        <p class="small">${errorText}</p>
+                    </div>
+                `;
+                showLoading(false);
+                return;
+            }
+        } catch (e) {
+            console.error("❌ API call failed:", e);
+            console.error("❌ Error name:", e.name);
+            console.error("❌ Error message:", e.message);
+            console.error("❌ Error stack:", e.stack);
+            
+            document.getElementById('ordersList').innerHTML = `
+                <div class="text-center py-5 text-danger">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <p>Lỗi kết nối: ${e.message}</p>
+                </div>
+            `;
+            showLoading(false);
+            return;
         }
 
         orderState.orders = orders;
+        console.log('💾 orderState.orders updated:', orderState.orders.length);
         
         // Filter
         let filtered = orders;
         if (status !== 'ALL') {
             filtered = orders.filter(o => o.status === status);
+            console.log('🔍 Filtered by status', status, ':', filtered.length, 'orders');
         }
         
+        console.log('🎨 Calling renderOrders with', filtered.length, 'orders');
         renderOrders(filtered);
         
     } catch (error) {
@@ -122,10 +169,17 @@ async function loadOrders(status) {
 }
 
 function renderOrders(orders) {
+    console.log('🎨 renderOrders() called with', orders.length, 'orders');
     const container = document.getElementById('ordersList');
-    if (!container) return;
+    console.log('🎨 Container element:', container ? 'FOUND' : 'NOT FOUND');
+    
+    if (!container) {
+        console.error('❌ ordersList container not found!');
+        return;
+    }
     
     if (orders.length === 0) {
+        console.log('⚠️ No orders to display');
         container.innerHTML = `
             <div class="text-center py-5">
                 <p class="text-muted mt-3">Chưa có đơn hàng nào</p>
@@ -133,6 +187,8 @@ function renderOrders(orders) {
         `;
         return;
     }
+    
+    console.log('✅ Rendering', orders.length, 'orders...');
 
     container.innerHTML = orders.map(order => `
         <div class="order-card" data-order-code="${order.orderCode}">
@@ -360,7 +416,7 @@ async function cancelOrder(orderCode) {
             }
         }
         
-        const url = `${window.BASE_URL}/api/orders/cancel/${orderCode}`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/orders/cancel/${orderCode}`;
         console.log('Cancelling order:', url);
         
         const response = await httpRequest(url, { 

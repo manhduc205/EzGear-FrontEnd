@@ -28,7 +28,8 @@ async function getCartAPI(provinceId = null) {
         }
         
         // Build URL with optional provinceId parameter
-        let url = `http://localhost:8080/api/cart`;
+        const BASE_URL = window.API_BASE_URL || 'http://localhost:8080';
+        let url = `${BASE_URL}/api/cart`;
         if (provinceId) {
             url += `?provinceId=${provinceId}`;
         }
@@ -77,7 +78,8 @@ async function getCartAPI(provinceId = null) {
 async function addItemAPI(item, provinceId = null) {
     try {
         // Build URL with optional provinceId parameter
-        let url = `http://localhost:8080/api/cart/add`;
+        const BASE_URL = window.API_BASE_URL || 'http://localhost:8080';
+        let url = `${BASE_URL}/api/cart/add`;
         if (provinceId) {
             url += `?provinceId=${provinceId}`;
         }
@@ -113,7 +115,7 @@ async function addItemAPI(item, provinceId = null) {
 async function updateQuantityAPI(skuId, quantity, provinceId = null) {
     try {
         // Build URL with quantity and optional provinceId parameters
-        let url = `${window.BASE_URL}/api/cart/update/${skuId}?quantity=${quantity}`;
+        let url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/cart/update/${skuId}?quantity=${quantity}`;
         if (provinceId) {
             url += `&provinceId=${provinceId}`;
         }
@@ -157,7 +159,7 @@ async function updateQuantityAPI(skuId, quantity, provinceId = null) {
 async function removeItemAPI(skuId, provinceId = null) {
     try {
         // Build URL with optional provinceId parameter
-        let url = `${window.BASE_URL}/api/cart/remove/${skuId}`;
+        let url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/cart/remove/${skuId}`;
         if (provinceId) {
             url += `?provinceId=${provinceId}`;
         }
@@ -196,7 +198,7 @@ async function removeItemAPI(skuId, provinceId = null) {
  */
 async function clearCartAPI() {
     try {
-        const response = await fetch(`${window.BASE_URL}/api/cart/clear`, {
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/cart/clear`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -244,7 +246,8 @@ function renderCartItems() {
         const price = item.price || 0;
         const originalPrice = item.originalPrice || 0;
         const skuId = item.skuId;
-        const productId = item.productId || 0;
+        // Create a slug from productName if productId is not available
+        const productSlug = (item.productId || productNameToSlug(productName));
         const quantity = item.quantity || 1;
         const stockQuantity = item.availableQuantity || 0;
         const variant = item.skuName || '';
@@ -254,11 +257,6 @@ function renderCartItems() {
         
         return `
         <div class="cart-item ${cartState.selectedItems.has(skuId) ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}" data-sku-id="${skuId}">
-            ${isOutOfStock ? `
-            <div class="sold-out-tag">
-                <img src="../../assets/img/sold-out.png" alt="Hết hàng">
-            </div>` : ''}
-
             <!-- Checkbox -->
             <div class="item-checkbox">
                 <input 
@@ -271,7 +269,11 @@ function renderCartItems() {
             </div>
 
             <!-- Image -->
-            <div class="item-image">
+            <div class="item-image" onclick="viewProduct('${productSlug}')" style="cursor: pointer; position: relative;">
+                ${isOutOfStock ? `
+                <div class="sold-out-tag">
+                    <img src="../../assets/img/sold-out.png" alt="Hết hàng">
+                </div>` : ''}
                 <img src="${productImage}" 
                      alt="${productName}"
                      class="product-img"
@@ -280,7 +282,7 @@ function renderCartItems() {
 
             <!-- Info -->
             <div class="item-info">
-                <div class="item-name" onclick="viewProduct(${productId})">
+                <div class="item-name" onclick="viewProduct('${productSlug}')">
                     ${productName}
                 </div>
                 
@@ -716,9 +718,9 @@ async function applyVoucherCode(code) {
 
         // Try multiple endpoint patterns to be robust
         const endpoints = [
-            `http://localhost:8080/api/voucher/validate/${voucherCode}`,
-            `http://localhost:8080/api/voucher/validate?code=${encodeURIComponent(voucherCode)}`,
-            `http://localhost:8080/api/voucher/validate`
+            `${window.API_BASE_URL}/api/voucher/validate/${voucherCode}`,
+            `${window.API_BASE_URL}/api/voucher/validate?code=${encodeURIComponent(voucherCode)}`,
+            `${window.API_BASE_URL}/api/voucher/validate`
         ];
 
         for (const url of endpoints) {
@@ -767,7 +769,7 @@ async function applyVoucherCode(code) {
             
             try {
                 // Get available vouchers and validate client-side
-                const availableResponse = await fetch('http://localhost:8080/api/voucher/available', {
+                const availableResponse = await fetch(`${window.API_BASE_URL}/api/voucher/available`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -995,8 +997,24 @@ function proceedToCheckout() {
 /**
  * View product details
  */
-function viewProduct(productId) {
-    window.location.href = `/product-detail.html?id=${productId}`;
+/**
+ * Convert product name to URL slug
+ * @param {string} name - Product name
+ * @returns {string} - URL-safe slug
+ */
+function productNameToSlug(name) {
+    if (!name) return 'product';
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/đ/g, 'd')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+}
+
+function viewProduct(slugOrId) {
+    window.location.href = `../product/product-detail.html?slug=${slugOrId}`;
 }
 
 // ==================== UTILITY FUNCTIONS ====================
@@ -1163,7 +1181,7 @@ async function fetchLocations() {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${window.BASE_URL}/api/locations`, {
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/locations`, {
             headers: headers
         });
         
@@ -1200,81 +1218,39 @@ async function fetchLocations() {
 }
 
 /**
- * Open location modal
+ * Setup listener for address changes from shared header component
  */
-function openLocationModal() {
-    const modal = document.getElementById('locationModal');
-    modal.classList.add('show');
-    
-    document.getElementById('locationSearchInput').value = '';
-    
-    if (locationState.locations.length === 0) {
-        fetchLocations().then(() => renderLocations(locationState.locations));
-    } else {
-        renderLocations(locationState.locations);
-    }
-}
-
-/**
- * Close location modal
- */
-function closeLocationModal() {
-    document.getElementById('locationModal').classList.remove('show');
-}
-
-/**
- * Render locations list
- */
-function renderLocations(locations) {
-    const list = document.getElementById('locationList');
-    
-    if (locations.length === 0) {
-        list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">Không tìm thấy kết quả</div>';
-        return;
-    }
-    
-    list.innerHTML = locations.map(loc => `
-        <div class="location-item ${loc.id === locationState.selectedLocationId ? 'selected' : ''}" 
-             onclick="selectLocation(${loc.id}, '${loc.name}')">
-            <span>${loc.name}</span>
-            <i class="fas fa-check-circle"></i>
-        </div>
-    `).join('');
-}
-
-/**
- * Handle location search
- */
-function handleLocationSearch() {
-    const keyword = document.getElementById('locationSearchInput').value.toLowerCase();
-    const filtered = locationState.locations.filter(loc => 
-        loc.name.toLowerCase().includes(keyword)
-    );
-    renderLocations(filtered);
+function setupAddressChangeListener() {
+    window.addEventListener('locationChanged', (event) => {
+        const { id, name } = event.detail;
+        console.log('📍 Location changed event received:', { id, name });
+        
+        const previousLocationId = locationState.selectedLocationId;
+        locationState.selectedLocationId = id;
+        
+        // Update cart state with new province ID
+        cartState.currentProvinceId = id;
+        
+        // Only reload if location actually changed and we're logged in
+        if (previousLocationId !== id && TokenHelper.isLoggedIn()) {
+            console.log('🔄 Reloading cart with new provinceId:', id);
+            showToast(`Đã chọn khu vực: ${name}`, 'success');
+            loadCart();
+        }
+    });
 }
 
 /**
  * Select location and reload cart with new province inventory
+ * This function is called from the shared header when user changes location
  */
 function selectLocation(id, name, close = true) {
     const previousLocationId = locationState.selectedLocationId;
     locationState.selectedLocationId = id;
     
-    const headerLocationText = document.querySelector('.header-location .text-large');
-    if (headerLocationText) {
-        headerLocationText.textContent = name;
-    }
-    
     localStorage.setItem('selectedLocation', JSON.stringify({ id, name }));
     
-    if (document.getElementById('locationModal').classList.contains('show')) {
-        handleLocationSearch();
-    }
-    
-    if (close) {
-        closeLocationModal();
-        showToast(`Đã chọn khu vực: ${name}`, 'success');
-    }
+    showToast(`Đã chọn khu vực: ${name}`, 'success');
     
     // Update cart state with new province ID and reload cart to check inventory
     cartState.currentProvinceId = id;
@@ -1290,10 +1266,19 @@ function selectLocation(id, name, close = true) {
  * Initialize cart page
  */
 function initCart() {
-    // Initialize header
-    initUserInfo();
+    // Load shared header component
+    if (typeof ComponentLoader !== 'undefined') {
+        ComponentLoader.load('#header-container', '../../components/header.html');
+    }
+    
+    // Update cart badge (shared header will call updateCartBadge after loading)
     updateCartBadge();
+    
+    // Fetch locations for inventory checking
     fetchLocations();
+    
+    // Setup address change listener for header location changes
+    setupAddressChangeListener();
     
     // Check authentication
     if (!TokenHelper.isLoggedIn()) {

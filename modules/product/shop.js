@@ -1,7 +1,7 @@
 /* ==================== EZGEAR SHOP JS - DYNAMIC CATEGORY SECTIONS ==================== */
 
-// API Base URL
-const BASE_URL = window.BASE_URL || 'http://127.0.0.1:8080';
+// API Base URL - Sử dụng từ config.js
+const BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:8080';
 
 // Category Icons Mapping (Material Symbols)
 const CATEGORY_ICONS = {

@@ -28,6 +28,9 @@ function base64ToFile(base64String, filename) {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Order-detail.js DOMContentLoaded');
+    console.log('📍 window.API_BASE_URL:', window.API_BASE_URL);
+    console.log('📍 TokenHelper available:', typeof TokenHelper !== 'undefined');
     initOrderDetailPage();
     initHeaderUser();
 
@@ -60,57 +63,101 @@ function initOrderDetailPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const orderCode = urlParams.get('orderCode');
     
+    console.log('📋 URL Params:', window.location.search);
+    console.log('📋 Order Code from URL:', orderCode);
+    
     if (!orderCode) {
+        console.error('❌ No orderCode in URL');
         alert('Không tìm thấy mã đơn hàng');
         window.location.href = './order.html';
         return;
     }
     
+    console.log('✅ Loading order detail for:', orderCode);
     loadOrderDetail(orderCode);
 }
 
 async function loadOrderDetail(orderCode) {
+    console.log('🔄 loadOrderDetail() called with:', orderCode);
     showLoading(true);
     try {
         if (!TokenHelper.isLoggedIn()) {
+            console.error('❌ User not logged in');
             window.location.href = '../auth/auth.html';
             return;
         }
 
         // Call API to get order detail
-        const url = `${window.BASE_URL}/api/orders/${orderCode}`;
+        const baseUrl = window.API_BASE_URL || 'http://localhost:8080';
+        const url = `${baseUrl}/api/orders/${orderCode}`;
+        
+        console.log('🌐 Fetching order detail from:', url);
+        console.log('🔑 Token exists:', !!TokenHelper.getAccessToken());
         
         const response = await httpRequest(url, { method: 'GET' });
+        console.log('📥 Response received:', response);
+        console.log('📥 Response type:', typeof response);
         
         // Handle response structure
         let order = null;
         if (response.payload) {
+            console.log('✅ Using response.payload');
             order = response.payload;
         } else if (response.data) {
+            console.log('✅ Using response.data');
             order = response.data;
         } else {
+            console.log('✅ Using response directly');
             order = response;
         }
         
-        if (!order) throw new Error('Order not found');
+        console.log('📦 Final order object:', order);
+        
+        if (!order) {
+            console.error('❌ Order is null/undefined');
+            throw new Error('Order not found');
+        }
         
         orderDetailState.order = order;
+        console.log('💾 Order saved to state');
+        
+        console.log('🎨 Rendering order detail...');
         renderOrderDetail(order);
         checkAndShowActions(order);
-        // loadShipmentHistory(order); // Uncomment if shipment history API is available
         
     } catch (error) {
-        console.error('Error loading order detail:', error);
+        console.error('❌ Error loading order detail:', error);
+        console.error('❌ Error name:', error.name);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error stack:', error.stack);
         showLoading(false);
         
-        // Show error message
-        const errorMsg = error.message || 'Không thể tải chi tiết đơn hàng';
+        // Show detailed error message
+        let errorMsg = 'Không thể tải chi tiết đơn hàng';
+        
+        if (error.message === 'Lỗi hệ thống' || error.message.includes('SERVER_ERROR')) {
+            errorMsg = `
+⚠️ Lỗi từ server khi tải đơn hàng
+
+Có thể do:
+- Đơn hàng không tồn tại
+- Server đang gặp sự cố
+- Dữ liệu đơn hàng bị lỗi
+
+Vui lòng thử lại sau hoặc liên hệ hỗ trợ.
+            `.trim();
+        } else {
+            errorMsg = error.message || errorMsg;
+        }
+        
+        console.log('🚨 Showing error to user:', errorMsg);
         alert(errorMsg);
         
-        // Redirect back to order list after 1 second
+        // Redirect back to order list after 2 seconds
+        console.log('🔙 Redirecting to order list in 2s...');
         setTimeout(() => {
             window.location.href = './order.html';
-        }, 1000);
+        }, 2000);
     } finally {
         showLoading(false);
     }
@@ -249,7 +296,7 @@ async function loadShipmentHistory(order) {
         const orderId = order.id || order.orderId || order.orderCode; // fallback orderCode if API accepts
         if (!orderId) return;
 
-        const url = `${window.BASE_URL}/api/shipment-history/tracking/${orderId}`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/shipment-history/tracking/${orderId}`;
         const response = await httpRequest(url, { method: 'GET' });
 
         const data = response.payload || response.data || response;
@@ -506,7 +553,7 @@ async function toggleProductReviews(skuId) {
 
 // Fetch reviews for a product (page, limit)
 async function fetchProductReviews(productId, page = 0, limit = 5) {
-    const url = `${window.BASE_URL}/api/reviews/product/${productId}?page=${page}&limit=${limit}`;
+    const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews/product/${productId}?page=${page}&limit=${limit}`;
     const res = await httpRequest(url, { method: 'GET' });
     const payload = res.payload || res.data || res;
     // If payload is a Page-like object, try to get content
@@ -696,7 +743,7 @@ async function submitReviews() {
             });
         
         
-        const url = `${window.BASE_URL}/api/reviews`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews`;
         
         // Submit each review with FormData
         const promises = reviewsToSubmit.map((review, index) => {
@@ -785,7 +832,7 @@ async function loadInvoice() {
     
     try {
         // First try to get invoice by order ID
-        const url = `${window.BASE_URL}/api/invoices/order/${order.id}`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/invoices/order/${order.id}`;
         
         const response = await httpRequest(url, { method: 'GET' });
         const invoice = response.payload || response.data || response;

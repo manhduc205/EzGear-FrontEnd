@@ -5,8 +5,8 @@
 
 // ==================== CONSTANTS ====================
 
-// Use global BASE_URL from api.js for consistency
-const API_BASE_URL = window.BASE_URL || 'http://127.0.0.1:8080';
+// Use global API_BASE_URL from config.js
+const API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:8080';
 
 // Category slug to ID mapping (from backend)
 const CATEGORY_SLUG_TO_ID = {

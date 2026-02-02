@@ -121,7 +121,8 @@ class VoucherModal {
             `;
             
             // Gọi API thực để lấy danh sách voucher
-            const response = await fetch('http://localhost:8080/api/voucher/available', {
+            const BASE_URL = window.API_BASE_URL || 'http://localhost:8080';
+            const response = await fetch(`${BASE_URL}/api/voucher/available`, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',

@@ -16,11 +16,13 @@ let checkoutState = {
 };
 
 // ==================== API ENDPOINTS ====================
-const CHECKOUT_API = `http://localhost:8080/api/orders/place`;
-const ADDRESS_API = `http://localhost:8080/api/customer-addresses`;
-const SHIPPING_SERVICES_API = `http://localhost:8080/api/shipping/available-services`;
-const SHIPPING_FEE_API = `http://localhost:8080/api/shipping/fee`;
-const APPLY_VOUCHER_API = `http://localhost:8080/api/voucher/apply`;
+// Sử dụng API_BASE_URL từ config.js
+const BASE_URL = window.API_BASE_URL || 'http://localhost:8080';
+const CHECKOUT_API = `${BASE_URL}/api/orders/place`;
+const ADDRESS_API = `${BASE_URL}/api/customer-addresses`;
+const SHIPPING_SERVICES_API = `${BASE_URL}/api/shipping/available-services`;
+const SHIPPING_FEE_API = `${BASE_URL}/api/shipping/fee`;
+const APPLY_VOUCHER_API = `${BASE_URL}/api/voucher/apply`;
 
 // ==================== INITIALIZATION ====================
 
@@ -39,7 +41,65 @@ async function initCheckout() {
         return;
     }
     
-    // Get cart items from sessionStorage (passed from cart page) or localStorage (cart key)
+    // Check if this is a "Buy Now" checkout (direct from product detail)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isBuyNow = urlParams.get('buyNow') === 'true';
+    
+    if (isBuyNow) {
+        console.log('🛍️ Buy Now checkout detected');
+        const buyNowData = localStorage.getItem('buyNowCheckout');
+        
+        if (!buyNowData) {
+            showToast('Không tìm thấy thông tin sản phẩm', 'warning');
+            setTimeout(() => {
+                window.location.href = '../product/shop.html';
+            }, 1500);
+            return;
+        }
+        
+        try {
+            const buyNowItem = JSON.parse(buyNowData);
+            console.log('📦 Buy Now item:', buyNowItem);
+            
+            // Convert to cart item format
+            checkoutState.cartItems = [{
+                skuId: buyNowItem.skuId,
+                quantity: buyNowItem.quantity,
+                productName: buyNowItem.productName,
+                skuName: buyNowItem.skuName,
+                price: buyNowItem.price,
+                imageUrl: buyNowItem.imageUrl,
+                selected: true
+            }];
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Render products
+            renderProductsFromCart();
+            
+            // Initialize voucher modal
+            initializeVoucherModal();
+            
+            // Calculate summary
+            calculateLocalSummary();
+            
+            // Load addresses and auto-select the one used in buyNow
+            await loadUserAddresses(buyNowItem.addressId);
+            
+            // Clear buyNowCheckout from localStorage after use
+            localStorage.removeItem('buyNowCheckout');
+            
+            return;
+            
+        } catch (error) {
+            console.error('❌ Buy Now init error:', error);
+            showToast('Lỗi khởi tạo thanh toán', 'error');
+            return;
+        }
+    }
+    
+    // Normal checkout from cart
     const savedCartItems = sessionStorage.getItem('checkoutItems') || localStorage.getItem('cart');
     const savedVoucher = sessionStorage.getItem('checkoutVoucher');
     
@@ -261,7 +321,7 @@ function updateOrderSummary() {
 /**
  * Load user addresses
  */
-async function loadUserAddresses() {
+async function loadUserAddresses(preSelectedAddressId = null) {
     try {
         const response = await fetch(ADDRESS_API, {
             method: 'GET',
@@ -289,33 +349,43 @@ async function loadUserAddresses() {
                 is_default: addr.is_default
             })));
             
-            // 🔥 FIX: Auto-select default address - Check multiple field names
-            const defaultAddress = addresses.find(addr => {
-                return addr.isDefault === true || 
-                       addr.default === true || 
-                       addr.is_default === true ||
-                       addr.isDefault === 1 ||
-                       addr.default === 1 ||
-                       addr.is_default === 1;
-            });
+            // 🛍️ If preSelectedAddressId is provided (Buy Now), use it
+            let addressToSelect = null;
             
-            if (defaultAddress) {
-                console.log('🏠 Auto-selecting default address:', defaultAddress);
+            if (preSelectedAddressId) {
+                console.log('🛍️ Buy Now: Pre-selecting address ID:', preSelectedAddressId);
+                addressToSelect = addresses.find(addr => addr.id === preSelectedAddressId);
+            }
+            
+            // 🔥 FIX: Auto-select default address if no pre-selection
+            if (!addressToSelect) {
+                addressToSelect = addresses.find(addr => {
+                    return addr.isDefault === true || 
+                           addr.default === true || 
+                           addr.is_default === true ||
+                           addr.isDefault === 1 ||
+                           addr.default === 1 ||
+                           addr.is_default === 1;
+                });
+            }
+            
+            if (addressToSelect) {
+                console.log('🏠 Auto-selecting address:', addressToSelect);
                 console.log('🏠 Default field values:', {
-                    isDefault: defaultAddress.isDefault,
-                    default: defaultAddress.default,
-                    is_default: defaultAddress.is_default
+                    isDefault: addressToSelect.isDefault,
+                    default: addressToSelect.default,
+                    is_default: addressToSelect.is_default
                 });
                 
                 // 🔥 FIX: Ensure proper selection and UI update
-                await selectAddress(defaultAddress);
+                await selectAddress(addressToSelect);
                 
                 // 🔥 FIX: Force UI update if selectAddress didn't work properly
                 setTimeout(() => {
                     if (checkoutState.selectedAddress) {
                         document.getElementById('noAddress').style.display = 'none';
                         document.getElementById('selectedAddressCard').style.display = 'flex';
-                        console.log('✅ UI updated - default address selected');
+                        console.log('✅ UI updated - address selected');
                     } else {
                         console.warn('⚠️ selectAddress failed, showing address selection');
                         document.getElementById('noAddress').style.display = 'block';
@@ -519,7 +589,7 @@ let editSelectedProvince = { id: null, name: '' };
 let editSelectedDistrict = { id: null, name: '' };
 let editSelectedWard = { code: '', name: '' };
 
-const GHN_API = `${window.BASE_URL}/api/ghn-locations`;
+const GHN_API = `${window.API_BASE_URL || 'http://localhost:8080'}/api/ghn-locations`;
 
 /**
  * Select address label (Nhà Riêng / Văn Phòng)
@@ -1045,7 +1115,7 @@ async function loadShippingServices() {
     try {
         // First, get nearest branch based on address
         // If backend doesn't provide branch API, we can let backend auto-detect in shipping service call
-        const branchResponse = await fetch(`${window.BASE_URL}/api/warehouses/nearest?addressId=${checkoutState.selectedAddress.id}`, {
+        const branchResponse = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/warehouses/nearest?addressId=${checkoutState.selectedAddress.id}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

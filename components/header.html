@@ -875,44 +875,218 @@
     }
 
     /* Media Queries */
+    @media (max-width: 992px) {
+        .shop-header-inner {
+            padding: 12px 15px;
+        }
+        
+        .shop-header-center {
+            margin: 0 1rem;
+            max-width: 400px;
+        }
+        
+        .header-location .location-text {
+            display: none;
+        }
+        
+        .header-location {
+            min-width: auto;
+            padding: 8px 10px;
+        }
+        
+        .btn-cart span:not(.cart-badge) {
+            display: none;
+        }
+        
+        .btn-cart {
+            padding: 8px 12px;
+        }
+        
+        .user-name {
+            display: none;
+        }
+        
+        .btn-login span:first-child {
+            display: none;
+        }
+    }
+    
     @media (max-width: 768px) {
-        .shop-header {
-            padding: 12px 20px;
-            flex-direction: column;
-            gap: 12px;
+        .shop-header-inner {
+            padding: 10px 12px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .shop-header-left {
-            width: 100%;
-            justify-content: space-between;
+            order: 1;
         }
         
         .shop-header-right {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .header-location {
-            width: 100%;
-            justify-content: space-between;
-            margin-right: 0;
-            margin-bottom: 10px;
+            order: 2;
+            gap: 8px;
         }
         
-        .nav-item {
-            padding: 10px 12px;
-            font-size: 0.8rem;
+        .shop-header-center {
+            order: 3;
+            flex: 1 1 100%;
+            margin: 0;
+            max-width: 100%;
         }
-    }
-
-    @media (max-width: 480px) {
+        
         .shop-header-left h1 {
             font-size: 1.2rem;
         }
         
+        .shop-logo {
+            font-size: 1.5rem;
+        }
+        
+        .header-location {
+            padding: 6px 8px;
+        }
+        
+        .btn-cart {
+            padding: 6px 10px;
+        }
+        
+        .btn-cart i {
+            font-size: 1.1rem;
+        }
+        
+        .cart-badge {
+            padding: 2px 5px;
+            font-size: 0.65rem;
+            top: -5px;
+            right: -5px;
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 0.9rem;
+        }
+        
+        .header-search-input {
+            padding: 0.6rem 2.5rem 0.6rem 1rem;
+            font-size: 13px;
+        }
+        
+        .search-dropdown {
+            max-height: 60vh;
+        }
+        
+        .search-product-image {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .search-product-name {
+            font-size: 12px;
+        }
+        
+        .search-product-price {
+            font-size: 13px;
+        }
+        
+        /* Modal styles for mobile */
+        .location-modal {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100vh;
+            max-height: 100vh;
+            border-radius: 0;
+            margin: 0;
+        }
+        
         .location-list {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
             gap: 0;
+        }
+    }
+
+    /* iPhone 14 Pro Max: 430px viewport */
+    @media (max-width: 480px) {
+        .shop-header-inner {
+            padding: 8px 12px;
+            gap: 8px;
+        }
+        
+        .shop-header-left {
+            gap: 8px;
+        }
+        
+        .shop-header-left h1 {
+            font-size: 1.1rem;
+        }
+        
+        .shop-logo {
+            font-size: 1.3rem;
+        }
+        
+        .shop-header-right {
+            gap: 8px;
+        }
+        
+        .header-location {
+            padding: 6px 8px;
+            border-radius: 8px;
+        }
+        
+        .header-location .location-icon {
+            font-size: 1rem;
+        }
+        
+        .btn-cart {
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        
+        .btn-cart i {
+            font-size: 1.1rem;
+        }
+        
+        .cart-badge {
+            padding: 2px 5px;
+            font-size: 0.65rem;
+            min-width: 16px;
+        }
+        
+        .btn-login {
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        
+        .header-search-input {
+            padding: 10px 36px 10px 16px;
+            font-size: 14px;
+            border-radius: 10px;
+        }
+        
+        .header-search-btn {
+            right: 8px;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .header-search-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+        }
+        
+        .user-dropdown {
+            right: -10px;
+            min-width: 160px;
+        }
+        
+        .dropdown-item {
+            padding: 10px 12px;
+            font-size: 13px;
         }
     }
 </style>
@@ -990,7 +1164,7 @@
             }
 
             // Use window.BASE_URL from config.js, fallback if not available
-            const baseUrl = window.BASE_URL || 'http://localhost:8080';
+            const baseUrl = window.API_BASE_URL || 'http://localhost:8080';
             const response = await fetch(`${baseUrl}/api/locations`, {
                 headers: headers
             });
@@ -1194,7 +1368,7 @@
             if (!keyword || keyword.length < 2) return [];
             
             try {
-                const baseUrl = window.BASE_URL || 'http://127.0.0.1:8080';
+                const baseUrl = window.API_BASE_URL || 'http://127.0.0.1:8080';
                 
                 // 📡 Fetch all categories from API
                 const response = await fetch(`${baseUrl}/api/categories`, {
@@ -1265,7 +1439,7 @@
             if (!keyword || keyword.trim().length < 2) return [];
             
             try {
-                const baseUrl = window.BASE_URL || 'http://127.0.0.1:8080';
+                const baseUrl = window.API_BASE_URL || 'http://127.0.0.1:8080';
                 const params = new URLSearchParams({
                     keyword: keyword.trim(),
                     sortBy: 'relevance',
@@ -1519,7 +1693,7 @@
             try {
                 // Check if user is logged in
                 if (typeof TokenHelper !== 'undefined' && TokenHelper.isLoggedIn()) {
-                    const baseUrl = window.BASE_URL || 'http://127.0.0.1:8080';
+                    const baseUrl = window.API_BASE_URL || 'http://127.0.0.1:8080';
                     const token = TokenHelper.getAccessToken();
                     
                     const response = await fetch(`${baseUrl}/api/cart`, {

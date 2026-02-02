@@ -1,5 +1,5 @@
 // Branches Management JavaScript
-const GHN_API = `${window.BASE_URL}/api/ghn/location`;
+const GHN_API = `${window.API_BASE_URL}/api/ghn/location`;
 
 let branches = [];
 let filteredBranches = [];

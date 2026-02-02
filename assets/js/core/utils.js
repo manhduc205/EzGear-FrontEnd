@@ -195,7 +195,7 @@ async function handleRefreshToken(url, options) {
 
   try {
     console.log('🔄 Refreshing token...');
-    const refreshResponse = await fetch(`${window.BASE_URL}/api/auth/refresh-token`, {
+    const refreshResponse = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken })

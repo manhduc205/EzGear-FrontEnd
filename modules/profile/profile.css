@@ -72,6 +72,80 @@ body {
         padding-bottom: 30px;
         margin-bottom: 30px;
     }
+    
+    body {
+        padding-top: 90px;
+    }
+    
+    .profile-card-header {
+        padding: 15px 20px;
+    }
+    
+    .profile-card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .profile-card-body {
+        padding: 20px;
+    }
+    
+    .form-label {
+        font-size: 0.85rem;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+    
+    .avatar-upload-container {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-top: 100px;
+    }
+    
+    .profile-card {
+        border-radius: 0;
+        min-height: auto;
+    }
+    
+    .profile-card-header {
+        padding: 12px 15px;
+    }
+    
+    .profile-card-header h5 {
+        font-size: 0.95rem;
+    }
+    
+    .profile-card-body {
+        padding: 15px;
+    }
+    
+    .form-label {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+    
+    .avatar-upload-container {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .btn-primary,
+    .btn-outline-secondary {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
 }
 
 .border-end-md {

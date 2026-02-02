@@ -10,7 +10,7 @@
  * @returns {Promise} - Response data
  */
 async function loginAPI(email, password) {
-  const url = `${window.BASE_URL}/api/auth/login`;
+  const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/login`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -37,7 +37,7 @@ async function loginAPI(email, password) {
  * @returns {Promise} - Response data
  */
 async function registerAPI(fullName, email, password, retypePassword) {
-  const url = `${window.BASE_URL}/api/auth/register`;
+  const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/register`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -63,7 +63,7 @@ async function registerAPI(fullName, email, password, retypePassword) {
  * @returns {Promise} - Response data
  */
 async function logoutAPI(userId, accessToken, refreshToken) {
-  const url = `${window.BASE_URL}/api/auth/logout`;
+  const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/logout`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -87,7 +87,7 @@ async function logoutAPI(userId, accessToken, refreshToken) {
  * @returns {Promise} - Response data
  */
 async function loginGoogleAPI(token) {
-  const url = `${window.BASE_URL}/api/auth/social/google`;
+  const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/social/google`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -111,7 +111,7 @@ async function loginGoogleAPI(token) {
  * @returns {Promise} - Response data
  */
 async function loginFacebookAPI(token) {
-  const url = `${window.BASE_URL}/api/auth/social/facebook`;
+  const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/auth/social/facebook`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -433,7 +433,7 @@ async function handleRegister(e) {
 
     if (res.success) {
       alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
-      window.location.href = CONFIG.ROUTES.LOGIN;
+      window.location.href = './auth.html'; // Redirect to login page
     } else {
       const errorMsg = res.errors ? res.errors.join('\n') : res.error || res.message;
       alert('Đăng ký thất bại:\n' + errorMsg);
@@ -487,7 +487,7 @@ function initSocialLogin() {
   // 1. Cấu hình hàm init cho Facebook SDK
   window.fbAsyncInit = function() {
     FB.init({
-      appId      : CONFIG.SOCIAL_KEYS.FACEBOOK_APP_ID,
+      appId      : window.SOCIAL_CONFIG.FACEBOOK_APP_ID,
       cookie     : true,
       xfbml      : true,
       version    : 'v18.0'
@@ -510,7 +510,7 @@ function initSocialLogin() {
       }
       
       const client = google.accounts.oauth2.initTokenClient({
-        client_id: CONFIG.SOCIAL_KEYS.GOOGLE_CLIENT_ID, // Cần thay thế bằng Client ID thật
+        client_id: window.SOCIAL_CONFIG.GOOGLE_CLIENT_ID,
         scope: 'email profile openid',
         callback: async (response) => {
           if (response.access_token) {
@@ -591,7 +591,7 @@ async function handleLogout() {
     TokenHelper.clearTokens();
     
     alert("Đăng xuất thành công!");
-    window.location.href = CONFIG.ROUTES.LOGIN;
+    window.location.href = './auth.html';
     
   } catch (err) {
     console.error("Logout error:", err);
@@ -599,7 +599,7 @@ async function handleLogout() {
     // Vẫn xóa token local ngay cả khi API lỗi
     TokenHelper.clearTokens();
     alert("Đã đăng xuất!");
-    window.location.href = CONFIG.ROUTES.LOGIN;
+    window.location.href = './auth.html';
   }
 }
 

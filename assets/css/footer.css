@@ -208,22 +208,178 @@
         margin-top: 60px;
     }
 
+    .footer-container {
+        padding: 0 16px;
+    }
+
     .footer-top {
         grid-template-columns: 1fr;
-        gap: 32px;
+        gap: 28px;
+        padding-bottom: 30px;
+    }
+    
+    .footer-column {
+        gap: 15px;
+    }
+    
+    .footer-title {
+        font-size: 20px;
+    }
+    
+    .footer-title .material-symbols-outlined {
+        font-size: 28px;
+    }
+    
+    .footer-heading {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .footer-links {
+        gap: 10px;
+    }
+    
+    .footer-links a {
+        font-size: 13px;
+    }
+    
+    .contact-item {
+        font-size: 13px;
+    }
+    
+    .footer-social {
+        gap: 10px;
+    }
+    
+    .social-link {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
     }
 
     .footer-bottom-content {
         flex-direction: column;
         text-align: center;
     }
+    
+    .footer-bottom {
+        padding: 20px 0;
+    }
+    
+    .copyright {
+        font-size: 12px;
+    }
 
     .footer-payment {
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
+        font-size: 12px;
+    }
+    
+    .payment-methods {
+        gap: 8px;
+    }
+    
+    .payment-methods img {
+        height: 24px;
+        padding: 3px 6px;
     }
 
     .footer-map {
         margin-top: 16px;
+    }
+}
+
+/* iPhone 14 Pro Max: 430px viewport */
+@media (max-width: 480px) {
+    .footer {
+        padding: 32px 0 0;
+        margin-top: 40px;
+    }
+    
+    .footer-container {
+        padding: 0 16px;
+    }
+    
+    .footer-top {
+        gap: 28px;
+        padding-bottom: 28px;
+    }
+    
+    .footer-column {
+        gap: 14px;
+    }
+    
+    .footer-title {
+        font-size: 20px;
+        gap: 8px;
+    }
+    
+    .footer-title .material-symbols-outlined {
+        font-size: 26px;
+    }
+    
+    .footer-desc {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .footer-heading {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .footer-links {
+        gap: 10px;
+    }
+    
+    .footer-links a {
+        font-size: 14px;
+        padding: 4px 0;
+    }
+    
+    .contact-item {
+        font-size: 14px;
+        gap: 12px;
+        padding: 6px 0;
+    }
+    
+    .contact-item .material-symbols-outlined {
+        font-size: 20px;
+    }
+    
+    .footer-social {
+        gap: 12px;
+    }
+    
+    .social-link {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .footer-bottom {
+        padding: 20px 0;
+    }
+    
+    .copyright {
+        font-size: 13px;
+    }
+    
+    .footer-payment {
+        font-size: 13px;
+        gap: 10px;
+    }
+    
+    .payment-methods {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .payment-methods img {
+        height: 28px;
+        padding: 4px 8px;
+        border-radius: 6px;
     }
 }

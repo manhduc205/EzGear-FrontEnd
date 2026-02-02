@@ -51,15 +51,15 @@
 }
 
 /* Review item hover effect */
-#reviews-list > div {
+.review-item {
     transition: background-color 0.2s ease;
 }
 
-#reviews-list > div:hover {
+.review-item:hover {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
-.dark #reviews-list > div:hover {
+.dark .review-item:hover {
     background-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -75,24 +75,36 @@
 .review-avatar-orange { background-color: #f97316; }
 .review-avatar-pink { background-color: #ec4899; }
 
-/* Review image lightbox */
-#reviews-list img {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Review image styling */
+.review-item img {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-#reviews-list img:hover {
+.review-item img:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #D70018 !important;
 }
 
 /* Tag hover effect */
-#reviews-list .rounded-full {
+.review-item .rounded-full {
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-#reviews-list .rounded-full:hover {
-    background-color: rgba(220, 38, 38, 0.1);
-    transform: translateY(-1px);
+/* Shop response styling */
+.review-item .border-l-4 {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* ==================== FIND IN STORE STYLES ==================== */
@@ -459,15 +471,30 @@
     background: #9ca3af;
 }
 
-/* Mobile responsiveness */
+/* Store modal responsiveness */
+@media (max-width: 768px) {
+    .store-modal .location-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .store-modal .modal-content {
+        max-width: 95%;
+        margin: 10px;
+    }
+}
+
 @media (max-width: 480px) {
-    .location-list {
+    .store-modal .location-list {
         grid-template-columns: 1fr;
         gap: 0;
     }
     
-    .modal-content {
-        max-width: 95%;
+    .store-modal .modal-content {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+        height: 100vh;
     }
 }
 
@@ -599,7 +626,111 @@
 }
 
 /* Mobile responsive adjustments */
+@media (max-width: 992px) {
+    body {
+        padding-top: 70px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    /* Review section */
+    #reviews-section {
+        scroll-margin-top: 90px;
+    }
+    
+    /* Store modal */
+    .store-modal .modal-content {
+        max-width: 90%;
+    }
+    
+    .location-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
+    body {
+        padding-top: 90px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    /* Breadcrumb */
+    nav.flex.text-sm {
+        font-size: 0.75rem;
+        padding: 8px 0;
+    }
+    
+    /* Product title section */
+    h1.text-2xl {
+        font-size: 1.25rem !important;
+        line-height: 1.4;
+    }
+    
+    /* Action buttons in header */
+    .flex.space-x-4.text-accent-blue {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .flex.space-x-4.text-accent-blue button {
+        font-size: 0.75rem;
+    }
+    
+    .flex.space-x-4.text-accent-blue .material-icons-outlined {
+        font-size: 1rem;
+    }
+    
+    /* Product gallery thumbnails */
+    .custom-scrollbar button {
+        width: 56px;
+        height: 56px;
+    }
+    
+    /* Price section */
+    .text-primary.font-bold {
+        font-size: 1.3rem;
+    }
+    
+    /* Quantity control */
+    .quantity-control {
+        transform: scale(0.9);
+    }
+    
+    /* Buy buttons */
+    button.bg-primary {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+    
+    /* Store location */
+    .store-card {
+        padding: 12px;
+    }
+    
+    .store-card h4 {
+        font-size: 0.9rem;
+    }
+    
+    .location-list {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Specifications */
+    .specs-table td {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+    
+    /* Reviews */
+    #reviews-section {
+        scroll-margin-top: 100px;
+    }
+    
     #editReviewModal .modal-content {
         margin: 1rem;
         max-height: calc(100vh - 2rem);
@@ -616,5 +747,245 @@
     #reviews-pagination button {
         padding: 0.5rem 0.75rem;
         font-size: 0.875rem;
+    }
+    
+    /* Review images */
+    .review-images-grid img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    /* Star rating */
+    #reviews-section .material-icons {
+        font-size: 1.1rem;
+    }
+    
+    /* Modal */
+    .modal-content {
+        max-width: 95%;
+        margin: 10px;
+    }
+}
+
+/* iPhone 14 Pro Max: 430px viewport */
+@media (max-width: 480px) {
+    body {
+        padding-top: 110px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    /* Breadcrumb */
+    nav.flex.text-sm {
+        font-size: 0.8rem;
+        gap: 6px;
+        padding: 8px 0;
+    }
+    
+    nav.flex.text-sm span.mx-2 {
+        margin: 0 6px;
+    }
+    
+    /* Product title */
+    h1.text-2xl {
+        font-size: 1.25rem !important;
+        line-height: 1.4;
+    }
+    
+    /* Rating display */
+    .flex.items-center.text-yellow-500 .material-icons {
+        font-size: 1rem;
+    }
+    
+    .flex.items-center.text-yellow-500 span {
+        font-size: 0.95rem;
+    }
+    
+    /* Action buttons */
+    .flex.space-x-4.text-accent-blue {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .flex.space-x-4.text-accent-blue button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        background: #f3f4f6;
+    }
+    
+    .flex.space-x-4.text-accent-blue button .material-icons-outlined {
+        font-size: 1.1rem;
+    }
+    
+    /* Gallery */
+    .aspect-\[4\/3\] {
+        aspect-ratio: 4 / 3;
+        border-radius: 12px;
+    }
+    
+    .custom-scrollbar {
+        padding: 10px;
+    }
+    
+    .custom-scrollbar button {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+    }
+    
+    /* Navigation arrows in gallery */
+    button.absolute.w-10 {
+        width: 40px;
+        height: 40px;
+    }
+    
+    button.absolute.w-10 .material-icons {
+        font-size: 1.4rem;
+    }
+    
+    /* Price */
+    .text-primary.font-bold {
+        font-size: 1.4rem;
+    }
+    
+    .text-gray-400.line-through {
+        font-size: 0.9rem;
+    }
+    
+    /* SKU options */
+    .grid.grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .grid.grid-cols-4 button {
+        padding: 12px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+    
+    /* Quantity */
+    .quantity-control {
+        transform: scale(1);
+    }
+    
+    .quantity-control button {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .quantity-control input {
+        width: 50px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    /* Buy buttons */
+    button.bg-primary,
+    button.bg-blue-500 {
+        padding: 14px 20px;
+        font-size: 1rem;
+        border-radius: 12px;
+    }
+    
+    button.bg-primary .material-icons,
+    button.bg-blue-500 .material-icons {
+        font-size: 1.2rem;
+    }
+    
+    /* Reviews */
+    #reviews-section {
+        scroll-margin-top: 140px;
+        padding: 16px;
+    }
+    
+    .review-images-grid {
+        gap: 8px;
+    }
+    
+    .review-images-grid img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+    }
+    
+    #editReviewImagesPreview {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    /* Modal */
+    .modal-content {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 16px 16px 0 0;
+        max-height: 90vh;
+    }
+    
+    #editReviewModal .modal-content {
+        margin: 0;
+        max-height: 90vh;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-header {
+        padding: 18px 16px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    /* Store location */
+    .store-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    
+    .store-card h4 {
+        font-size: 0.95rem;
+    }
+    
+    .store-card p {
+        font-size: 0.85rem;
+    }
+    
+    .store-phone-btn,
+    .store-map-btn {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+    
+    /* Related products */
+    .related-products .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    /* Specifications table */
+    .specs-table {
+        font-size: 0.9rem;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .specs-table td {
+        padding: 12px 14px;
+    }
+    
+    /* Tab content */
+    .tab-content {
+        padding: 16px;
+    }
+    
+    /* Product info sections */
+    .bg-surface-light,
+    .bg-surface-dark {
+        border-radius: 12px;
+        padding: 16px;
     }
 }

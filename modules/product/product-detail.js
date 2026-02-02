@@ -45,7 +45,7 @@ let productState = {
         totalPages: 0,
         totalElements: 0,
         currentPage: 0,
-        pageSize: 5
+        pageSize: 10
     },
     galleryImages: [],
     currentImageIndex: 0
@@ -54,12 +54,12 @@ let productState = {
 // ==================== UTILITY FUNCTIONS ====================
 
 /**
- * Get slug from URL
- * URL format: product-detail.html?slug=laptop-dell-xps-15-9530
+ * Get slug or ID from URL
+ * URL format: product-detail.html?slug=laptop-dell-xps-15-9530 or product-detail.html?id=123
  */
 function getSlugFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('slug');
+    return urlParams.get('slug') || urlParams.get('id');
 }
 
 /**
@@ -92,12 +92,67 @@ function generateStarRating(rating, size = 'text-lg') {
 }
 
 /**
+ * Generate star rating HTML with SVG icons (for reviews)
+ */
+function generateStarRatingHTML(rating) {
+    const fullStars = Math.floor(rating);
+    let html = '';
+    for (let i = 0; i < fullStars; i++) {
+        html += `<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 576 512" class="w-4 h-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M259.3 17.8L194 150.2 47.9 171.5c-26.2 3.8-36.7 36.1-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0z"></path></svg>`;
+    }
+    for (let i = fullStars; i < 5; i++) {
+        html += `<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 576 512" class="w-4 h-4 text-gray-300" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M259.3 17.8L194 150.2 47.9 171.5c-26.2 3.8-36.7 36.1-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0z"></path></svg>`;
+    }
+    return html;
+}
+
+/**
+ * Format review date
+ */
+function formatReviewDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Mask username for privacy
+ */
+function maskUsername(username) {
+    if (!username || username.length <= 4) return username;
+    const firstTwo = username.substring(0, 2);
+    const lastTwo = username.substring(username.length - 2);
+    const masked = '*'.repeat(Math.min(9, username.length - 4));
+    return `${firstTwo}${masked}${lastTwo}`;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
  * Get rating label based on score
  */
 function getRatingLabel(rating) {
-    if (rating >= 4.5) return 'Tuyệt vời';
-    if (rating >= 4) return 'Rất tốt';
-    if (rating >= 3) return 'Tốt';
+    if (rating >= 5) return 'Cực kì hài lòng';
+    if (rating >= 4) return 'Hài lòng';
+    if (rating >= 3) return 'Bình thường';
     if (rating >= 2) return 'Bình thường';
     return 'Kém';
 }
@@ -198,7 +253,7 @@ function showToastNotification(message, type = 'info') {
         container.id = 'product-toast-container';
         container.style.cssText = `
             position: fixed;
-            top: 20px;
+            top: 100px;
             right: 20px;
             z-index: 10000;
             display: flex;
@@ -267,12 +322,12 @@ function showToastNotification(message, type = 'info') {
 // ==================== API CALLS ====================
 
 /**
- * Fetch product detail by slug
+ * Fetch product detail by slug or ID
  */
-async function fetchProductDetail(slug) {
+async function fetchProductDetail(slugOrId) {
     try {
-        console.log('📦 Fetching product detail for slug:', slug);
-        const response = await fetch(`${window.BASE_URL}/api/products/${slug}`);
+        console.log('📦 Fetching product detail for:', slugOrId);
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/products/${slugOrId}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -299,7 +354,7 @@ async function fetchProductDetail(slug) {
 async function fetchRelatedProducts(slug) {
     try {
         console.log('📦 Fetching related products for slug:', slug);
-        const response = await fetch(`${window.BASE_URL}/api/products/${slug}/related`);
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/products/${slug}/related`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -324,7 +379,7 @@ async function fetchRelatedProducts(slug) {
 async function fetchReviews(productId, page = 0, limit = 5) {
     try {
         console.log('📝 Fetching reviews for product:', productId, 'page:', page);
-        const response = await fetch(`${window.BASE_URL}/api/reviews/product/${productId}?page=${page}&limit=${limit}`);
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews/product/${productId}?page=${page}&limit=${limit}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -360,7 +415,7 @@ async function addToCart(skuId, quantity = 1) {
         
         console.log('🛒 Adding to cart - SKU ID:', skuId, 'Quantity:', quantity);
         
-        const response = await fetch(`${window.BASE_URL}/api/cart/add`, {
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/cart/add`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1023,31 +1078,69 @@ window.handleBuyNow = async function() {
         return;
     }
     
-    // Add to cart first
-    console.log('⏳ Adding to cart before checkout...');
-    const success = await addToCart(productState.selectedSku.id, 1);
+    // Check if user is logged in
+    if (!TokenHelper.isLoggedIn()) {
+        showToastNotification('Vui lòng đăng nhập để mua hàng', 'error');
+        setTimeout(() => {
+            window.location.href = '/modules/auth/auth.html';
+        }, 800);
+        return;
+    }
     
-    if (success) {
-        console.log('✅ Product added to cart, redirecting to checkout...');
+    try {
+        console.log('🚀 Calling checkout API directly...');
         
-        // Save selected items for checkout
-        const checkoutItems = [{
+        // Get default address
+        const addressesUrl = `${window.API_BASE_URL}/api/customer-addresses`;
+        const addressesResponse = await httpRequest(addressesUrl, { method: 'GET' });
+        console.log('📍 Addresses response:', addressesResponse);
+        
+        const addresses = addressesResponse.payload || addressesResponse.data || addressesResponse || [];
+        const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+        
+        if (!defaultAddress) {
+            showToastNotification('Vui lòng thêm địa chỉ giao hàng trước', 'error');
+            setTimeout(() => {
+                window.location.href = '/modules/address/index.html';
+            }, 1000);
+            return;
+        }
+        
+        console.log('✅ Using address:', defaultAddress);
+        
+        // Prepare checkout payload
+        const checkoutPayload = {
+            cartItems: [{
+                skuId: productState.selectedSku.id,
+                quantity: 1
+            }],
+            addressId: defaultAddress.id,
+            voucherCode: null,
+            paymentMethod: "COD", // Default to COD
+            serviceId: null // Will be selected in checkout page
+        };
+        
+        console.log('📦 Checkout payload:', checkoutPayload);
+        
+        // Save to localStorage for checkout page
+        localStorage.setItem('buyNowCheckout', JSON.stringify({
             skuId: productState.selectedSku.id,
             quantity: 1,
-            selected: true
-        }];
-        localStorage.setItem('checkoutItems', JSON.stringify(checkoutItems));
-
-        // Mark this item as selected in cart API if possible, or assume checkout page handles it.
-        // If checkout page reads directly from cart API, we should ensure the item is selected there.
-        // Assuming checkout page uses cart API and filtered by selected=true or localStorage fallback.
+            addressId: defaultAddress.id,
+            productName: productState.selectedSku.productName || productState.product?.name,
+            skuName: productState.selectedSku.attributeValues || '',
+            price: productState.selectedSku.salePrice || productState.selectedSku.price,
+            imageUrl: productState.selectedSku.imageUrl || productState.product?.imageUrl
+        }));
         
-        // Wait a moment for Toast to be seen
-        setTimeout(() => {
-            window.location.href = '/modules/checkout/checkout.html';
-        }, 800);
-    } else {
-        console.log('❌ Failed to add to cart, not redirecting');
+        console.log('✅ Saved buyNowCheckout to localStorage, redirecting...');
+        
+        // Redirect to checkout page
+        window.location.href = '/modules/checkout/checkout.html?buyNow=true';
+        
+    } catch (error) {
+        console.error('❌ Error during buy now:', error);
+        showToastNotification('Có lỗi xảy ra: ' + error.message, 'error');
     }
 };
 
@@ -1148,11 +1241,114 @@ function setupReviewFilters() {
             btn.classList.remove('border-gray-300', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300');
             
             const filterText = btn.textContent.trim();
-            if (filterText !== 'Tất cả') {
+            let filteredReviews = productState.reviews.content;
+            
+            // Apply filters
+            if (filterText === 'Có hình ảnh') {
+                filteredReviews = filteredReviews.filter(r => r.imageUrls && r.imageUrls.length > 0);
                 showToastNotification(`Đang lọc: ${filterText}`, 'info');
+            } else if (filterText === 'Đã mua hàng') {
+                filteredReviews = filteredReviews.filter(r => r.verified === true);
+                showToastNotification(`Đang lọc: ${filterText}`, 'info');
+            } else if (filterText.includes('sao')) {
+                const rating = parseInt(filterText);
+                filteredReviews = filteredReviews.filter(r => r.rating === rating);
+                showToastNotification(`Đang lọc: ${filterText}`, 'info');
+            } else {
+                // Tất cả
+                filteredReviews = productState.reviews.content;
             }
+            
+            // Render filtered reviews
+            renderFilteredReviews(filteredReviews);
         });
     });
+}
+
+/**
+ * Render filtered reviews
+ */
+function renderFilteredReviews(reviews) {
+    const container = document.getElementById('reviews-list');
+    if (!container) return;
+    
+    if (reviews.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <span class="material-icons text-6xl text-gray-300 dark:text-gray-600">rate_review</span>
+                <p class="text-gray-500 dark:text-gray-400 mt-4">Không có đánh giá phù hợp với bộ lọc này</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    reviews.forEach(review => {
+        const userName = review.userName || 'Người dùng';
+        const avatarLetter = userName.charAt(0).toUpperCase();
+        const avatarColor = getAvatarColor(userName);
+        const ratingLabel = getRatingLabel(review.rating);
+        const formattedDate = formatReviewDate(review.createdAt);
+        
+        html += `
+            <div class="border-t pt-4 pb-2 border-gray-200 dark:border-gray-700 review-item">
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white font-semibold">
+                            ${avatarLetter}
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <span class="font-medium">${maskUsername(userName)}</span>
+                            <span class="text-gray-500"> | ${formattedDate} | </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                                ✓ Đã mua hàng
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-yellow-500">
+                            ${generateStarRatingHTML(review.rating)}
+                            <span class="ml-2 font-semibold text-gray-800 dark:text-gray-200">${ratingLabel}</span>
+                        </div>
+                        ${review.comment ? `
+                            <div class="text-gray-800 dark:text-gray-300 text-sm whitespace-pre-line">${escapeHtml(review.comment)}</div>
+                        ` : ''}
+                        ${review.imageUrls && review.imageUrls.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="w-full">
+                                    <div class="flex gap-2 flex-wrap">
+                                        ${review.imageUrls.map(img => `
+                                            <div class="relative">
+                                                <img src="${img}" 
+                                                    class="h-[100px] object-cover rounded cursor-pointer border border-transparent hover:border-primary transition"
+                                                    onclick="openImageModal('${img}')">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${review.shopResponse ? `
+                            <div class="mt-3 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-primary">
+                                <div class="flex items-start gap-2">
+                                    <span class="material-icons text-primary text-sm mt-0.5">store</span>
+                                    <div class="flex-1">
+                                        <div class="font-medium text-sm text-gray-900 dark:text-white mb-1">Phản hồi từ shop</div>
+                                        <p class="text-sm text-gray-700 dark:text-gray-300">${escapeHtml(review.shopResponse)}</p>
+                                        ${review.shopResponseAt ? `
+                                            <div class="text-xs text-gray-500 mt-1">${formatReviewDate(review.shopResponseAt)}</div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
 }
 
 /**
@@ -1341,7 +1537,7 @@ async function loadProvinces() {
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         
-        const response = await fetch(`${window.BASE_URL}/api/locations`, { headers });
+        const response = await fetch(`${window.API_BASE_URL || 'http://localhost:8080'}/api/locations`, { headers });
         
         if (!response.ok) throw new Error('Failed to fetch provinces');
         
@@ -1379,7 +1575,7 @@ async function loadDistricts(provinceId) {
         if (token) headers['Authorization'] = `Bearer ${token}`;
         
         const response = await fetch(
-            `${window.BASE_URL}/api/locations/districts?provinceId=${provinceId}`,
+            `${window.API_BASE_URL || 'http://localhost:8080'}/api/locations/districts?provinceId=${provinceId}`,
             { headers }
         );
         
@@ -1439,7 +1635,7 @@ async function findStores() {
         }
         
         const response = await fetch(
-            `${window.BASE_URL}/api/stocks/public/locations?${params}`,
+            `${window.API_BASE_URL || 'http://localhost:8080'}/api/stocks/public/locations?${params}`,
             { headers }
         );
         
@@ -1851,14 +2047,17 @@ async function loadProductReviews(productId, page = 0) {
     }
     
     try {
-        const url = `${window.BASE_URL}/api/reviews/product/${productId}?page=${page}&size=${productState.reviews.pageSize}`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews/product/${productId}?page=${page}&limit=${productState.reviews.pageSize}`;
         console.log('Loading reviews from:', url);
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to load reviews');
         
-        const data = await response.json();
-        console.log('Reviews data:', data);
+        const result = await response.json();
+        console.log('Reviews response:', result);
+        
+        // Extract data from payload
+        const data = result.payload || result;
         
         // Update state
         productState.reviews = {
@@ -1866,16 +2065,91 @@ async function loadProductReviews(productId, page = 0) {
             totalPages: data.totalPages || 0,
             totalElements: data.totalElements || 0,
             currentPage: page,
-            pageSize: data.size || 5
+            pageSize: data.size || 10
         };
         
         // Render reviews
         renderReviews();
         renderReviewsPagination();
         
+        // Load and render review statistics
+        await loadReviewStatistics(productId);
+        
     } catch (error) {
         console.error('Error loading reviews:', error);
         renderReviewsError();
+    }
+}
+
+/**
+ * Load review statistics from API
+ */
+async function loadReviewStatistics(productId) {
+    if (!productId) {
+        console.warn('Product ID not available for statistics');
+        return;
+    }
+    
+    try {
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews/product/${productId}/statistics`;
+        console.log('Loading review statistics from:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.warn('Statistics API not available, using default data');
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('Review statistics:', result);
+        
+        const stats = result.payload || result;
+        
+        // Update average rating display
+        const avgRating = stats.averageRating || 0;
+        const totalReviews = stats.totalReviews || 0;
+        const ratingCounts = stats.ratingCount || {};
+        
+        // Update header
+        const avgDisplay = document.querySelector('#reviews-section .text-5xl');
+        if (avgDisplay) {
+            avgDisplay.innerHTML = `${avgRating.toFixed(1)}<span class="text-2xl text-gray-500">/5</span>`;
+        }
+        
+        const reviewCountDisplay = document.querySelector('#reviews-section .text-gray-500.text-sm');
+        if (reviewCountDisplay) {
+            reviewCountDisplay.textContent = `${totalReviews} lượt đánh giá`;
+        }
+        
+        // Update rating breakdown bars
+        const maxCount = Math.max(...Object.values(ratingCounts), 1);
+        for (let i = 5; i >= 1; i--) {
+            const count = ratingCounts[i] || 0;
+            const percentage = (count / maxCount) * 100;
+            
+            // Find the correct bar for this rating
+            const bars = document.querySelectorAll('#reviews-section .h-3.bg-gray-200');
+            const barIndex = 5 - i; // 5★ is index 0, 1★ is index 4
+            
+            if (bars[barIndex]) {
+                const fillBar = bars[barIndex].querySelector('.h-full');
+                if (fillBar) {
+                    fillBar.style.width = percentage + '%';
+                }
+                
+                // Update count text
+                const parent = bars[barIndex].closest('.flex.items-center.gap-2');
+                if (parent) {
+                    const countText = parent.querySelector('.text-sm.text-gray-500.w-20');
+                    if (countText) {
+                        countText.textContent = `${count} đánh giá`;
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading review statistics:', error);
     }
 }
 
@@ -1901,55 +2175,64 @@ function renderReviews() {
     
     let html = '';
     reviews.forEach(review => {
-        const userName = review.user?.fullName || review.user?.username || 'Người dùng';
-        const avatarLetter = getAvatarLetter(userName);
+        const userName = review.userName || 'Người dùng';
+        const avatarLetter = userName.charAt(0).toUpperCase();
         const avatarColor = getAvatarColor(userName);
         const ratingLabel = getRatingLabel(review.rating);
-        const relativeTime = formatRelativeTime(review.createdAt);
-        const isCurrentUser = review.user?.id === TokenHelper.getUserInfo()?.id;
+        const formattedDate = formatReviewDate(review.createdAt);
         
         html += `
-            <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                        ${avatarLetter}
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-900 dark:text-white">${userName}</span>
-                                ${review.verified ? '<span class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Đã mua hàng</span>' : ''}
-                            </div>
-                            ${isCurrentUser ? `
-                                <button onclick="openEditReviewModal(${review.id})" 
-                                    class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                                    <span class="material-icons text-sm">edit</span>
-                                    Chỉnh sửa
-                                </button>
-                            ` : ''}
+            <div class="border-t pt-4 pb-2 border-gray-200 dark:border-gray-700 review-item">
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white font-semibold">
+                            ${avatarLetter}
                         </div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="flex text-yellow-500">
-                                ${generateStarRating(review.rating, 'text-sm')}
-                            </div>
-                            <span class="text-sm text-green-600 font-medium">${ratingLabel}</span>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <span class="font-medium">${maskUsername(userName)}</span>
+                            <span class="text-gray-500"> | ${formattedDate} | </span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                                ✓ Đã mua hàng
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-yellow-500">
+                            ${generateStarRatingHTML(review.rating)}
+                            <span class="ml-2 font-semibold text-gray-800 dark:text-gray-200">${ratingLabel}</span>
                         </div>
                         ${review.comment ? `
-                            <p class="text-gray-700 dark:text-gray-300 text-sm mb-3">${review.comment}</p>
+                            <div class="text-gray-800 dark:text-gray-300 text-sm whitespace-pre-line">${escapeHtml(review.comment)}</div>
                         ` : ''}
-                        ${review.images && review.images.length > 0 ? `
-                            <div class="flex gap-2 mb-3 flex-wrap">
-                                ${review.images.map(img => `
-                                    <img src="${img}" alt="Review image" 
-                                        class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
-                                        onclick="openImageModal('${img}')">
-                                `).join('')}
+                        ${review.imageUrls && review.imageUrls.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="w-full">
+                                    <div class="flex gap-2 flex-wrap">
+                                        ${review.imageUrls.map(img => `
+                                            <div class="relative">
+                                                <img src="${img}" 
+                                                    class="h-[100px] object-cover rounded cursor-pointer border border-transparent hover:border-primary transition"
+                                                    onclick="openImageModal('${img}')">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
                             </div>
                         ` : ''}
-                        <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                            <span class="material-icons-outlined text-sm mr-1">schedule</span>
-                            Đánh giá đã đăng ${relativeTime}
-                        </div>
+                        ${review.shopResponse ? `
+                            <div class="mt-3 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border-l-4 border-primary">
+                                <div class="flex items-start gap-2">
+                                    <span class="material-icons text-primary text-sm mt-0.5">store</span>
+                                    <div class="flex-1">
+                                        <div class="font-medium text-sm text-gray-900 dark:text-white mb-1">Phản hồi từ shop</div>
+                                        <p class="text-sm text-gray-700 dark:text-gray-300">${escapeHtml(review.shopResponse)}</p>
+                                        ${review.shopResponseAt ? `
+                                            <div class="text-xs text-gray-500 mt-1">${formatReviewDate(review.shopResponseAt)}</div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -2251,7 +2534,7 @@ async function submitEditReview() {
             }
         }
         
-        const url = `${window.BASE_URL}/api/reviews/${editReviewState.reviewId}`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/reviews/${editReviewState.reviewId}`;
         const token = TokenHelper.getAccessToken();
         
         const response = await fetch(url, {

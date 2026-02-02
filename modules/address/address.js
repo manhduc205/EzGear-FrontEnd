@@ -2,8 +2,8 @@
 /* Quản lý địa chỉ khách hàng - GearVN Theme */
 
 // ==================== API ENDPOINTS ====================
-const GHN_API_BASE = `${window.BASE_URL}/api/ghn/location`;
-const ADDRESS_API = `${window.BASE_URL}/api/customer-addresses`;
+const GHN_API_BASE = `${window.API_BASE_URL || 'http://localhost:8080'}/api/ghn/location`;
+const ADDRESS_API = `${window.API_BASE_URL || 'http://localhost:8080'}/api/customer-addresses`;
 
 // ==================== STATE MANAGEMENT ====================
 let selectedProvince = { id: '', name: '' };

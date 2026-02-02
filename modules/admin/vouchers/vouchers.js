@@ -1,7 +1,7 @@
 /* ==================== VOUCHERS MODULE JS ==================== */
 
-// API Endpoints
-const API_BASE = window.BASE_URL || 'http://localhost:8080';
+// API Endpoints - Sử dụng từ config.js
+const API_BASE = window.API_BASE_URL || 'http://localhost:8080';
 const VOUCHER_API = `${API_BASE}/api/voucher`;
 const CATEGORY_API = `${API_BASE}/api/categories`;
 

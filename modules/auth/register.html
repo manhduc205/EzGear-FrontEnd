@@ -191,11 +191,11 @@
         </div>
 
         <div class="social-login">
-          <button class="social-btn google">
+          <button class="social-btn google" type="button" id="google-login-btn">
             <i class="fab fa-google"></i>
             <span>Google</span>
           </button>
-          <button class="social-btn zalo">
+          <button class="social-btn facebook" type="button" id="facebook-login-btn">
             <i class="fab fa-facebook"></i>
             <span>Facebook</span>
           </button>
@@ -208,7 +208,7 @@
     </div>
   </div>
 
-  <script src="../../assets/js/core/api.js"></script>
+  <script src="/config.js"></script>
 
   <script>
     // Hiển thị/ẩn mật khẩu
@@ -383,5 +383,11 @@
       }
     });
   </script>
+
+  <!-- Google & Facebook Login Scripts -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="./auth.js"></script>
 </body>
 </html>

@@ -472,7 +472,7 @@ textarea.form-control {
 /* ==================== TOAST NOTIFICATIONS ==================== */
 .toast {
   position: fixed;
-  top: 20px;
+  top: 90px;
   right: 20px;
   padding: 15px 20px;
   border-radius: 6px;
@@ -512,32 +512,194 @@ textarea.form-control {
 }
 
 /* ==================== RESPONSIVE ==================== */
+@media (max-width: 992px) {
+  body {
+    padding-top: 70px;
+  }
+  
+  .address-container {
+    padding: 15px;
+  }
+}
+
 @media (max-width: 768px) {
+  body {
+    padding-top: 90px;
+  }
+  
+  .address-container {
+    padding: 12px 10px;
+  }
+  
   .address-form-container {
-    padding: 20px;
+    padding: 20px 15px;
+  }
+  
+  .address-header {
+    padding: 15px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .address-header h1 {
+    font-size: 1.2rem;
   }
 
   .form-row {
     flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 0.9rem;
   }
 
   .modal {
     width: 95%;
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+  }
+  
+  .modal-header {
+    padding: 15px;
+  }
+  
+  .modal-body {
+    padding: 15px;
   }
 
   .address-type-buttons {
     flex-direction: column;
+    gap: 10px;
   }
 
   .type-btn {
     width: 100%;
+    padding: 12px;
   }
 
   .form-actions {
     flex-direction: column-reverse;
+    gap: 10px;
   }
 
   .btn {
     width: 100%;
+    padding: 12px;
+  }
+  
+  .address-card {
+    padding: 15px;
+  }
+  
+  .address-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .address-info h4 {
+    font-size: 0.95rem;
+  }
+  
+  .address-info p {
+    font-size: 0.85rem;
+  }
+  
+  .address-actions {
+    width: 100%;
+  }
+  
+  .address-actions button {
+    flex: 1;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding-top: 100px;
+  }
+  
+  .address-container {
+    padding: 10px 8px;
+  }
+  
+  .address-form-container {
+    padding: 15px 12px;
+    border-radius: 10px;
+  }
+  
+  .address-header {
+    padding: 12px;
+  }
+  
+  .address-header h1 {
+    font-size: 1.1rem;
+  }
+  
+  .form-group label {
+    font-size: 0.8rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .modal {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+  
+  .type-btn {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .btn {
+    padding: 11px;
+    font-size: 0.9rem;
+  }
+  
+  .address-card {
+    padding: 12px;
+  }
+  
+  .address-info h4 {
+    font-size: 0.9rem;
+  }
+  
+  .address-info p {
+    font-size: 0.8rem;
+  }
+  
+  .address-actions button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .empty-address i {
+    font-size: 3rem;
+  }
+  
+  .empty-address h3 {
+    font-size: 1rem;
+  }
+  
+  .empty-address p {
+    font-size: 0.85rem;
   }
 }

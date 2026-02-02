@@ -6,7 +6,8 @@
  */
 
 // ===== CONFIGURATION =====
-const API_BASE_URL = 'http://127.0.0.1:8080/api';
+// Sử dụng API_BASE_URL từ config.js
+const API_BASE_URL = window.API_BASE_URL ? `${window.API_BASE_URL}/api` : 'http://127.0.0.1:8080/api';
 
 // ===== GLOBAL VARIABLES =====
 let revenueChart = null;

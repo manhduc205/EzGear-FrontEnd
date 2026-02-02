@@ -19,7 +19,7 @@ async function initProfilePage() {
         }
 
         // Fetch Profile Data
-        const url = `${window.BASE_URL}/api/users/profile`;
+        const url = `${window.API_BASE_URL || 'http://localhost:8080'}/api/users/profile`;
         console.log('Fetching profile from:', url);
         
         const response = await httpRequest(url, { method: 'GET' });
