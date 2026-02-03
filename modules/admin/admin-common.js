@@ -2,9 +2,10 @@
 // Sử dụng API_BASE_URL từ config.js
 const BASE_URL = window.API_BASE_URL ? `${window.API_BASE_URL}/api` : 'http://127.0.0.1:8080/api';
 
-// Load sidebar from component
+// Load sidebar and topbar from component
 document.addEventListener('DOMContentLoaded', async () => {
     await loadSidebar();
+    await loadTopbar();
     await checkAdminAuth();
     loadUserInfo();
     setupLogoClickHandler();
@@ -21,7 +22,7 @@ function setupLogoClickHandler() {
             logoHeader.addEventListener('click', () => {
                 const pathParts = window.location.pathname.split('/');
                 const parentFolder = pathParts[pathParts.length - 2];
-                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders'].includes(parentFolder);
+                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'orders-management'].includes(parentFolder);
                 const dashboardLink = isInSubDir ? '../dashboard.html' : './dashboard.html';
                 window.location.href = dashboardLink;
             });
@@ -96,7 +97,7 @@ async function loadSidebar() {
     const currentPage = pathParts.pop();
     const parentFolder = pathParts.pop();
     
-    const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'report', 'picking'].includes(parentFolder);
+    const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'report', 'picking', 'orders-management'].includes(parentFolder);
     const base = isInSubDir ? '../' : './';
     const stockTransferLink = isInSubDir ? '../stock-transfer/stock-transfer.html' : './stock-transfer/stock-transfer.html';
     const branchesLink = isInSubDir ? '../branches/branches.html' : './branches/branches.html';
@@ -112,6 +113,7 @@ async function loadSidebar() {
     const purchaseOrdersLink = isInSubDir ? '../purchase-orders/purchase-orders.html' : './purchase-orders/purchase-orders.html';
     const reportLink = isInSubDir ? '../report/report.html' : './report/report.html';
     const pickingLink = isInSubDir ? '../picking/picking.html' : './picking/picking.html';
+    const ordersManagementLink = isInSubDir ? '../orders-management/orders-management.html' : './orders-management/orders-management.html';
     
     sidebar.innerHTML = `
         <div class="sidebar-header" title="Nhấn để về Dashboard">
@@ -190,6 +192,14 @@ async function loadSidebar() {
             </div>
 
             <div class="menu-section">
+                <div class="menu-section-title">Đơn Hàng</div>
+                <a href="${ordersManagementLink}" class="menu-item ${currentPage === 'orders-management.html' ? 'active' : ''}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="menu-item-text">Quản lý đơn hàng</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
                 <div class="menu-section-title">Khuyến Mãi</div>
                 <a href="${vouchersLink}" class="menu-item ${currentPage === 'vouchers.html' ? 'active' : ''}">
                     <i class="fas fa-ticket-alt"></i>
@@ -209,6 +219,31 @@ async function loadSidebar() {
                 </a>
             </div>
         </nav>
+    `;
+}
+
+// Load topbar
+async function loadTopbar() {
+    const topbarContainer = document.getElementById('topbar-container');
+    if (!topbarContainer) return;
+    
+    // Get page title from data attribute or page name
+    const pageTitle = topbarContainer.getAttribute('data-title') || document.title.split('-')[0].trim();
+    const pageBreadcrumb = topbarContainer.getAttribute('data-breadcrumb') || '';
+    
+    topbarContainer.innerHTML = `
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>${pageTitle}</h1>
+                ${pageBreadcrumb ? `<div class="breadcrumb">${pageBreadcrumb}</div>` : ''}
+            </div>
+            <div class="topbar-right">
+                <div class="user-info" id="userInfo"></div>
+                <button class="btn-logout" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
+            </div>
+        </div>
     `;
 }
 
@@ -415,7 +450,7 @@ async function handleLogout() {
             setTimeout(() => {
                 const pathParts = window.location.pathname.split('/');
                 const parentFolder = pathParts[pathParts.length - 2];
-                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders'].includes(parentFolder);
+                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'orders-management'].includes(parentFolder);
                 // Always use absolute path to avoid incorrect relative resolution
                 window.location.href = '/modules/auth/auth.html';
             }, 800);
@@ -430,7 +465,7 @@ async function handleLogout() {
                 localStorage.clear();
                 const pathParts = window.location.pathname.split('/');
                 const parentFolder = pathParts[pathParts.length - 2];
-                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders'].includes(parentFolder);
+                const isInSubDir = ['stock-transfer', 'branches', 'categories', 'brands', 'add-product', 'manage-products', 'vouchers', 'warehouses', 'stocks', 'stock-transactions', 'purchase-orders', 'orders-management'].includes(parentFolder);
                 const authLink = isInSubDir ? '../../auth/auth.html' : '../auth/auth.html';
                 window.location.href = authLink;
             }, 1000);

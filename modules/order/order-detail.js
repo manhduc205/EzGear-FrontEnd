@@ -167,7 +167,6 @@ function renderOrderDetail(order) {
     // 1. Basic Info
     document.getElementById('orderIdDisplay').textContent = '#' + order.orderCode;
     document.getElementById('orderStatusText').textContent = getStatusLabel(order.status);
-    document.getElementById('paymentStatusText').textContent = order.paymentStatus || '...';
     document.getElementById('createdAtText').textContent = formatDate(order.createdAt);
     
     const statusTextElement = document.getElementById('orderStatusText');
@@ -412,6 +411,21 @@ function openReviewModal() {
     
     renderReviewProducts(order.items);
     const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    
+    // Hide header when modal opens
+    const headerElement = document.querySelector('.shop-header');
+    if (headerElement) {
+        headerElement.style.display = 'none';
+    }
+    
+    // Show header again when modal closes
+    document.getElementById('reviewModal').addEventListener('hidden.bs.modal', function () {
+        const headerElement = document.querySelector('.shop-header');
+        if (headerElement) {
+            headerElement.style.display = '';
+        }
+    }, { once: true });
+    
     modal.show();
 }
 
@@ -816,6 +830,21 @@ async function submitReviews() {
 // Open invoice modal and load invoice
 async function openInvoiceModal() {
     const modal = new bootstrap.Modal(document.getElementById('invoiceModal'));
+    
+    // Hide header when modal opens
+    const headerElement = document.querySelector('.shop-header');
+    if (headerElement) {
+        headerElement.style.display = 'none';
+    }
+    
+    // Show header again when modal closes
+    document.getElementById('invoiceModal').addEventListener('hidden.bs.modal', function () {
+        const headerElement = document.querySelector('.shop-header');
+        if (headerElement) {
+            headerElement.style.display = '';
+        }
+    }, { once: true });
+    
     modal.show();
     
     await loadInvoice();

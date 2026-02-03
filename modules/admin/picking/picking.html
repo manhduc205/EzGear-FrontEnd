@@ -35,21 +35,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Topbar -->
-            <div class="topbar">
-                <div class="topbar-left">
-                    <h1>Nhặt Hàng</h1>
-                    <div class="breadcrumb">
-                        <a href="../dashboard.html">Trang chủ</a> / <a href="./picking.html">Nhặt hàng</a>
-                    </div>
-                </div>
-                <div class="topbar-right">
-                    <button class="btn-refresh" onclick="refreshOrders()">
-                        <i class="fas fa-sync-alt"></i>
-                        <span>Làm mới</span>
-                    </button>
-                    <div class="user-info" id="userInfo"></div>
-                    <button class="btn-logout" onclick="handleLogout()">
-                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            <div id="topbar-container" data-title="Nhặt Hàng" data-breadcrumb='<a href="../dashboard.html">Trang chủ</a> / <a href="./picking.html">Nhặt hàng</a>'></div>
                     </button>
                 </div>
             </div>
